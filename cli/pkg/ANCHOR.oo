@@ -1,0 +1,12 @@
+// # Opm Pkg Helpers — Anchor for Agents
+//
+// Logline: Re-export the 2 lock-format helpers used by the opm pkg subcommand.
+//
+// Setup: Pure string formatters for v2 lock lines. No filesystem, no network, no capability.
+//
+// Beats:
+//   1. parse.oo reads and validates a pkg line.
+//   2. lock.oo formats the sorted name@version#sha256#CapName lines.
+
+import "parse.oo";
+import "lock.oo";

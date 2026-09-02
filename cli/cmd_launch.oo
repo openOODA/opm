@@ -1,0 +1,135 @@
+// # Launch a pinned ingest payload
+//
+// Logline: Re-hash the CAS blob and refuse yank, extra caps, or sha drift. Then print the path, or run the pinned .oo when --exec is set.
+//
+// Setup: Reads lock v2 and CAS. Default prints the path. --exec runs the pinned .oo after the gate.
+//
+// Beats:
+//   1. Find the lock node and live CAS bytes.
+//   2. pm_launch_gate must be ok or ERR and no exec.
+//   3. After ok, --exec runs the pinned .oo unless the body is marked untrusted. Without --exec, print the path only.
+
+import "cmd_cat.oo";
+import "cmd_io.oo";
+import "host_run.oo";
+import "host_build.oo";
+import "std/os/env.oo";
+import "policy/caps.oo";
+import "opm/core/ANCHOR.oo";
+import "opm/launch/ANCHOR.oo";
+import "core/pin.oo";
+import "opm/policy/ANCHOR.oo";
+import "opm/resolve/ANCHOR.oo";
+import "opm/store/ANCHOR.oo";
+
+fn launch_die(msg: String) {
+    println("ERR\tpm\t" + msg);
+    println("ooda launch: " + msg);
+    process_exit(2);
+}
+
+fn launch_untrusted_mark(env: &EnvCap) -> String {
+    let r: Result[String, String] = env_get(env, "OODA_UNTRUSTED");
+    return match r { Ok(s) => s, Err(_) => "" };
+}
+
+fn launch_pay_name(fr: &FsReadCap, proc: &ProcessCap, cas: String) -> String {
+    let names: String = pm_list_dir(fr, proc, cas);
+    let n: Int = chars_len(names);
+    let mut start: Int = 0;
+    let mut i: Int = 0;
+    while i <= n {
+        if i == n || char_at(names, i) == "\n" {
+            if i > start {
+                let nm: String = str_slice(names, start, i);
+                if chars_len(nm) >= 7 {
+                    if str_slice(nm, 0, 7) == "ingest_" {
+                        let _w: String = nm;
+                    } else {
+                        return nm;
+                    }
+                } else {
+                    return nm;
+                }
+            }
+            start = i + 1;
+        }
+        i = i + 1;
+    }
+    return "";
+}
+
+pub fn run_ooda_pm_launch(fr: &FsReadCap, fw: &FsWriteCap, proc: &ProcessCap, env: &EnvCap, args: List[String]) {
+    let name: String = pm_arg_name(args);
+    if name == "" {
+        launch_die("missing package name");
+    }
+    if !pm_name_ok(name) {
+        launch_die("refuse name");
+    }
+    let root: String = pm_root_abs(fr, proc);
+    let acc: String = pm_first_nonempty(pm_slurp(fr, root + "/.ooda_modules/lock"), pm_slurp(fr, ".ooda_modules/lock"));
+    let n: Int = chars_len(acc);
+    let mut start: Int = 0;
+    let mut i: Int = 0;
+    let mut line: String = "";
+    while i <= n {
+        if i == n || char_at(acc, i) == "\n" {
+            if i > start {
+                let cur: String = str_slice(acc, start, i);
+                if pm_is_pkg_line(cur) {
+                    if pm_tok_name(cur) == name {
+                        line = cur;
+                    }
+                }
+            }
+            start = i + 1;
+        }
+        i = i + 1;
+    }
+    if line == "" {
+        launch_die("not installed");
+    }
+    let sha: String = pm_tok_sha(line);
+    let cas: String = root + "/.ooda_modules/cas/" + sha;
+    let leaf: String = launch_pay_name(fr, proc, cas);
+    let body: String = pm_slurp(fr, cas + "/" + leaf);
+    let live: String = pm_cas_id(body);
+    let pkg: String = pm_slurp(fr, "ooda.pkg");
+    let grant: Int = pm_cap_parse(pm_kv(pkg, "caps"));
+    let need: Int = pm_cap_parse(pm_tok_cap(line));
+    let ydir: String = pm_first_nonempty(pm_opt(args, "--vendor"), "../registry");
+    let yanked: Bool = pm_yanked(pm_slurp(fr, ydir + "/yank"), name, pm_tok_ver(line));
+    let gate: String = pm_launch_gate(sha, live, grant, need, yanked);
+    if str_slice(gate, 0, 3) == "ok " {
+        let _o: String = gate;
+    } else {
+        if gate == "ok" {
+            let _g: String = gate;
+        } else {
+            if pm_flag(args, "--exec") {
+                launch_die(str_slice(gate, 4, chars_len(gate)));
+            }
+            launch_die(str_slice(gate, 4, chars_len(gate)));
+        }
+    }
+    let path: String = cas + "/" + leaf;
+    if pm_flag(args, "--exec") {
+        if pm_launch_sink_ok(body, launch_untrusted_mark(env)) != "ok" {
+            launch_die("untrusted");
+        }
+        let pn: Int = chars_len(path);
+        if leaf == "" || path == "" || pn < 3 || str_slice(path, pn - 3, pn) != ".oo" {
+            launch_die("exec");
+        }
+        let mut rargs: List[String] = list_new();
+        rargs = list_push(rargs, path);
+        run_oodac_run(fr, fw, proc, env, rargs);
+        return;
+    }
+    if pm_flag(args, "--json") || pm_flag(args, "-json") {
+        println("{\"ok\":true,\"cmd\":\"launch\",\"name\":\"" + pm_jesc(name) + "\",\"path\":\"" + pm_jesc(path) + "\"}");
+        return;
+    }
+    println("ooda launch: ok " + path);
+}

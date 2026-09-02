@@ -1,0 +1,108 @@
+// # Local-registry publish
+//
+// Logline: Write the local `ooda.pkg` manifest + payload to a registry directory tree. Sign with HMAC. Default registry is `.ooda-cache/registry`; `--to <dir>` overrides.
+//
+// Setup: The runtime has no `fetch_put` primitive, so this ships a local-registry simulation. The user can `rsync` the registry to a real server, or extend this dispatcher to use `sys_exec` + `curl --upload-file` when the runtime gains a PUT path.
+//
+// Beats:
+//   1. Read `ooda.pkg`. Refuse if missing or empty.
+//   2. Resolve the registry root to an absolute path. Create each parent directory along the way.
+//   3. Create `<root>/<name>/<version>/` and write `ooda.pkg`, the payload, and a signed `index`.
+//   4. `--json` prints the path; otherwise text.
+
+import "cmd_io.oo";
+import "opm/resolve/ANCHOR.oo";
+import "opm/sign/ANCHOR.oo";
+import "opm/store/ANCHOR.oo";
+
+fn pm_mkdir_p(fr: &FsReadCap, fw: &FsWriteCap, abs: String) -> Bool {
+    if path_exists(fr, abs) { return true; }
+    // Walk the path and create each missing parent. The runtime's `mkdir` does not create parents.
+    let n: Int = chars_len(abs);
+    let mut i: Int = 1;
+    while i < n {
+        if char_at(abs, i) == "/" {
+            let prefix: String = str_slice(abs, 0, i);
+            if !path_exists(fr, prefix) {
+                if !pm_mkdir(fr, fw, prefix) { return false; }
+            }
+        }
+        i = i + 1;
+    }
+    return pm_mkdir(fr, fw, abs);
+}
+
+pub fn run_ooda_pm_publish(fr: &FsReadCap, fw: &FsWriteCap, proc: &ProcessCap, args: List[String]) {
+    let mut to_dir: String = ".ooda-cache/registry";
+    let mut json: Bool = false;
+    let mut i: Int = 1;
+    while i < list_len(args) {
+        let a: String = list_get(args, i);
+        if a == "--to" {
+            if i + 1 < list_len(args) {
+                to_dir = list_get(args, i + 1);
+                i = i + 1;
+            }
+        } else if a == "--json" {
+            json = true;
+        }
+        i = i + 1;
+    }
+
+    let pkg_path: String = "ooda.pkg";
+    let man: String = pm_slurp(fr, pkg_path);
+    if man == "" {
+        println("ERR\tpm publish\tmissing ooda.pkg");
+        process_exit(1);
+    }
+    let name: String = pm_kv(man, "name");
+    let ver: String = pm_kv(man, "version");
+    if name == "" || ver == "" {
+        println("ERR\tpm publish\tmanifest missing name= or version=");
+        process_exit(1);
+    }
+    let payload_name: String = pm_kv(man, "payload");
+    let payload_body: String = pm_slurp(fr, payload_name);
+    if payload_body == "" {
+        println("ERR\tpm publish\tmissing payload " + payload_name);
+        process_exit(1);
+    }
+
+    // Resolve the registry root to an absolute path. The runtime's `path_under_writedir` check rejects relative paths.
+    let root: String = pm_root_abs(fr, proc);
+    let mut abs_root: String = root;
+    if to_dir == "" || str_slice(to_dir, 0, 1) != "/" {
+        abs_root = root + "/" + to_dir;
+    } else {
+        abs_root = to_dir;
+    }
+    let pkg_dir: String = abs_root + "/" + name + "/" + ver;
+    if !pm_mkdir_p(fr, fw, abs_root) {
+        println("ERR\tpm publish\tcannot create " + abs_root);
+        process_exit(1);
+    }
+    if !pm_mkdir_p(fr, fw, pkg_dir) {
+        println("ERR\tpm publish\tcannot create " + pkg_dir);
+        process_exit(1);
+    }
+    if !pm_place(fw, pkg_dir + "/ooda.pkg", man) {
+        println("ERR\tpm publish\twrite ooda.pkg failed");
+        process_exit(1);
+    }
+    if !pm_place(fw, pkg_dir + "/" + payload_name, payload_body) {
+        println("ERR\tpm publish\twrite payload failed");
+        process_exit(1);
+    }
+    let sha: String = crypto_sha256_internal(man);
+    let sig: String = pm_sign("ooda-local-pm", name, ver, sha);
+    let index: String = "name=" + name + "\nversion=" + ver + "\nsha256=" + sha + "\nsig=" + sig + "\n";
+    if !pm_place(fw, pkg_dir + "/index", index) {
+        println("ERR\tpm publish\twrite index failed");
+        process_exit(1);
+    }
+    if json {
+        println("{\"ok\":true,\"path\":\"" + pkg_dir + "\",\"name\":\"" + name + "\",\"version\":\"" + ver + "\"}");
+        return;
+    }
+    println("ooda pkg publish: wrote " + pkg_dir + " (name=" + name + ", version=" + ver + ")");
+}

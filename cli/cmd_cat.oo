@@ -1,0 +1,197 @@
+// # File-backed PM catalog
+//
+// Logline: Load vendor rows, merge path: deps from ooda.pkg, and union resolve names.
+//
+// Setup: Default vendor ../registry. Path packages live in fixtures/pm_<name>. No HTTP.
+//
+// Beats:
+//   1. A vendor dir or a single-package dir becomes catalog lines.
+//   2. path:name rows load from fixtures/pm_name or name/.
+//   3. Several root names resolve to one lock without duplicate nodes.
+
+import "cmd_io.oo";
+import "std/os/fs.oo";
+import "sign/index.oo";
+import "core/pin.oo";
+import "opm/resolve/ANCHOR.oo";
+import "lock/v2.oo";
+
+pub fn pm_list_dir(fr: &FsReadCap, proc: &ProcessCap, dir: String) -> String {
+    let names: List[String] = fs_read_dir(fr, dir);
+    let mut out: String = "";
+    let mut i: Int = 0;
+    let n: Int = list_len(names);
+    while i < n {
+        out = out + list_get(names, i) + "\n";
+        i = i + 1;
+    }
+    return out;
+}
+
+fn pm_row_from_dir(fr: &FsReadCap, dir: String) -> String {
+    let man: String = pm_slurp(fr, dir + "/manifest");
+    if man == "" {
+        return "";
+    }
+    let nm: String = pm_kv(man, "name");
+    if nm == "" {
+        return "";
+    }
+    let pay: String = pm_kv(man, "payload");
+    let mut pn: String = pay;
+    if pn == "" {
+        pn = nm + ".oo";
+    }
+    let body: String = pm_slurp(fr, dir + "/" + pn);
+    let live: String = pm_cas_id(body);
+    return nm + "|" + pm_kv(man, "version") + "|" + pm_kv(man, "caps") + "|" + pm_kv(man, "deps") + "|" + live + "\n";
+}
+
+pub fn pm_pkg_dir(fr: &FsReadCap, vendor: String, name: String) -> String {
+    if name != "" {
+        if path_exists(fr, vendor + "/" + name + "/manifest") {
+            return vendor + "/" + name;
+        }
+    }
+    if path_exists(fr, vendor + "/manifest") {
+        let nm: String = pm_kv(pm_slurp(fr, vendor + "/manifest"), "name");
+        if name == "" || nm == name {
+            return vendor;
+        }
+    }
+    if name != "" {
+        if path_exists(fr, "fixtures/pm_" + name + "/manifest") {
+            return "fixtures/pm_" + name;
+        }
+        if path_exists(fr, name + "/manifest") {
+            return name;
+        }
+    }
+    return "";
+}
+
+pub fn pm_load_catalog(fr: &FsReadCap, proc: &ProcessCap, vendor: String) -> String {
+    if path_exists(fr, vendor + "/index") {
+        let idx: String = pm_slurp(fr, vendor + "/index");
+        let sig: String = pm_slurp(fr, vendor + "/index.sig");
+        if pm_index_ok(idx, sig) {
+            return idx;
+        }
+        return "";
+    }
+    if path_exists(fr, vendor + "/manifest") {
+        return pm_row_from_dir(fr, vendor);
+    }
+    let names: String = pm_list_dir(fr, proc, vendor);
+    let n: Int = chars_len(names);
+    let mut cat: String = "";
+    let mut start: Int = 0;
+    let mut i: Int = 0;
+    while i <= n {
+        if i == n || char_at(names, i) == "\n" {
+            if i > start {
+                let nm: String = str_slice(names, start, i);
+                if pm_name_ok(nm) {
+                    cat = cat + pm_row_from_dir(fr, vendor + "/" + nm);
+                }
+            }
+            start = i + 1;
+        }
+        i = i + 1;
+    }
+    return cat;
+}
+
+fn pm_path_rows(fr: &FsReadCap, deps: String) -> String {
+    let n: Int = chars_len(deps);
+    let mut out: String = "";
+    let mut start: Int = 0;
+    let mut i: Int = 0;
+    while i <= n {
+        if i == n || char_at(deps, i) == "," {
+            if i > start {
+                let one: String = str_slice(deps, start, i);
+                let mut nm: String = "";
+                if chars_len(one) >= 5 {
+                    if str_slice(one, 0, 5) == "path:" {
+                        nm = str_slice(one, 5, chars_len(one));
+                    }
+                }
+                if chars_len(one) >= 4 {
+                    if str_slice(one, 0, 4) == "git:" {
+                        nm = pm_git_name(one);
+                    }
+                }
+                if nm != "" {
+                    out = out + pm_row_from_dir(fr, pm_pkg_dir(fr, ".", nm));
+                }
+            }
+            start = i + 1;
+        }
+        i = i + 1;
+    }
+    return out;
+}
+
+pub fn pm_load_work_catalog(fr: &FsReadCap, proc: &ProcessCap, vendor: String) -> String {
+    let cat: String = pm_load_catalog(fr, proc, vendor);
+    let deps: String = pm_kv(pm_slurp(fr, "ooda.pkg"), "deps");
+    return cat + pm_path_rows(fr, deps);
+}
+
+pub fn pm_cat_line(catalog: String, name: String) -> String {
+    let n: Int = chars_len(catalog);
+    let mut start: Int = 0;
+    let mut i: Int = 0;
+    while i <= n {
+        if i == n || char_at(catalog, i) == "\n" {
+            if i > start {
+                let line: String = str_slice(catalog, start, i);
+                if pm_line_field(line, 0) == name {
+                    return line;
+                }
+            }
+            start = i + 1;
+        }
+        i = i + 1;
+    }
+    return "";
+}
+
+pub fn pm_pick_vendor(args: List[String]) -> String {
+    let from: String = pm_opt(args, "--from");
+    if from != "" {
+        return from;
+    }
+    let v: String = pm_opt(args, "--vendor");
+    if v != "" {
+        return v;
+    }
+    return "../registry";
+}
+
+pub fn pm_first_nonempty(a: String, b: String) -> String {
+    if a != "" {
+        return a;
+    }
+    return b;
+}
+
+pub fn pm_first_lock_name(lock: String) -> String {
+    let n: Int = chars_len(lock);
+    let mut start: Int = 0;
+    let mut i: Int = 0;
+    while i <= n {
+        if i == n || char_at(lock, i) == "\n" {
+            if i > start {
+                let line: String = str_slice(lock, start, i);
+                if pm_is_pkg_line(line) {
+                    return pm_tok_name(line);
+                }
+            }
+            start = i + 1;
+        }
+        i = i + 1;
+    }
+    return "";
+}
