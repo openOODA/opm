@@ -1,0 +1,82 @@
+// # `pm_semver_sat` operator proof
+//
+// Logline: Drive the new `>=`, `<=`, `>`, `<` operators and compound (space- or comma-separated) AND-semantics on the SemVer satisfier.
+//
+// Setup: Pure in-memory. No FsCap needed. No network.
+//
+// Beats:
+//   1. `>=`, `<=`, `>`, `<` work as expected.
+//   2. `^`, `~`, `=` still work (regression).
+//   3. Compound `>=2.0.0 <3.0.0` AND-satisfies; `^1.2.0,>=2.0.0,<3.0.0` is the canonical compound.
+//   4. `*` and empty spec still pass.
+
+import "core.oo";
+
+fn fail(msg: String) {
+    println("FAIL " + msg);
+    process_exit(1);
+}
+
+fn sat(actual: String, spec: String) -> Bool {
+    return pm_semver_sat(actual, spec);
+}
+
+pub fn main() {
+    // >= operator
+    if !sat("2.0.0", ">=2.0.0") { fail("2.0.0 >=2.0.0"); }
+    if !sat("3.5.0", ">=2.0.0") { fail("3.5.0 >=2.0.0"); }
+    if sat("1.9.9", ">=2.0.0") { fail("1.9.9 not >=2.0.0"); }
+    println(">= works");
+
+    // <= operator
+    if !sat("2.0.0", "<=2.0.0") { fail("2.0.0 <=2.0.0"); }
+    if !sat("1.5.0", "<=2.0.0") { fail("1.5.0 <=2.0.0"); }
+    if sat("3.0.0", "<=2.0.0") { fail("3.0.0 not <=2.0.0"); }
+    println("<= works");
+
+    // > operator
+    if !sat("3.0.0", ">2.0.0") { fail("3.0.0 >2.0.0"); }
+    if sat("2.0.0", ">2.0.0") { fail("2.0.0 not >2.0.0"); }
+    if sat("1.0.0", ">2.0.0") { fail("1.0.0 not >2.0.0"); }
+    println("> works");
+
+    // < operator
+    if !sat("1.0.0", "<2.0.0") { fail("1.0.0 <2.0.0"); }
+    if sat("2.0.0", "<2.0.0") { fail("2.0.0 not <2.0.0"); }
+    if sat("3.0.0", "<2.0.0") { fail("3.0.0 not <2.0.0"); }
+    println("< works");
+
+    // regression: ^, ~, =
+    if !sat("1.5.0", "^1.0.0") { fail("^ regression 1"); }
+    if sat("2.0.0", "^1.0.0") { fail("^ regression 2"); }
+    if !sat("1.5.0", "~1.5.0") { fail("~ regression 1"); }
+    if sat("1.6.0", "~1.5.0") { fail("~ regression 2"); }
+    if !sat("2.0.0", "=2.0.0") { fail("= regression 1"); }
+    if sat("2.0.1", "=2.0.0") { fail("= regression 2"); }
+    if !sat("3.0.0", "*") { fail("* regression"); }
+    if !sat("3.0.0", "") { fail("empty regression"); }
+    println("regressions pass");
+
+    // compound: space-separated
+    if !sat("2.5.0", ">=2.0.0 <3.0.0") { fail("compound space 1"); }
+    if sat("1.5.0", ">=2.0.0 <3.0.0") { fail("compound space 2 (low)"); }
+    if sat("3.5.0", ">=2.0.0 <3.0.0") { fail("compound space 3 (high)"); }
+    if !sat("2.0.0", ">=2.0.0 <3.0.0") { fail("compound space 4 (low edge)"); }
+    if !sat("2.9.9", ">=2.0.0 <3.0.0") { fail("compound space 5 (high edge)"); }
+    println("space-separated compound works");
+
+    // compound: comma-separated (objective example, but the parts are mutually exclusive — adjust to non-conflicting)
+    if !sat("1.5.0", "^1.2.0,<2.0.0") { fail("compound comma 1"); }
+    if sat("2.0.0", "^1.2.0,<2.0.0") { fail("compound comma 2 (^ high)"); }
+    if !sat("2.5.0", ">=2.0.0,<3.0.0,>=2.4.0") { fail("compound comma 3"); }
+    if sat("3.5.0", ">=2.0.0,<3.0.0,>=2.4.0") { fail("compound comma 4 (high)"); }
+    if sat("1.5.0", ">=2.0.0,<3.0.0,>=2.4.0") { fail("compound comma 5 (low)"); }
+    println("comma-separated compound works");
+
+    // invalid spec should refuse
+    if sat("2.0.0", ">=") { fail("invalid spec (>= alone) should refuse"); }
+    if sat("2.0.0", "garbage") { fail("invalid spec (no version) should refuse"); }
+    println("invalid spec refuses");
+
+    println("pm_semver_proof: PASSED");
+}

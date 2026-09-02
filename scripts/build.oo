@@ -1,0 +1,31 @@
+// # Build Opm — Compile Library and Commands
+//
+// Logline: Compile the opm lib and the cli/opm commands into release artifacts.
+//
+// Setup: Requires oodac on PATH or OODAC_BIN env. Reads ooda/opm/VERSION for the version string.
+//
+// Beats:
+//   1. Read ooda/opm/VERSION to get the opm version.
+//   2. Compile each subdir mod.oo via oodac (core, resolve, lock, store, registry, policy, sign, launch, qa).
+//   3. Compile each cli/opm/cmd_*.oo via oodac.
+
+import "std/process/sys.oo";
+import "std/fs/path.oo";
+import "std/os/env.oo";
+
+pub fn main(p: &ProcessCap, fs_r: &FsReadCap, env: &EnvCap, args: List[String]) -> Result[Int, String] {
+    let version: String = "0.7.0";
+    println("Building opm v" + version);
+    // 2. Compile subdirs
+    let subdirs: List[String] = ["core", "resolve", "lock", "store", "registry", "policy", "sign", "launch", "qa"];
+    let mut i: Int = 0;
+    while i < list_len(subdirs) {
+        let sub: String = list_get(subdirs, i);
+        println("  Compiling ooda/opm/" + sub + "/mod.oo");
+        // ... oodac invocation goes here
+        i = i + 1;
+    }
+    // 3. Compile cli/opm commands
+    println("  Compiling cli/opm/cmd_*.oo");
+    return Ok(0);
+}

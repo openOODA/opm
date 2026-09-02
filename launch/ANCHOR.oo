@@ -1,0 +1,12 @@
+// # Opm Launch Gate
+//
+// Logline: Pre-exec re-verify: SHA-256 re-check and capability subset assertion.
+//
+// Setup: Launch: re-verify package hash and capability subset before spawn.
+//
+// Beats:
+//   1. Opm Launch Gate — primary purpose.
+//   2. Fail-closed: every function returns Result[T, E] or asserts a precondition.
+//   3. Granular capability tokens (per RFC-0001); no broad caps.
+
+import "launch.oo";

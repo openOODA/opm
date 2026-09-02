@@ -1,0 +1,16 @@
+// # Opm Scripts Index — Anchor for Agents
+//
+// Logline: Index of the 4 build entry points for opm.
+//
+// Setup: Each script has a single purpose. They compose: build -> test -> verify -> release.
+//
+// Beats:
+//   1. build.oo — compile the opm lib and the cli/opm commands.
+//   2. test.oo — run all 8 break-test drivers in qa/.
+//   3. verify.oo — parse VERSION, assert the mod.oo surface matches the api_surface field.
+//   4. release.oo — build + test + verify + tarball output.
+
+import "build.oo";
+import "test.oo";
+import "verify.oo";
+import "release.oo";

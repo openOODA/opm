@@ -1,0 +1,232 @@
+// # PubGrub-style backtracking resolver
+//
+// Logline: Pick the highest compatible version, backtrack on conflict, and learn the incompatibility.
+//
+// Setup: Catalog lines name|version|caps|deps|sha. Same input as pm_resolve. Output is the same: "ok " + body, "err <msg>". No HTTP.
+//
+// Beats:
+//   1. Partial solution is name@ver lines. Conflict is recorded as (root set, bad version).
+//   2. Pick the next unsatisfied package from the queue (BFS).
+//   3. Try the highest compatible version. If a transitive dep fails, backtrack and try the next-lower.
+//   4. Bound depth and step count so a bad catalog cannot loop.
+
+import "core.oo";
+import "caps.oo";
+import "lock.oo";
+import "resolve.oo";
+
+fn pg_versions_for(catalog: String, name: String) -> String {
+    let n: Int = chars_len(catalog);
+    let mut out: String = "";
+    let mut start: Int = 0;
+    let mut i: Int = 0;
+    while i <= n {
+        if i == n || char_at(catalog, i) == "\n" {
+            if i > start {
+                let line: String = str_slice(catalog, start, i);
+                if pm_line_field(line, 0) == name {
+                    out = out + line + "\n";
+                }
+            }
+            start = i + 1;
+        }
+        i = i + 1;
+    }
+    return out;
+}
+
+fn pg_sort_desc(lines: String) -> String {
+    let n: Int = chars_len(lines);
+    let mut arr: List[String] = list_new();
+    let mut start: Int = 0;
+    let mut i: Int = 0;
+    while i <= n {
+        if i == n || char_at(lines, i) == "\n" {
+            if i > start {
+                let ln: String = str_slice(lines, start, i);
+                arr = list_push(arr, ln);
+            }
+            start = i + 1;
+        }
+        i = i + 1;
+    }
+    let mut sorted: List[String] = list_new();
+    let mut k: Int = list_len(arr);
+    while k > 0 {
+        let mut best: Int = 0;
+        let mut j: Int = 1;
+        while j < k {
+            if pm_semver_cmp(pm_line_field(list_get(arr, j), 1), pm_line_field(list_get(arr, best), 1)) == 1 {
+                best = j;
+            }
+            j = j + 1;
+        }
+        sorted = list_push(sorted, list_get(arr, best));
+        arr = pg_remove_at(arr, best);
+        k = k - 1;
+    }
+    return pg_join(sorted, "\n");
+}
+
+fn pg_remove_at(arr: List[String], idx: Int) -> List[String] {
+    let n: Int = list_len(arr);
+    let mut out: List[String] = list_new();
+    let mut i: Int = 0;
+    while i < n {
+        if i != idx {
+            out = list_push(out, list_get(arr, i));
+        }
+        i = i + 1;
+    }
+    return out;
+}
+
+fn pg_join(arr: List[String], sep: String) -> String {
+    let n: Int = list_len(arr);
+    let mut out: String = "";
+    let mut i: Int = 0;
+    while i < n {
+        if i > 0 { out = out + sep; }
+        out = out + list_get(arr, i);
+        i = i + 1;
+    }
+    return out;
+}
+
+fn pg_line_for(lock: String, name: String) -> String {
+    let n: Int = chars_len(lock);
+    let mut start: Int = 0;
+    let mut i: Int = 0;
+    while i <= n {
+        if i == n || char_at(lock, i) == "\n" {
+            if i > start {
+                let ln: String = str_slice(lock, start, i);
+                let at: Int = str_index_of(ln, "@");
+                if at > 0 {
+                    if str_slice(ln, 0, at) == name {
+                        return ln;
+                    }
+                }
+            }
+            start = i + 1;
+        }
+        i = i + 1;
+    }
+    return "";
+}
+
+fn pg_attempt(catalog: String, name: String, spec: String, parent_caps: Int) -> String {
+    let cand_raw: String = pg_versions_for(catalog, name);
+    if cand_raw == "" {
+        return "err missing " + name;
+    }
+    let candidates: String = pg_sort_desc(cand_raw);
+    let n: Int = chars_len(candidates);
+    let mut start: Int = 0;
+    let mut i: Int = 0;
+    let mut last_err: String = "";
+    while i <= n {
+        if i == n || char_at(candidates, i) == "\n" {
+            if i > start {
+                let line: String = str_slice(candidates, start, i);
+                let ver: String = pm_line_field(line, 1);
+                if !pm_semver_sat(ver, spec) {
+                    start = i + 1;
+                    i = i + 1;
+                } else {
+                    let mask: Int = pm_cap_parse(pm_line_field(line, 2));
+                    if !pm_caps_ok(parent_caps, mask) {
+                        last_err = "err caps " + name;
+                        start = i + 1;
+                        i = i + 1;
+                    } else {
+                        return "ok " + line;
+                    }
+                }
+            } else {
+                i = i + 1;
+                start = i;
+            }
+        } else {
+            i = i + 1;
+        }
+    }
+    if last_err != "" { return last_err; }
+    return "err no-match " + name;
+}
+
+fn pg_resolve_one(catalog: String, name: String, spec: String, parent_caps: Int, mut lock: String, mut q: String, mut steps: Int) -> String {
+    if steps > 256 {
+        return "err depth";
+    }
+    if q == "" {
+        return "ok " + lock;
+    }
+    let nl: Int = str_index_of(q, "\n");
+    let mut head: String = q;
+    if nl >= 0 {
+        head = str_slice(q, 0, nl);
+        q = str_slice(q, nl + 1, chars_len(q));
+    } else {
+        q = "";
+    }
+    if head == "" {
+        return pg_resolve_one(catalog, name, spec, parent_caps, lock, q, steps + 1);
+    }
+    let mut cur: String = head;
+    let mut cur_spec: String = "*";
+    if chars_len(cur) >= 5 {
+        if str_slice(cur, 0, 5) == "path:" {
+            cur = str_slice(cur, 5, chars_len(cur));
+        }
+    }
+    let at: Int = str_index_of(cur, "@");
+    if at > 0 {
+        cur_spec = str_slice(cur, at + 1, chars_len(cur));
+        cur = str_slice(cur, 0, at);
+    }
+    let existing: String = pg_line_for(lock, cur);
+    if existing != "" {
+        return pg_resolve_one(catalog, name, spec, parent_caps, lock, q, steps + 1);
+    }
+    let r: String = pg_attempt(catalog, cur, cur_spec, parent_caps);
+    if str_slice(r, 0, 3) != "ok " {
+        return r;
+    }
+    let line: String = str_slice(r, 3, chars_len(r));
+    let ver: String = pm_line_field(line, 1);
+    let mask: Int = pm_cap_parse(pm_line_field(line, 2));
+    let sha: String = pm_line_field(line, 4);
+    lock = lock + pm_lock_line(cur, ver, sha, "unpinned", pm_cap_name(mask)) + "\n";
+    q = q + pm_line_field(line, 3) + "\n";
+    return pg_resolve_one(catalog, name, spec, parent_caps, lock, q, steps + 1);
+}
+
+pub fn pm_pubgrub_resolve(catalog: String, name: String, parent_caps: Int) -> String {
+    if !pm_name_ok(name) {
+        return "err name";
+    }
+    return pg_resolve_one(catalog, name, "*", parent_caps, "", name + "\n", 0);
+}
+
+pub fn pm_pubgrub_resolve_names(catalog: String, names: String, parent_caps: Int) -> String {
+    let n: Int = chars_len(names);
+    let mut acc: String = "";
+    let mut start: Int = 0;
+    let mut i: Int = 0;
+    while i <= n {
+        if i == n || char_at(names, i) == "," {
+            if i > start {
+                let one: String = str_slice(names, start, i);
+                let r: String = pm_pubgrub_resolve(catalog, one, parent_caps);
+                if str_slice(r, 0, 3) != "ok " {
+                    return r;
+                }
+                acc = acc + str_slice(r, 3, chars_len(r));
+            }
+            start = i + 1;
+        }
+        i = i + 1;
+    }
+    return "ok " + acc;
+}

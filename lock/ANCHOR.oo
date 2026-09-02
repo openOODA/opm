@@ -1,0 +1,13 @@
+// # Opm Lockfile
+//
+// Logline: Lockfile format and the v2 pin/replace/override protocol.
+//
+// Setup: Lockfile: v1 lock lines and v2 toolchain pin, replace, and override operations.
+//
+// Beats:
+//   1. Opm Lockfile — primary purpose.
+//   2. Fail-closed: every function returns Result[T, E] or asserts a precondition.
+//   3. Granular capability tokens (per RFC-0001); no broad caps.
+
+import "lock.oo";
+import "v2.oo";

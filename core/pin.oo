@@ -1,0 +1,107 @@
+// # Toolchain pin for lock v2
+//
+// Logline: Record SHA-256 of oodac and std.pin so a retargeted toolchain fails closed.
+//
+// Setup: All hashes are computed with crypto_sha256_internal under FsReadCap.
+//
+// Beats:
+//   1. Read std.pin and oodac/oodac as text and hash.
+//   2. Emit v2 / oodac# / std# header lines.
+//   3. An existing pin that does not match live is a miss.
+
+import "core.oo";
+
+pub fn pm_is_pkg_line(line: String) -> Bool {
+    return str_index_of(line, "@") >= 1;
+}
+
+pub fn pm_file_sha(fr: &FsReadCap, path: String) -> String {
+    let rr: Result[String, String] = read_file(fr, path);
+    if !rr.is_ok() {
+        return "";
+    }
+    let text: String = match rr { Ok(s) => s, Err(_) => "" };
+    let h: String = crypto_sha256_internal(text);
+    if chars_len(h) == 64 {
+        return h;
+    }
+    return "";
+}
+
+pub fn pm_oodac_sha(fr: &FsReadCap) -> String {
+    let a: String = pm_file_sha(fr, "oodac/oodac");
+    if a != "" {
+        return a;
+    }
+    return pm_file_sha(fr, "./oodac/oodac");
+}
+
+pub fn pm_std_sha(fr: &FsReadCap) -> String {
+    return pm_file_sha(fr, "std.pin");
+}
+
+pub fn pm_lock_hdr(oodac: String, stdp: String) -> String {
+    return "v2\noodac#" + oodac + "\nstd#" + stdp + "\n";
+}
+
+pub fn pm_hdr_val(lock: String, key: String) -> String {
+    let pat: String = key + "#";
+    let n: Int = chars_len(lock);
+    let mut start: Int = 0;
+    let mut i: Int = 0;
+    while i <= n {
+        if i == n || char_at(lock, i) == "\n" {
+            let line: String = str_slice(lock, start, i);
+            if chars_len(line) >= chars_len(pat) {
+                if str_slice(line, 0, chars_len(pat)) == pat {
+                    return str_slice(line, chars_len(pat), chars_len(line));
+                }
+            }
+            start = i + 1;
+        }
+        i = i + 1;
+    }
+    return "";
+}
+
+pub fn pm_pin_ok(lock: String, live_oodac: String, live_std: String) -> Bool {
+    let want_o: String = pm_hdr_val(lock, "oodac");
+    if want_o != "" {
+        if want_o == live_oodac {
+            let _o: String = want_o;
+        } else {
+            return false;
+        }
+    }
+    let want_s: String = pm_hdr_val(lock, "std");
+    if want_s != "" {
+        if want_s == live_std {
+            let _s: String = want_s;
+        } else {
+            return false;
+        }
+    }
+    return true;
+}
+
+fn pm_clean_ver(ver: String) -> String {
+    if chars_len(ver) > 0 {
+        if char_at(ver, 0) == "v" || char_at(ver, 0) == "V" {
+            return str_slice(ver, 1, chars_len(ver));
+        }
+    }
+    return ver;
+}
+
+pub fn pm_min_pin_ok(min_pin: String, current_ver: String) -> Bool {
+    if min_pin == "" {
+        return true;
+    }
+    let c_pin: String = pm_clean_ver(min_pin);
+    let c_cur: String = pm_clean_ver(current_ver);
+    return pm_semver_cmp(c_cur, c_pin) >= 0;
+}
+
+pub fn pm_pin_min_ok(min_pin: String, current_ver: String) -> Bool {
+    return pm_min_pin_ok(min_pin, current_ver);
+}

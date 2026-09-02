@@ -1,0 +1,16 @@
+# Sample Recipe
+
+File: ooda/opm/examples/recipe.oot
+
+A recipe is a key=value manifest for offline key resolution. It maps package names to local tarball paths.
+
+```
+[recipe]
+hello-world = ./pkgs/hello-world-1.2.3.tar.gz
+json-parser = ./pkgs/json-parser-2.1.0.tar.gz
+http-client = ./pkgs/http-client-1.5.4.tar.gz
+```
+
+## Usage
+
+`ooda opm add hello-world` resolves via the recipe first, then via the catalog. Fail-closed if neither has it.

@@ -1,0 +1,34 @@
+# Opm Versioning Contract
+
+File: ooda/opm/docs/versioning.oot
+
+## 1. The VERSION File
+
+`ooda/opm/VERSION` declares opm's own version and its requirements on the parent product.
+
+```
+opm=0.7.0
+ooda=2.10.0
+ooda_max=2.99.0
+oodac=2.10.0
+std=2.10.0
+api_surface=9
+```
+
+## 2. Field Semantics
+
+- `opm`: the package's own version (Semantic Versioning).
+- `ooda`: the minimum required ooda toolchain version.
+- `ooda_max`: the maximum compatible ooda version (pin to 2.x; 3.x needs a new contract).
+- `oodac`: minimum compiler version.
+- `std`: minimum stdlib version.
+- `api_surface`: structural check; the loader asserts the mod.oo exposes exactly N public subdirs.
+
+## 3. Fail-Closed Behavior
+
+opm refuses to run if:
+- The installed ooda toolchain does not satisfy the declared range.
+- The api_surface count does not match the actual mod.oo subdirs.
+- A required subdir is missing or contains zero `.oo` files.
+
+No silent fallbacks. No compatibility shims.

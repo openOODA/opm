@@ -1,0 +1,14 @@
+// # Opm Policy Gates
+//
+// Logline: Capability allow-list, package policy, and license/yank gates.
+//
+// Setup: Policy: named capability gates, package policy enforcement, and license allow-list.
+//
+// Beats:
+//   1. Opm Policy Gates — primary purpose.
+//   2. Fail-closed: every function returns Result[T, E] or asserts a precondition.
+//   3. Granular capability tokens (per RFC-0001); no broad caps.
+
+import "allow.oo";
+import "caps.oo";
+import "policy.oo";

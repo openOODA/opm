@@ -1,0 +1,70 @@
+// # `pm_lock_line` format proof
+//
+// Logline: Verify the new lock line format includes a Git commit field between sha256 and cap.
+//
+// Setup: Pure in-memory. No FsCap needed. No network.
+//
+// Beats:
+//   1. The new 5-field format renders correctly.
+//   2. The unit proofs (match, tamper, order) all pass with the new signature.
+
+import "lock.oo";
+
+fn fail(msg: String) {
+    println("FAIL " + msg);
+    process_exit(1);
+}
+
+pub fn main() {
+    if !pm_lock_unit_match() { fail("unit_match"); }
+    println("unit_match passed");
+
+    if !pm_lock_unit_tamper() { fail("unit_tamper"); }
+    println("unit_tamper passed");
+
+    if !pm_lock_unit_order() { fail("unit_order"); }
+    println("unit_order passed");
+
+    let line: String = pm_lock_line("foo", "1.0.0", "abc", "deadbeef", "FsRead");
+    if str_index_of(line, "foo@1.0.0#abc#deadbeef#FsRead") < 0 { fail("new format: " + line); }
+    println("new format OK: " + line);
+
+    let line2: String = pm_lock_line("hello", "2.1.0", "sha256hex", "abc123commit", "FsWrite");
+    let n2: Int = chars_len(line2);
+    // Verify the 4 fields by index into substrings (avoid List<String> which trips the C emit)
+    // Field 1: name@ver = up to first '#'
+    let mut f1_end: Int = 0;
+    let mut k: Int = 0;
+    while k < n2 {
+        if char_at(line2, k) == "#" { f1_end = k; break; }
+        k = k + 1;
+    }
+    if f1_end == 0 { fail("no first # found"); }
+    let f1: String = str_slice(line2, 0, f1_end);
+    if f1 != "hello@2.1.0" { fail("field 1: " + f1); }
+    // Find second '#' starting after f1_end
+    let mut f2_end: Int = f1_end + 1;
+    let mut k2: Int = f1_end + 1;
+    while k2 < n2 {
+        if char_at(line2, k2) == "#" { f2_end = k2; break; }
+        k2 = k2 + 1;
+    }
+    if f2_end == f1_end + 1 { fail("no second # found"); }
+    let f2: String = str_slice(line2, f1_end + 1, f2_end);
+    if f2 != "sha256hex" { fail("field 2 (sha): " + f2); }
+    // Find third '#' starting after f2_end
+    let mut f3_end: Int = f2_end + 1;
+    let mut k3: Int = f2_end + 1;
+    while k3 < n2 {
+        if char_at(line2, k3) == "#" { f3_end = k3; break; }
+        k3 = k3 + 1;
+    }
+    if f3_end == f2_end + 1 { fail("no third # found"); }
+    let f3: String = str_slice(line2, f2_end + 1, f3_end);
+    if f3 != "abc123commit" { fail("field 3 (commit): " + f3); }
+    let f4: String = str_slice(line2, f3_end + 1, n2);
+    if f4 != "FsWrite" { fail("field 4 (cap): " + f4); }
+    println("4 fields parsed correctly");
+
+    println("pm_lock_format_proof: PASSED");
+}

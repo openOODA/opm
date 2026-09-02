@@ -1,0 +1,25 @@
+# Sample Package Manifest
+
+File: ooda/opm/examples/manifest.oot
+
+A minimal package manifest declares the package's name, version, capabilities, and dependencies.
+
+```
+name: hello-world
+version: 1.2.3
+caps: [&FsReadCap, &FsWriteCap, &NetCap]
+deps:
+  - name: json-parser
+    version: ^2.0.0
+  - name: http-client
+    version: ~1.5.0
+checksum: sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08
+```
+
+## Field Semantics
+
+- `name`: unique package name (lowercase, hyphenated).
+- `version`: Semantic Version (major.minor.patch).
+- `caps`: the granular capability tokens the package needs.
+- `deps`: list of {name, version-range, checksum} entries.
+- `checksum`: SHA-256 of the package tarball, verified at install time.

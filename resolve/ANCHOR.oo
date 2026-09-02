@@ -1,0 +1,14 @@
+// # Opm Dependency Resolution
+//
+// Logline: SemVer parsing, pubgrub-style solver, and dependency graph.
+//
+// Setup: Dependency resolver: pubgrub algorithm, version resolution, and graph algorithms.
+//
+// Beats:
+//   1. Opm Dependency Resolution — primary purpose.
+//   2. Fail-closed: every function returns Result[T, E] or asserts a precondition.
+//   3. Granular capability tokens (per RFC-0001); no broad caps.
+
+import "graph.oo";
+import "pubgrub.oo";
+import "resolve.oo";

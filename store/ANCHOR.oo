@@ -1,0 +1,14 @@
+// # Opm Store and Archive
+//
+// Logline: Content-addressable storage and tar archive extraction.
+//
+// Setup: CAS: file store, archive extraction, and ustar tarball walker.
+//
+// Beats:
+//   1. Opm Store and Archive — primary purpose.
+//   2. Fail-closed: every function returns Result[T, E] or asserts a precondition.
+//   3. Granular capability tokens (per RFC-0001); no broad caps.
+
+import "extract.oo";
+import "store.oo";
+import "tar.oo";

@@ -1,0 +1,16 @@
+# Sample Lockfile
+
+File: ooda/opm/examples/lock.oot
+
+A lockfile pins the exact set of installed packages and their hashes. It is regenerated on every successful install.
+
+```
+[lock]
+hello-world|1.2.3|sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08
+json-parser|2.1.0|sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+http-client|1.5.4|sha256:5d41402abc4b2a76b9719d911017c592a2b5a8e0c6b7c4e8a3c2d3a4b5c6d7e8
+```
+
+## Format
+
+`<name>|<version>|<algo>:<digest>`, one per line. Read at install time; fail-closed on any mismatch.

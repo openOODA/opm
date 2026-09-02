@@ -1,0 +1,16 @@
+// # Opm Registry and Git Ingest
+//
+// Logline: Catalog resolution, registry protocol, and git-URL ingestion with proofs.
+//
+// Setup: Registry: catalog resolver, registry protocol proofs, git-URL ingest, and ingest proofs.
+//
+// Beats:
+//   1. Opm Registry and Git Ingest — primary purpose.
+//   2. Fail-closed: every function returns Result[T, E] or asserts a precondition.
+//   3. Granular capability tokens (per RFC-0001); no broad caps.
+
+import "git_ingest.oo";
+import "git_ingest_proof.oo";
+import "reg.oo";
+import "reg_proof.oo";
+import "regs.oo";

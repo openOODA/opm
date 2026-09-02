@@ -1,0 +1,24 @@
+// # Opm QA Index — Anchor for Agents
+//
+// Logline: Index of the 8 break-test drivers that ship with opm.
+//
+// Setup: Each proof driver is a hostile test for one shipped function. If a driver fails, opm fails to release.
+//
+// Beats:
+//   1. today_proof.oo — proves the today-claim signer passes bit-identical double-run.
+//   2. tomorrow_proof.oo — proves the tomorrow-revoke gate is fail-closed.
+//   3. extract_proof.oo — proves archive extraction refuses traversal.
+//   4. ingest_proof.oo — proves registry ingest rejects malformed manifests.
+//   5. init_proof.oo — proves project init lays down the XDG tree correctly.
+//   6. lock_format_proof.oo — proves the lockfile format is round-trip stable.
+//   7. pubgrub_proof.oo — proves the resolver terminates and returns valid plans.
+//   8. semver_proof.oo — proves the SemVer parser handles edge cases.
+
+import "today_proof.oo";
+import "tomorrow_proof.oo";
+import "extract_proof.oo";
+import "ingest_proof.oo";
+import "init_proof.oo";
+import "lock_format_proof.oo";
+import "pubgrub_proof.oo";
+import "semver_proof.oo";

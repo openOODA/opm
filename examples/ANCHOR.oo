@@ -1,0 +1,14 @@
+// # Opm Examples Index — Anchor for Agents
+//
+// Logline: Index of the 3 sample inputs for opm.
+//
+// Setup: Each example is the minimum viable demonstration of one real use case.
+//
+// Beats:
+//   1. manifest.oot — sample package manifest (name, version, caps, deps).
+//   2. recipe.oot — sample offline key=value recipe.
+//   3. lock.oot — sample SHA-256 lock lines.
+
+import "manifest.oot";
+import "recipe.oot";
+import "lock.oot";

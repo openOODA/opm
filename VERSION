@@ -1,0 +1,17 @@
+# opm version and compat contract
+#
+# Format: NAME=MAJOR.MINOR.PATCH[-PRERELEASE]
+# Bump MAJOR: incompatible API change (consumers must update imports)
+# Bump MINOR: backwards-compatible feature (consumers continue to work)
+# Bump PATCH: backwards-compatible bug fix
+#
+# opm refuses to run if the installed ooda toolchain does not satisfy
+# the declared range. The api_surface field is a structural check: the
+# loader asserts the mod.oo exposes exactly 9 public subdirs.
+
+opm=0.7.0
+ooda=2.10.0
+ooda_max=2.99.0
+oodac=2.10.0
+std=2.10.0
+api_surface=9

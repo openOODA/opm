@@ -1,0 +1,12 @@
+// # Opm Docs Index — Anchor for Agents
+//
+// Logline: Index of the 2 user-facing docs for opm.
+//
+// Setup: Per-package docs (RFC-0005). They travel with the package when opm ships independently.
+//
+// Beats:
+//   1. versioning.oot — how the VERSION contract works (opm version, ooda compat range, api_surface check).
+//   2. cli.oot — user-facing CLI reference for `ooda opm <subcommand>`.
+
+import "versioning.oot";
+import "cli.oot";

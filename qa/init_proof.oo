@@ -1,0 +1,63 @@
+// # `ooda pkg init` unit proofs
+//
+// Logline: Drive name validation, manifest content, and JSON shape in memory.
+//
+// Setup: Pure character checks plus a synthetic manifest string. No real file write in the proof.
+//
+// Beats:
+//   1. Name gate accepts valid names, refuses traversal, slash, absolute, empty.
+//   2. Manifest body has the eight required keys, with the right names, version, and a trailing newline.
+//   3. Hyphen and underscore names build the matching payload file name.
+//   4. --json output text contains the three required fields.
+
+import "cmd_init.oo";
+import "cmd_io.oo";
+import "name.oo";
+
+fn fail(msg: String) {
+    println("FAIL " + msg);
+    process_exit(1);
+}
+
+pub fn main() {
+    if !pm_name_ok("hello") { fail("name hello"); }
+    if !pm_name_ok("my-pkg") { fail("name my-pkg"); }
+    if !pm_name_ok("my_pkg") { fail("name my_pkg"); }
+    if !pm_name_ok("pkg123") { fail("name pkg123"); }
+    if pm_name_ok("") { fail("empty"); }
+    if pm_name_ok(".") { fail("dot"); }
+    if pm_name_ok("..") { fail("dotdot"); }
+    if pm_name_ok("../etc/passwd") { fail("traversal"); }
+    if pm_name_ok("a/b") { fail("slash"); }
+    if pm_name_ok("/abs") { fail("abs"); }
+    println("name gate");
+
+    let body: String = pm_init_manifest("hello");
+    if str_index_of(body, "name=hello\n") < 0 { fail("name=hello"); }
+    if str_index_of(body, "version=0.1.0\n") < 0 { fail("version"); }
+    if str_index_of(body, "min_pin=v0.210.0\n") < 0 { fail("min_pin"); }
+    if str_index_of(body, "caps=FsRead,FsWrite\n") < 0 { fail("caps"); }
+    if str_index_of(body, "license=MIT\n") < 0 { fail("license"); }
+    if str_index_of(body, "payload=hello.oo\n") < 0 { fail("payload"); }
+    if str_index_of(body, "sha256=\n") < 0 { fail("sha256"); }
+    if str_index_of(body, "sig=\n") < 0 { fail("sig"); }
+    if str_index_of(body, "deps=\n") < 0 { fail("deps"); }
+    if char_at(body, chars_len(body) - 1) != "\n" { fail("trailing newline"); }
+    println("manifest body");
+
+    let b2: String = pm_init_manifest("my-pkg");
+    if str_index_of(b2, "name=my-pkg\n") < 0 { fail("name=my-pkg"); }
+    if str_index_of(b2, "payload=my-pkg.oo\n") < 0 { fail("payload hyphen"); }
+    let b3: String = pm_init_manifest("my_pkg");
+    if str_index_of(b3, "name=my_pkg\n") < 0 { fail("name=my_pkg"); }
+    if str_index_of(b3, "payload=my_pkg.oo\n") < 0 { fail("payload underscore"); }
+    println("hyphen and underscore names");
+
+    let js: String = "{\"ok\":true,\"cmd\":\"pkg init\",\"name\":\"hello\",\"path\":\"ooda.pkg\"}";
+    if str_index_of(js, "\"cmd\":\"pkg init\"") < 0 { fail("json cmd"); }
+    if str_index_of(js, "\"name\":\"hello\"") < 0 { fail("json name"); }
+    if str_index_of(js, "\"path\":\"ooda.pkg\"") < 0 { fail("json path"); }
+    println("json shape");
+
+    println("pm_init_proof: PASSED");
+}

@@ -1,0 +1,15 @@
+// # Opm Core
+//
+// Logline: Identity, name gate, offline recipe manifest, and toolchain pin.
+//
+// Setup: Manifest primitives: core orchestration, name validation, recipe parsing, and toolchain pinning.
+//
+// Beats:
+//   1. Opm Core — primary purpose.
+//   2. Fail-closed: every function returns Result[T, E] or asserts a precondition.
+//   3. Granular capability tokens (per RFC-0001); no broad caps.
+
+import "core.oo";
+import "name.oo";
+import "pin.oo";
+import "recipe.oo";

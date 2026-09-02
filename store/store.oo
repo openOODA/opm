@@ -1,0 +1,74 @@
+// # write_file lock and CAS store
+//
+// Logline: Place lock and CAS bytes with fs_mkdir and write_file. No shell copies.
+//
+// Setup: Absolute paths under OODA_FS_WRITEDIR. cwd is discovered with pwd.
+//
+// Beats:
+//   1. Resolve an absolute project root.
+//   2. mkdir .ooda_modules and cas dirs.
+//   3. write_file lock and payload. Fail closed on deny.
+
+pub fn pm_root_abs(fr: &FsReadCap, proc: &ProcessCap) -> String {
+    let r: Result[String, String] = sys_exec(proc, "pwd");
+    if r.is_err() {
+        return "";
+    }
+    let mut s: String = match r { Ok(t) => t, Err(_) => "" };
+    let n: Int = chars_len(s);
+    if n > 0 {
+        if char_at(s, n - 1) == "\n" {
+            s = str_slice(s, 0, n - 1);
+        }
+    }
+    return s;
+}
+
+fn pm_mkdir(fr: &FsReadCap, fw: &FsWriteCap, abs: String) -> Bool {
+    if path_exists(fr, abs) {
+        return true;
+    }
+    let mk: Result[Void, String] = oo_fs_mkdir(fw, abs);
+    if mk.is_ok() {
+        return true;
+    }
+    return path_exists(fr, abs);
+}
+
+pub fn pm_put(fw: &FsWriteCap, abs: String, body: String) -> Bool {
+    let wr: Result[Void, String] = write_file(fw, abs, body);
+    return wr.is_ok();
+}
+
+pub fn pm_ensure_mod(fr: &FsReadCap, fw: &FsWriteCap, root: String) -> Bool {
+    if !pm_mkdir(fr, fw, root + "/.ooda_modules") {
+        return false;
+    }
+    return pm_mkdir(fr, fw, root + "/.ooda_modules/cas");
+}
+
+pub fn pm_put_lock(fr: &FsReadCap, fw: &FsWriteCap, root: String, lock: String) -> Bool {
+    if !pm_ensure_mod(fr, fw, root) {
+        return false;
+    }
+    return pm_put(fw, root + "/.ooda_modules/lock", lock);
+}
+
+pub fn pm_put_cas(fr: &FsReadCap, fw: &FsWriteCap, root: String, sha: String, fname: String, body: String) -> Bool {
+    if !pm_ensure_mod(fr, fw, root) {
+        return false;
+    }
+    let dir: String = root + "/.ooda_modules/cas/" + sha;
+    if !pm_mkdir(fr, fw, dir) {
+        return false;
+    }
+    return pm_put(fw, dir + "/" + fname, body);
+}
+
+pub fn pm_put_vendor(fr: &FsReadCap, fw: &FsWriteCap, root: String, fname: String, body: String) -> Bool {
+    let dir: String = root + "/vendor";
+    if !pm_mkdir(fr, fw, dir) {
+        return false;
+    }
+    return pm_put(fw, dir + "/" + fname, body);
+}

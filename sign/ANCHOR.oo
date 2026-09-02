@@ -1,0 +1,13 @@
+// # Opm Signing and Index
+//
+// Logline: HMAC signing of manifests and index construction.
+//
+// Setup: Signing: HMAC over manifest fields, index construction for fast lookup.
+//
+// Beats:
+//   1. Opm Signing and Index — primary purpose.
+//   2. Fail-closed: every function returns Result[T, E] or asserts a precondition.
+//   3. Granular capability tokens (per RFC-0001); no broad caps.
+
+import "index.oo";
+import "sign.oo";

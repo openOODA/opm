@@ -1,0 +1,27 @@
+// # Opm — Anchor for Agents
+//
+// Logline: OODA Package Manager tactical library. Front door for the opm/ dir.
+//
+// Setup: 9 subdirs + qa/ + scripts/ + docs/ + examples/ + VERSION. Each subdir has its own ANCHOR.oo.
+//
+// Beats:
+//   1. The 9 subdirs are: core, resolve, lock, store, registry, policy, sign, launch, qa.
+//   2. Each subdir has its own ANCHOR.oo front door and its own mod.oo module entry.
+//   3. qa/ has 8 break-test drivers that ship with the package.
+//   4. scripts/ has build, test, verify, release entry points.
+//   5. docs/ has versioning.oot, cli.oot, and ANCHOR.oo.
+//   6. examples/ has manifest, recipe, and lockfile samples.
+//   7. VERSION declares opm=0.7.0 with ooda compat range.
+
+import "core/ANCHOR.oo";
+import "resolve/ANCHOR.oo";
+import "lock/ANCHOR.oo";
+import "store/ANCHOR.oo";
+import "registry/ANCHOR.oo";
+import "policy/ANCHOR.oo";
+import "sign/ANCHOR.oo";
+import "launch/ANCHOR.oo";
+import "qa/ANCHOR.oo";
+import "scripts/ANCHOR.oo";
+import "docs/ANCHOR.oo";
+import "examples/ANCHOR.oo";

@@ -1,0 +1,27 @@
+# Opm CLI Reference
+
+File: ooda/opm/docs/cli.oot
+
+## 1. The Top-Level Command
+
+After installation, opm is invoked as `ooda opm <subcommand>`. The dispatcher is `cli/opm/mod.oo`.
+
+## 2. Subcommands
+
+| Subcommand | Purpose | File |
+|---|---|---|
+| `ooda opm add` | Install a package | `cli/opm/cmd_add.oo` |
+| `ooda opm audit` | Audit the installed set | `cli/opm/cmd_audit.oo` |
+| `ooda opm tree` | Show the dependency tree | `cli/opm/cmd_tree.oo` |
+| `ooda opm pack` | Build an offline pack | `cli/opm/cmd_pack.oo` |
+| `ooda opm search` | Search the catalog | `cli/opm/cmd_search.oo` |
+| `ooda opm reg` | Registry operations | `cli/opm/cmd_reg.oo` |
+| `ooda opm launch` | Re-verify and launch | `cli/opm/cmd_launch.oo` |
+
+## 3. Shortcut Aliases
+
+`ooda opm` also accepts short forms: `ingest`, `launch`, `remove`, `update`, `outdated`, `why`, `vendor`, `clean`, `sbom`, `registry`, `audit`, `tree`, `search`, `more`. These dispatch to the same handler.
+
+## 4. Capability Requirements
+
+Every opm subcommand takes only the granular capability it needs (`&FsReadCap`, `&FsWriteCap`, `&NetCap`, `&HttpCap`, or `&ProcessCap`). opm never requires broad caps (`&FsCap`, `&SysCap`, `&NetCap`).

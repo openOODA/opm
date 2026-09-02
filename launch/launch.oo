@@ -1,0 +1,36 @@
+// # Launch gates for a pinned ingest blob
+//
+// Logline: Re-check sha256, cap subset, and yank before any exec.
+//
+// Setup: Pure strings. The blob is unchanged. No seccomp. No rewrite.
+//
+// Beats:
+//   1. Yank is err yank.
+//   2. Sha mismatch is err sha256 mismatch.
+//   3. Extra caps are err caps. A marked untrusted body is err untrusted. Else ok.
+
+import "caps.oo";
+import "recipe.oo";
+import "sec/untrusted.oo";
+
+
+
+pub fn pm_launch_gate(want_sha: String, live_sha: String, grant: Int, need: Int, yanked: Bool) -> String {
+    if yanked {
+        return "err yank";
+    }
+    if !pm_recipe_sha_ok(want_sha, live_sha) {
+        return "err sha256 mismatch";
+    }
+    if !pm_caps_ok(grant, need) {
+        return "err caps";
+    }
+    return "ok";
+}
+
+pub fn pm_launch_sink_ok(body: String, blob: String) -> String {
+    if untrusted_sink_denied("launch", untrusted_blob_in(body, blob)) {
+        return "err untrusted";
+    }
+    return "ok";
+}

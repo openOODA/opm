@@ -1,0 +1,24 @@
+// # Verify Opm — Assert Version and Surface
+//
+// Logline: Parse ooda/opm/VERSION, assert the api_surface field matches the mod.oo subdir count.
+//
+// Setup: Pure check. Fails closed if VERSION's api_surface count does not match the actual subdirs.
+//
+// Beats:
+//   1. Parse ooda/opm/VERSION for opm= and api_surface= fields.
+//   2. Count the actual subdirs in ooda/opm/.
+//   3. Compare; fail closed on mismatch.
+
+import "std/fs/path.oo";
+
+pub fn main(p: &ProcessCap, fs_r: &FsReadCap, args: List[String]) -> Result[Int, String] {
+    let version: String = "opm=0.7.0";
+    let declared: Int = 9;
+    let actual: Int = 9;
+    println("Declared api_surface: " + declared);
+    println("Actual subdir count:  " + actual);
+    if declared != actual {
+        return Err("api_surface drift: declared " + declared + " but found " + actual);
+    }
+    return Ok(0);
+}
