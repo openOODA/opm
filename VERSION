@@ -9,7 +9,7 @@
 # the declared range. The api_surface field is a structural check: the
 # loader asserts the opm ANCHOR.oo exposes exactly 10 public subdirs.
 
-opm=0.7.0
+opm=0.8.0
 ooda=2.10.0
 ooda_max=2.99.0
 oodac=2.10.0
