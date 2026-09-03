@@ -1,12 +1,18 @@
 // # Opm Docs Index — Anchor for Agents
 //
-// Logline: Index of the 2 user-facing docs for opm.
+// Logline: Index of the user-facing docs for opm.
 //
 // Setup: Per-package docs (RFC-0005). They travel with the package when opm ships independently.
 //
 // Beats:
-//   1. versioning.oot — how the VERSION contract works (opm version, ooda compat range, api_surface check).
-//   2. cli.oot — user-facing CLI reference for `ooda opm <subcommand>`.
+//   1. INSTALL.oot — how to install opm and how it relates to the rest of the toolchain.
+//   2. versioning.oot — how the VERSION contract works (opm version, ooda compat range, api_surface check).
+//   3. cli.oot — user-facing CLI reference for `ooda opm <subcommand>`.
+//   4. MANIFEST.oot — the package manifest format: fields, types, required vs optional, examples.
+//   5. REGISTRY.oot — how the openOODA registry works: CAS hashes, capability declarations, search, install.
 
+import "INSTALL.oot";
 import "versioning.oot";
 import "cli.oot";
+import "MANIFEST.oot";
+import "REGISTRY.oot";

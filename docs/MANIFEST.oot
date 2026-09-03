@@ -1,0 +1,103 @@
+# The Package Manifest
+
+File: ooda/opm/docs/MANIFEST.oot
+
+A package manifest is the small key=value text file that opm reads to install a package. The file is named `ooda.pkg` and lives at the root of the project. The `init` subcommand writes a starter; `add` reads it; `publish` ships it.
+
+## 1. Format
+
+The manifest is one line per key, in `key=value` form. Comments start with `#`. Blank lines are ignored. Values are short strings. Lists are comma-separated. There is no JSON, no YAML, and no nested syntax.
+
+```
+name=hello-world
+version=1.2.3
+min_pin=v0.210.0
+deps=json-parser@^2.0.0,http-client@~1.5.0
+caps=FsRead,FsWrite,Net
+license=MIT
+payload=hello-world.oo
+commit=
+sha256=
+sig=
+```
+
+## 2. Fields
+
+| Key | Required | Meaning |
+|---|---|---|
+| `name` | yes | The unique package name. Lowercase letters, digits, and hyphens. No traversal. |
+| `version` | yes | The package version in `MAJOR.MINOR.PATCH` form. |
+| `min_pin` | yes | The minimum opm version that can install this package. |
+| `deps` | no | Comma-separated list of `name@range` pairs. |
+| `caps` | yes | Comma-separated list of capability tokens the package needs. |
+| `license` | yes | The SPDX license id. Compared to the project allow-list. |
+| `payload` | yes | The file name of the main `.oo` source the package ships. |
+| `commit` | no | For `git:` origin only. The exact commit hash to pin. |
+| `sha256` | no | The expected CAS sha256 of the payload. Verified at install. |
+| `sig` | no | An HMAC signature of `name|version|sha256`. Verified at install. |
+| `pay` | no | Optional. Marks the package as paid (`pay=free`, `pay=fixed`, `pay=metered`). |
+| `replaces` | no | A rename map: `old>new,old>new`. Applied before resolve. |
+| `overrides` | no | A version pin map: `name@ver,name@ver`. Refuses a different resolve. |
+| `licenses` | no | The local allow-list override. Used in place of the project default. |
+| `outline` | no | Optional second `.oo` file (the type or interface outline). |
+
+## 3. Capabilities
+
+The `caps` field is the only place where a package declares what it can touch. opm reads this and refuses to install if the requested tokens are outside the project's allow-list. The granular tokens are:
+
+- `FsRead` — read the file system.
+- `FsWrite` — write the file system.
+- `Net` — open a network socket.
+- `Http` — make an HTTP request.
+- `Process` — spawn a child process.
+- `Env` — read an environment variable.
+
+A package that needs more than one must list them all. The loader enforces the parent-set-is-superset rule: the package's caps must be a subset of the project's allow-list.
+
+## 4. Dependencies
+
+The `deps` field is a comma-separated list of `name@range` pairs. The range syntax is the same as the version resolver: `=`, `^`, `~`, `*`, `>=`, `<=`, `>`, `<`, and compound (AND of parts). A bare name without `@` is an exact pin to the latest version the catalog has.
+
+Example: `deps=json-parser@^2.0.0,http-client@~1.5.0,cli-helper@1.4.2`.
+
+## 5. Pinned Git Dependencies
+
+For a local git pin, use a `git:` prefix in the dep string. The format is `git:name#commit`. The `commit` is verified against a local file `fixtures/pm_name/commit` (or `<name>/commit`) before the install proceeds. No git clone, no network.
+
+Example: `deps=git:local-tool#a1b2c3d4e5f6`.
+
+## 6. Integrity Fields
+
+- `sha256` — the expected SHA-256 of the payload file. If set, the install verifies the live CAS hash against it.
+- `sig` — an HMAC signature. Computed as `HMAC(secret, "name|version|sha256")`. Verified at install.
+
+If either is set and the live value does not match, the install is refused with `ERR pm sha256 mismatch <name>` or `ERR pm sig mismatch <name>`.
+
+## 7. Example: A Real Manifest
+
+```
+name=cli-helper
+version=0.4.1
+min_pin=v0.210.0
+deps=json-parser@^2.0.0,http-client@~1.5.0
+caps=FsRead,FsWrite,Http
+license=MIT
+payload=cli-helper.oo
+commit=
+sha256=5d41402abc4b2a76b9719d911017c592a2b5a8e0c6b7c4e8a3c2d3a4b5c6d7e8
+sig=hmac:9b71d224bd62f3785d96d46ad3ea3d73319bfbc2890caadae2dff72519673ca7
+```
+
+## 8. Errors
+
+A malformed manifest is an install-time error. The most common ones:
+
+- Missing `name` or `version` — `ERR pm manifest missing name= or version=`.
+- Traversal in `name` — `ERR pm refuse name`.
+- Cap outside the allow-list — `ERR pm extra cap`.
+- License outside the allow-list — `ERR pm license <name>`.
+- SHA-256 drift — `ERR pm sha256 mismatch <name>`.
+- Bad signature — `ERR pm sig mismatch <name>`.
+- `min_pin` below the running opm — `ERR pm min_pin mismatch <name>`.
+
+All of these are fail-closed. There is no `--force` and no `--ignore`. Fix the manifest and retry.

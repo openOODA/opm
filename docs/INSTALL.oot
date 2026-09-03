@@ -1,0 +1,82 @@
+# Installing opm
+
+File: ooda/opm/docs/INSTALL.oot
+
+This document describes how opm ships, how to install it, and how it relates to the rest of the openOODA toolchain. opm is not a stand-alone binary. It is a package that lives inside the ooda runtime.
+
+## 1. The Toolchain
+
+The openOODA toolchain has four parts:
+
+- `ooda` — the runtime. Loads packages, enforces the capability model, dispatches to `opm` and other subcommands.
+- `oodac` — the compiler. Reads `.oo` source files and produces the artifacts opm stores in CAS.
+- `std` — the standard library. The base set of packages every project can use.
+- `opm` — the package manager. Installs, removes, updates, and verifies packages.
+
+All four share a single release train. The `VERSION` file at the root of each repo declares the version and the compat range.
+
+## 2. Relationship to cli/ and std/
+
+opm is the user-facing front door for the package set. The dispatcher is at `cli/opm/main.oo` in the ooda toolchain's `cli/` dir. opm itself is its own repo: it has its own `ANCHOR.oo`, its own `VERSION`, and its own `cli/` dir with the 19 subcommand handlers.
+
+`std/` is the standard library. opm installs `std` packages the same way it installs any other package: as a sha-pinned CAS entry with a manifest and a payload. The toolchain's own `std` package is a versioned artifact, not a magic bundle.
+
+## 3. The Version Contract
+
+opm's `VERSION` file pins the runtime it needs:
+
+```
+opm=0.7.0
+ooda=2.10.0
+ooda_max=2.99.0
+oodac=2.10.0
+std=2.10.0
+api_surface=10
+```
+
+When the ooda toolchain starts, it reads the `opm/VERSION` file and refuses to run if the runtime does not satisfy the range. See `versioning.oot` for the full contract.
+
+## 4. Installing opm
+
+opm is not installed as a stand-alone binary. It is shipped as a package inside the ooda repo. To install it:
+
+1. Clone the openOODA monorepo.
+2. Build the runtime with `oodac` against the `cli/` and `std/` subdirs.
+3. Drop the `opm/` subdir under the runtime's package dir.
+4. Run `ooda opm <subcommand>`.
+
+The build step is the install step. There is no separate download. The runtime's own package system is the one opm manages.
+
+## 5. Verifying the Install
+
+After install, run:
+
+```
+ooda opm more
+```
+
+The `more` subcommand prints the full help text. If it prints, opm is wired into the dispatcher and the capability tokens are in place.
+
+Run a quick check:
+
+```
+ooda opm audit
+```
+
+This walks the toolchain's own lock and reports any pin drift. With a fresh install, the output is `ooda audit: ok`.
+
+## 6. Updating opm
+
+To update, pull the latest `opm/` dir from the openOODA repo. The `VERSION` file changes. Rebuild with `oodac`. The runtime re-checks the version contract on the next start. A breaking change bumps the MAJOR part of `opm` and the MAJOR part of `ooda_max`. See `versioning.oot` for the rules.
+
+## 7. Standalone Mode
+
+opm can also be built as a stand-alone binary for use in CI or air-gapped environments. The build target is `opm/scripts/release.oo`. The output binary embeds the runtime, the stdlib, and the opm package. The user adds the binary to `PATH` and calls `opm <subcommand>` directly. The dispatch path is the same; the wrapper just skips the `ooda` prefix.
+
+## 8. Common Pitfalls
+
+- The runtime is below `ooda`. opm refuses to run. Update the runtime.
+- The runtime is at or above `ooda_max`. opm refuses to run. Pin to a compatible runtime or wait for a new opm contract.
+- The `api_surface` count is off. A subdir was added or removed without a version bump. Bump the contract.
+- The stdlib is below `std`. opm refuses to run. Update std.
+- `OODA_FS_WRITEDIR` is not set. `add`, `init`, and `publish` refuse to write. Set the env var to a writable path.

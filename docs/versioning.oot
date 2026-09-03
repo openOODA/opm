@@ -2,9 +2,11 @@
 
 File: ooda/opm/docs/versioning.oot
 
+This document defines the version contract that opm uses for itself, for the parent ooda toolchain, and for every package it installs. The contract is fail-closed. If a check fails, opm refuses to run.
+
 ## 1. The VERSION File
 
-`ooda/opm/VERSION` declares opm's own version and its requirements on the parent product.
+`ooda/opm/VERSION` declares opm's own version and its requirements on the toolchain that hosts it. The format is `NAME=MAJOR.MINOR.PATCH[-PRERELEASE]`, one per line.
 
 ```
 opm=0.7.0
@@ -12,23 +14,94 @@ ooda=2.10.0
 ooda_max=2.99.0
 oodac=2.10.0
 std=2.10.0
-api_surface=9
+api_surface=10
 ```
 
 ## 2. Field Semantics
 
-- `opm`: the package's own version (Semantic Versioning).
-- `ooda`: the minimum required ooda toolchain version.
-- `ooda_max`: the maximum compatible ooda version (pin to 2.x; 3.x needs a new contract).
-- `oodac`: minimum compiler version.
-- `std`: minimum stdlib version.
-- `api_surface`: structural check; the loader asserts the mod.oo exposes exactly N public subdirs.
+- `opm` — opm's own version. Uses Semantic Versioning. Bump MAJOR on a breaking change to the CLI surface or the lock format. Bump MINOR for a backwards-compatible feature. Bump PATCH for a backwards-compatible fix.
+- `ooda` — the minimum required ooda toolchain version. opm refuses to run if the installed ooda is older.
+- `ooda_max` — the maximum compatible ooda version. Pinned to `2.x` because a 3.x toolchain implies a new contract.
+- `oodac` — the minimum compiler version. Same scheme as `ooda`.
+- `std` — the minimum standard library version. Same scheme.
+- `api_surface` — a structural check. The loader asserts that the opm `ANCHOR.oo` exposes exactly this many public subdirs. If a new subdir is added or removed, the number changes and the contract is bumped.
 
-## 3. Fail-Closed Behavior
+## 3. Bump Rules
 
-opm refuses to run if:
-- The installed ooda toolchain does not satisfy the declared range.
-- The api_surface count does not match the actual mod.oo subdirs.
+Bump the MAJOR part of `opm` when any of these change:
+
+- A subcommand is removed or renamed.
+- The `cli` argv shape changes.
+- The lock format changes in an incompatible way (see section 6).
+- The `ooda.pkg` manifest schema changes in an incompatible way.
+
+Bump the MINOR part when:
+
+- A new subcommand is added.
+- A new flag is added to an existing subcommand.
+- A new key is added to the lock.
+- The `api_surface` count grows.
+
+Bump the PATCH part when:
+
+- A bug is fixed.
+- The wording in a help line changes.
+- A new `ooda_max` pin is added.
+
+## 4. Range Syntax
+
+opm supports the common range operators on package versions. The catalog resolver (`core/core.oo`) understands these forms:
+
+- `=1.2.3` — exact match.
+- `^1.2.3` — caret. Same MAJOR, version `>= 1.2.3` and `< 2.0.0`.
+- `~1.2.3` — tilde. Same MAJOR.MINOR, version `>= 1.2.3` and `< 1.3.0`.
+- `*` — any version.
+- `>=1.2.3`, `<=1.2.3`, `>1.2.3`, `<1.2.3` — comparisons.
+- Compound: `^1.2.3 ~1.2.0` — AND of all parts.
+
+When no operator is given, opm treats the version as `=X.Y.Z` (exact pin).
+
+## 5. Resolution
+
+opm ships two resolvers:
+
+- `pm_resolve` — single-pass. Walks the catalog once, picks the highest compatible version, stops on the first conflict. This is the default for `add`.
+- `pm_pubgrub_resolve` — backtracking. Records conflicts as `(root set, bad version)` pairs, picks the next unsatisfied package from the queue, tries the highest compatible version, and backtracks to the next-lower on a transitive dep miss. This is opt-in with `--pubgrub`.
+
+Both resolvers have a depth and step bound. A bad catalog cannot loop forever.
+
+## 6. Lock File Format
+
+The lock is at `.ooda_modules/lock`. It is a line file. The first line is the live pin header: `oodac=<sha>` and `std=<sha>`. Each following line is one of:
+
+- `<name>|<version>|<algo>:<digest>` — a package line.
+- `# <text>` — a comment.
+- blank line — ignored on read.
+
+The lock is rewritten on every successful install. The hash is sorted lexicographically before the write, so the same set always produces the same lock bytes. The lock is a v2 format; v1 is not supported.
+
+## 7. Fail-Closed Behavior
+
+opm refuses to run when any of the following is true:
+
+- The installed ooda toolchain is below the declared `ooda` floor.
+- The installed ooda toolchain is at or above `ooda_max`.
+- The installed oodac is below `oodac`.
+- The installed std is below `std`.
+- The `api_surface` count does not match the actual `ANCHOR.oo` subdir count.
 - A required subdir is missing or contains zero `.oo` files.
+- The lock is malformed (any package line that does not parse).
+- A `min_pin` declared on a manifest is below the running opm's `min_pin`.
 
-No silent fallbacks. No compatibility shims.
+There are no silent fallbacks and no compatibility shims. A version contract that does not hold is an error.
+
+## 8. Breaking Changes
+
+A breaking change is any change that requires a consumer to update their code. Examples:
+
+- Removing or renaming a subcommand.
+- Removing a field from the lock.
+- Removing a `caps=` token from the default set.
+- Changing the shape of the error output (scripts that grep the output will break).
+
+Each breaking change bumps the MAJOR part of `opm`, the MAJOR part of `ooda_max`, and re-issues the contract. Consumers that pin `^0.7.0` will not pick up a `1.0.0` automatically. They must opt in.
