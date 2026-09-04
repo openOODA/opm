@@ -9,7 +9,7 @@
 //   2. Diamond: one world node. Conflict if two versions of one name.
 //   3. path:name deps use a catalog row with that name.
 
-import "core/core.oo";
+import "core/semver.oo";
 import "policy/caps.oo";
 import "lock/lock.oo";
 

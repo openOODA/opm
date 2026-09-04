@@ -1,35 +1,41 @@
 // # Opm CLI Command Interface — Anchor for Agents
 //
-// Logline: Front door for the opm command surface. Re-exports the 19 cmd_*.oo subcommand handlers plus the pkg/ helpers and the oodac-spawn utilities.
+// Logline: Front door for the opm command surface. Handlers vs helpers.
 //
-// Setup: The 19 cmd_*.oo files are the user-facing subcommand handlers (add, audit, ingest, launch, etc.). The pkg/ subdir has the lock/parse helpers used by cmd_pkg. find_compiler.oo, host_run.oo, and host_build.oo are copied from ooda/cli/build/ — they let opm launch payloads by spawning oodac.
+// Setup: main.oo dispatches live subcommands. Helpers are not commands.
+//        find_compiler.oo and host_run.oo spawn oodac from OODA_COMPILER only.
 //
 // Beats:
-//   1. 19 subcommand handlers: add, audit, bot, cat, git, ingest, init, io, launch, more, ops, pack, pick, pkg, publish, reg, regs, search, tree.
-//   2. pkg/ has 2 helpers: lock, parse (used by cmd_pkg).
-//   3. find_compiler/host_run/host_build spawn oodac. These are a copy of ooda/cli/build/ utilities, kept here so opm is self-contained. Refactor target: when oodac is its own repo, opm no longer needs these — cli/ spawns oodac instead.
-//   4. main.oo is the package entry point: parse argv, dispatch to the right cmd_* handler, return Result<Int, String>.
+//   1. Handlers: add, audit, sbom, bot, ingest, init, launch,
+//      remove, update, outdated, why, pack, pkg, publish,
+//      reg/registry/regs, search, tree, vendor, clean.
+//   2. Helpers: argv, slurp, catalog, vendor_pick, git_clone, reg_fetch, tool.
+//   3. pkg/ has lock and parse helpers used by cmd_pkg.
+//   4. main.oo parses argv and dispatches. Unknown subcommand is ERR.
 
+import "argv.oo";
+import "slurp.oo";
+import "catalog.oo";
+import "tool.oo";
+import "vendor_pick.oo";
+import "git_clone.oo";
+import "reg_fetch.oo";
+import "add_select.oo";
+import "add_lock.oo";
 import "cmd_add.oo";
 import "cmd_audit.oo";
 import "cmd_bot.oo";
-import "cmd_cat.oo";
-import "cmd_git.oo";
 import "cmd_ingest.oo";
 import "cmd_init.oo";
-import "cmd_io.oo";
 import "cmd_launch.oo";
-import "cmd_more.oo";
 import "cmd_ops.oo";
 import "cmd_pack.oo";
-import "cmd_pick.oo";
 import "cmd_pkg.oo";
 import "cmd_publish.oo";
-import "cmd_reg.oo";
 import "cmd_regs.oo";
 import "cmd_search.oo";
 import "cmd_tree.oo";
 import "find_compiler.oo";
 import "host_run.oo";
-import "host_build.oo";
 import "pkg/ANCHOR.oo";
+import "main.oo";

@@ -9,7 +9,7 @@
 //   2. Emit v2 / oodac# / std# header lines.
 //   3. An existing pin that does not match live is a miss.
 
-import "core.oo";
+import "semver.oo";
 
 pub fn pm_is_pkg_line(line: String) -> Bool {
     return str_index_of(line, "@") >= 1;
@@ -29,11 +29,7 @@ pub fn pm_file_sha(fr: &FsReadCap, path: String) -> String {
 }
 
 pub fn pm_oodac_sha(fr: &FsReadCap) -> String {
-    let a: String = pm_file_sha(fr, "oodac/oodac");
-    if a != "" {
-        return a;
-    }
-    return pm_file_sha(fr, "./oodac/oodac");
+    return pm_file_sha(fr, "oodac/oodac");
 }
 
 pub fn pm_std_sha(fr: &FsReadCap) -> String {

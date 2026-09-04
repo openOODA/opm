@@ -10,7 +10,7 @@
 //   3. Try the highest compatible version. If a transitive dep fails, backtrack and try the next-lower.
 //   4. Bound depth and step count so a bad catalog cannot loop.
 
-import "core/core.oo";
+import "core/semver.oo";
 import "policy/caps.oo";
 import "lock/lock.oo";
 import "resolve.oo";

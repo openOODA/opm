@@ -6,7 +6,7 @@
 //
 // Beats:
 //   1. Name gate accepts valid names, refuses traversal, slash, absolute, empty.
-//   2. Manifest body has the eight required keys, with the right names, version, and a trailing newline.
+//   2. Manifest body has the required keys, with the right names, version, and a trailing newline. No min_pin.
 //   3. Hyphen and underscore names build the matching payload file name.
 //   4. --json output text contains the three required fields.
 
@@ -34,7 +34,7 @@ pub fn main() {
     let body: String = pm_init_manifest("hello");
     if str_index_of(body, "name=hello\n") < 0 { fail("name=hello"); }
     if str_index_of(body, "version=0.1.0\n") < 0 { fail("version"); }
-    if str_index_of(body, "min_pin=v0.210.0\n") < 0 { fail("min_pin"); }
+    if str_index_of(body, "min_pin=") >= 0 { fail("min_pin must be omitted"); }
     if str_index_of(body, "caps=FsRead,FsWrite\n") < 0 { fail("caps"); }
     if str_index_of(body, "license=MIT\n") < 0 { fail("license"); }
     if str_index_of(body, "payload=hello.oo\n") < 0 { fail("payload"); }

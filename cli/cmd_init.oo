@@ -1,55 +1,45 @@
-// # Product `ooda pkg init`
+// # Product `opm init`
 //
 // Logline: Write a starter `ooda.pkg` manifest with name, version, deps, caps, license, and signature placeholders.
 //
-// Setup: Refuse if `ooda.pkg` already exists. Default name is "pkg". Writes under FsCap and OODA_FS_WRITEDIR. No HTTP. No dpkg.
+// Setup: Refuse if `ooda.pkg` already exists. Default name is "pkg". Writes under FsWriteCap and OODA_FS_WRITEDIR. No HTTP.
 //
 // Beats:
-//   1. Parse the optional project name from argv (skip "pkg" and "init").
+//   1. Parse the optional project name from rest[0].
 //   2. Refuse bad names and refuse an existing ooda.pkg.
-//   3. Build the manifest text and write it via write_file (FsCap).
+//   3. Build the manifest text and write it via write_file.
 //   4. Print text or --json confirmation.
 
-import "cmd_io.oo";
+import "argv.oo";
+import "slurp.oo";
 import "core/name.oo";
 import "store/store.oo";
 
 pub fn pm_init_manifest(name: String) -> String {
-    return "name=" + name + "\nversion=0.1.0\nmin_pin=v0.210.0\ndeps=\ncaps=FsRead,FsWrite\nlicense=MIT\npayload=" + name + ".oo\ncommit=\nsha256=\nsig=\n";
+    return "name=" + name + "\nversion=0.1.0\ndeps=\ncaps=FsRead,FsWrite\nlicense=MIT\npayload=" + name + ".oo\ncommit=\nsha256=\nsig=\n";
 }
 
-pub fn run_ooda_pm_init(fr: &FsReadCap, fw: &FsWriteCap, proc: &ProcessCap, args: List[String]) {
-    // ## CAPs
-    //   FsCap:     write the ooda.pkg manifest under OODA_FS_WRITEDIR
-    //   SysCap:    env policy compliance via the runtime gate
-    let mut name: String = "";
-    let mut i: Int = 2;
-    while i < list_len(args) {
-        let a: String = list_get(args, i);
-        if str_slice(a, 0, 1) != "-" {
-            if name == "" { name = a; }
-        }
-        i = i + 1;
-    }
-    if name == "" { name = "pkg"; }
+pub fn run_ooda_pm_init(fr: &FsReadCap, fw: &FsWriteCap, proc: &ProcessCap, env: &EnvCap, args: List[String]) {
+    let name: String = pm_init_name(args);
     if !pm_name_ok(name) {
-        pm_die("pkg init", "refuse name: " + name);
+        pm_die("init", "refuse name: " + name);
     }
     if pm_slurp(fr, "ooda.pkg") != "" {
-        pm_die("pkg init", "ooda.pkg already exists");
+        pm_die("init", "ooda.pkg already exists");
     }
-    let root: String = pm_root_abs(fr, proc);
+    let root: String = pm_root_abs(env);
     if root == "" {
-        pm_die("pkg init", "cannot resolve cwd (sys_exec pwd failed)");
+        pm_die("init", "OODA_FS_WRITEDIR required");
     }
     let abs: String = root + "/ooda.pkg";
     let body: String = pm_init_manifest(name);
     if !pm_place(fw, abs, body) {
-        pm_die("pkg init", "write failed (path not under OODA_FS_WRITEDIR?)");
+        pm_die("init", "write failed (path not under OODA_FS_WRITEDIR?)");
     }
     if pm_flag(args, "--json") || pm_flag(args, "-json") {
-        println("{\"ok\":true,\"cmd\":\"pkg init\",\"name\":\"" + pm_jesc(name) + "\",\"path\":\"" + pm_jesc(abs) + "\"}");
+        println("{\"ok\":true,\"cmd\":\"init\",\"name\":\"" + pm_jesc(name) + "\",\"path\":\"" + pm_jesc(abs) + "\"}");
         return;
     }
-    println("ooda pkg init: wrote " + abs + " (name=" + name + ", version=0.1.0)");
+    println("opm init: wrote " + abs + " (name=" + name + ", version=0.1.0)");
+    let _p: &ProcessCap = proc;
 }

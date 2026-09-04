@@ -52,7 +52,7 @@ Bump the PATCH part when:
 
 ## 4. Range Syntax
 
-opm supports the common range operators on package versions. The catalog resolver (`core/core.oo`) understands these forms:
+opm supports the common range operators on package versions. The catalog resolver (`core/semver.oo`) understands these forms:
 
 - `=1.2.3` — exact match.
 - `^1.2.3` — caret. Same MAJOR, version `>= 1.2.3` and `< 2.0.0`.
@@ -74,10 +74,15 @@ Both resolvers have a depth and step bound. A bad catalog cannot loop forever.
 
 ## 6. Lock File Format
 
-The lock is at `.ooda_modules/lock`. It is a line file. The first line is the live pin header: `oodac=<sha>` and `std=<sha>`. Each following line is one of:
+The lock is at `.ooda_modules/lock`. There is one format. Header lines:
 
-- `<name>|<version>|<algo>:<digest>` — a package line.
-- `# <text>` — a comment.
+- `v2`
+- `oodac#<sha>`
+- `std#<sha>`
+
+Each package line is `name@version#sha256#commit#CapName`.
+`lock/lock.oo` sorts and hashes those lines. `lock/v2.oo` is replace,
+override, and local git pin on the same file. Not a second format.
 - blank line — ignored on read.
 
 The lock is rewritten on every successful install. The hash is sorted lexicographically before the write, so the same set always produces the same lock bytes. The lock is a v2 format; v1 is not supported.

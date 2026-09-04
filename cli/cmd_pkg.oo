@@ -9,12 +9,14 @@
 //   2. Empty lock prints ooda pkg: empty.
 //   3. --json prints a packages array.
 
-import "cmd_cat.oo";
-import "cmd_io.oo";
+import "catalog.oo";
+import "argv.oo";
+import "slurp.oo";
 import "store/ANCHOR.oo";
 
-pub fn run_ooda_pm_pkg(fr: &FsReadCap, proc: &ProcessCap, args: List[String]) {
-    let root: String = pm_root_abs(fr, proc);
+pub fn run_ooda_pm_pkg(fr: &FsReadCap, proc: &ProcessCap, env: &EnvCap, args: List[String]) {
+    let root: String = pm_root_abs(env);
+    let _p: &ProcessCap = proc;
     let a: String = pm_slurp(fr, root + "/.ooda_modules/lock");
     let b: String = pm_slurp(fr, ".ooda_modules/lock");
     let lk: String = pm_first_nonempty(a, b);

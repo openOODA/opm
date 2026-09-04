@@ -1,7 +1,7 @@
-// # Verify Opm — Assert Surface, Ban VERSION
+// # Verify Opm — Assert Surface, Ban VERSION, Ban Shell
 //
-// Logline: Fail closed if a VERSION file exists or a public subdir
-//          lacks ANCHOR.oo.
+// Logline: Fail closed if a VERSION file exists, a public subdir lacks ANCHOR.oo,
+//          or a killed file / shell spawn is still in the tree.
 //
 // Setup: Run from the opm repo root. Requires &FsReadCap.
 //        Version comes from git tags (RFC-0006). api_surface is 10.
@@ -9,11 +9,51 @@
 // Beats:
 //   1. Refuse a repo-root VERSION file.
 //   2. Require ANCHOR.oo in each of the 10 public subdirs.
-//   3. Compare the live count to api_surface=10.
+//   3. Refuse cmd_more.oo, host_build.oo, core/core.oo.
+//   4. Refuse sh -c and compiler fallbacks.
+
+fn has_text(fs: &FsReadCap, path: String, needle: String) -> Bool {
+    if !path_exists(fs, path) {
+        return false;
+    }
+    let rr: Result[String, String] = read_file(fs, path);
+    let t: String = match rr { Ok(s) => s, Err(_) => "" };
+    return str_index_of(t, needle) >= 0;
+}
 
 pub fn main(fs_r: &FsReadCap, args: List[String]) -> Result[Int, String] {
     if path_exists(fs_r, "VERSION") {
         return Err("VERSION file is banned; version is the git tag");
+    }
+    if path_exists(fs_r, "cli/cmd_more.oo") {
+        return Err("cli/cmd_more.oo is banned");
+    }
+    if path_exists(fs_r, "cli/host_build.oo") {
+        return Err("cli/host_build.oo is banned");
+    }
+    if path_exists(fs_r, "core/core.oo") {
+        return Err("core/core.oo is banned; use core/semver.oo");
+    }
+    if has_text(fs_r, "cli/find_compiler.oo", "bin/oodac") {
+        return Err("find_compiler fallback bin/oodac");
+    }
+    if has_text(fs_r, "cli/find_compiler.oo", "ooda/oodac_bin") {
+        return Err("find_compiler fallback ooda/oodac_bin");
+    }
+    let shells: List[String] = [
+        "cli/host_run.oo", "cli/git_clone.oo", "cli/reg_fetch.oo",
+        "cli/cmd_bot.oo", "registry/regs.oo"
+    ];
+    let mut si: Int = 0;
+    while si < list_len(shells) {
+        let sp: String = list_get(shells, si);
+        if has_text(fs_r, sp, "sys_exec(proc, \"sh\"") {
+            return Err("sh exec in " + sp);
+        }
+        if has_text(fs_r, sp, "command -v") {
+            return Err("command -v in " + sp);
+        }
+        si = si + 1;
     }
     let dirs: List[String] = [
         "core", "resolve", "lock", "store", "registry",
@@ -40,5 +80,6 @@ pub fn main(fs_r: &FsReadCap, args: List[String]) -> Result[Int, String] {
         return Err("api_surface drift");
     }
     println("api_surface=10");
+    let _a: Int = list_len(args);
     return Ok(0);
 }

@@ -9,7 +9,7 @@
 //   2. Keep one version per name on a diamond. Incompatible specs are a conflict.
 //   3. path:name is a catalog row. Missing, traversal, extra caps fail closed.
 
-import "core/core.oo";
+import "core/semver.oo";
 
 fn graph_pfx(s: String, p: String) -> Bool {
     let n: Int = chars_len(p);

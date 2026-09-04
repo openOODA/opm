@@ -1,0 +1,26 @@
+// # Sbom dispatch proof
+//
+// Logline: sbom is its own handler. audit is audit.
+//
+// Setup: Pure name map. No lock file.
+//
+// Beats:
+//   1. sbom maps to sbom.
+//   2. audit maps to audit.
+//   3. Unknown is empty.
+
+import "cli/argv.oo";
+
+fn fail(msg: String) {
+    println("FAIL " + msg);
+    process_exit(1);
+}
+
+pub fn main() {
+    if pm_dispatch_handler("sbom") != "sbom" { fail("sbom"); }
+    if pm_dispatch_handler("audit") != "audit" { fail("audit"); }
+    if pm_dispatch_handler("reg") != "regs" { fail("reg alias"); }
+    if pm_dispatch_handler("cat") != "" { fail("cat must not dispatch"); }
+    if pm_dispatch_handler("more") != "" { fail("more must not dispatch"); }
+    println("sbom_dispatch_proof: PASSED");
+}

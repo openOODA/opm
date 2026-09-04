@@ -1,0 +1,739 @@
+# TODO — opm repair sequence (detailed)
+File: opm/audit/todo.oot
+Date: 2026-09-04. Repo: opm only. Tag at audit: v2.11.1.
+
+Stay in opm/. Do not start a later phase until the current phase
+hostile probes fail on old code, then pass twice.
+
+Do not add subcommands. Do not leave this repo. Do not write
+CLAUDE.md or extra .md files. Version is the git tag (RFC-0006).
+Files of product code stay at or under 256 lines.
+
+Keep (do not rewrite): resolve/, lock/ lock lines, policy/caps,
+qa proofs that already assert. The unique move is cap-aware
+resolve. The CLI wrapper is what lies.
+
+Rule of work: extract a pure helper the probe can call. Do not
+spawn the opm binary in Phase 0. oodac check can fake-pass; a
+proof must assert and process_exit(1) on miss.
+
+
+## Live command surface (truth)
+
+main.oo dispatches these names (this is the product):
+
+  add
+  audit, sbom          (sbom currently calls audit, not sbom)
+  bot
+  ingest
+  init
+  launch
+  remove, update, outdated, why
+  pack
+  pkg
+  publish
+  regs, reg, registry  (all three call run_ooda_pm_regs)
+  search
+  tree, vendor, clean
+
+Help and docs also list these. main.oo does NOT dispatch them:
+
+  cat, git, io, more, pick, ops
+
+Those files are helpers. Help lies. cli/ANCHOR.oo claims
+"19 subcommand handlers" and lists the helpers as commands.
+
+
+## Phase 0 — Probes first (no product fix yet)
+
+Write qa drivers that fail on today's code. Wire each name into
+scripts/test.oo. Double-run after they fail (they must fail, not
+fake-pass).
+
+### P0.1 qa/argv_init_proof.oo
+
+Today: run_ooda_pm_init starts `i = 2`. main.oo already sliced
+argv to rest, so `opm init myapp` arrives as rest=["myapp"].
+The loop never sees myapp. Name becomes "pkg".
+
+Extract (or add, then probe against today's loop) a helper:
+
+  pm_init_name(args: List[String]) -> String
+
+Probe cases (must fail today):
+
+  pm_init_name(["myapp"])            == "myapp"     FAIL today -> "pkg"
+  pm_init_name(["--json", "myapp"])  == "myapp"
+  pm_init_name(["myapp", "--json"])  == "myapp"
+  pm_init_name([])                   == "pkg"       default only when empty
+  pm_init_name(["--json"])           == "pkg"
+  pm_name_ok("../x") is false; init must refuse that name
+
+qa/init_proof.oo today only checks pm_init_manifest in memory.
+It does not cover argv. Keep it. P0.1 is the argv proof.
+
+### P0.2 qa/argv_bot_proof.oo and qa/argv_publish_proof.oo
+
+Today: cmd_bot.oo parse starts `i = 1`. rest=["registry"] is
+skipped. Target stays the default "registry" by luck when the
+user passes that word, and skips any other first positional.
+
+Today: cmd_publish.oo parse starts `i = 1`. rest=["--to",
+"/tmp/r"] skips "--to". Publish writes to
+`.ooda-cache/registry` instead of `/tmp/r`.
+
+Helpers to extract:
+
+  pm_bot_target(args) -> String     default "registry"
+  pm_publish_to(args) -> String     default ".ooda-cache/registry"
+  pm_publish_json(args) -> Bool
+
+Probe cases (must fail today):
+
+  pm_bot_target(["mydir"])                 == "mydir"
+  pm_bot_target(["--sign", "mydir"])       == "mydir"
+  pm_bot_target(["mydir", "--sign"])       == "mydir"
+  pm_publish_to(["--to", "/tmp/r"])        == "/tmp/r"
+  pm_publish_json(["--json"])              == true
+  pm_publish_to([])                        == ".ooda-cache/registry"
+
+### P0.3 qa/help_surface_proof.oo
+
+Extract print_help body to a String function:
+
+  pm_help_text() -> String
+
+Canonical live names (one list in the proof):
+
+  add audit sbom bot ingest init launch
+  remove update outdated why
+  pack pkg publish
+  reg registry regs
+  search tree vendor clean
+
+Must appear. Must NOT appear as subcommands:
+
+  cat git io more pick ops
+
+Also refuse the phrase "19 subcommand" in cli/ANCHOR.oo and
+docs/cli.oot once Phase 2 rewrites them. For Phase 0, only
+assert against pm_help_text() / print_help.
+
+Today print_help lists cat, git, io, more, pick. Probe fails.
+
+### P0.4 qa/compiler_token_proof.oo
+
+Today find_oodac (cli/find_compiler.oo) order:
+
+  1. OODA_COMPILER
+  2. bin/oodac            FALLBACK — kill
+  3. ooda/oodac_bin       FALLBACK — kill
+  then process_exit(1)
+
+Extract a Result helper (do not process_exit in the helper):
+
+  resolve_oodac(fs, env) -> Result[String, String]
+
+Phase 0 may start as a source probe if EnvCap is hard to mock:
+
+  slurp cli/find_compiler.oo
+  FAIL if the file contains `bin/oodac`
+  FAIL if the file contains `ooda/oodac_bin`
+  FAIL if scripts/build.oo, scripts/test.oo, scripts/release.oo
+       contain a second copy of find_oodac after Phase 3
+       (Phase 0 only flags cli/find_compiler.oo fallbacks)
+
+scripts/ already refuse unset OODA_COMPILER. The lie is only
+in cli/find_compiler.oo.
+
+### P0.5 qa/no_shell_proof.oo
+
+Source probe. Walk these files (exact list):
+
+  cli/host_run.oo
+  cli/cmd_git.oo
+  cli/cmd_reg.oo
+  cli/cmd_bot.oo
+  registry/regs.oo
+
+FAIL if the text contains: sys_exec(proc, "sh"
+FAIL if the text contains: "sh", "-c"
+FAIL if the text contains: command -v
+
+Today all five fail. After Phase 3, host_run.oo must pass.
+After Phase 4, the rest must pass.
+
+Do not "fix" the probe by deleting the grep. The product
+files must lose the shell.
+
+### P0.6 qa/sbom_dispatch_proof.oo
+
+Today: main.oo `sub == "audit" || sub == "sbom"` both call
+run_ooda_pm_audit. run_ooda_pm_sbom exists in cmd_audit.oo
+and is never reached from main.
+
+Extract a tiny dispatch table test, or assert in a helper:
+
+  pm_dispatch_handler("sbom") == "sbom"
+  pm_dispatch_handler("audit") == "audit"
+
+Today both would be "audit". Probe fails. Fix is T2.2.
+
+### P0.7 Wire into scripts/test.oo
+
+Today the driver list is 8 names. Add the new proofs to that
+list. Do not remove the 8. Still oodac check until T6.1.
+
+Double-run. Confirm each new proof FAILs on current main.
+
+
+## Phase 1 — Argv rest contract
+
+main.oo already passes rest. Handlers must read from index 0.
+Prefer pm_arg_name(args) / pm_flag / pm_opt from cmd_io.oo.
+Do not skip by magic index.
+
+### T1.1 cli/cmd_init.oo
+
+Delete `let mut i: Int = 2`.
+Use pm_init_name(args) from P0.1.
+Default name "pkg" only when rest has no positional.
+Comments say SysCap; signature is ProcessCap. Fix comments
+in this pass or in T5.4 — do not leave SysCap in the header.
+
+### T1.2 cli/cmd_bot.oo
+
+Delete `let mut i: Int = 1`.
+Use pm_bot_target(args). Skip only flags (`--sign`), never
+the first positional.
+
+### T1.3 cli/cmd_publish.oo
+
+Delete `let mut i: Int = 1` in run_ooda_pm_publish.
+The mkdir_p loop that walks path chars (also `i = 1`) is a
+different i — leave that one.
+Use pm_publish_to / pm_publish_json.
+
+### T1.4 cli/cmd_io.oo pm_is_verb
+
+Today the verb skip-list is incomplete. Missing at least:
+init, bot, publish, pack is present, ingest is present,
+reg, regs, search is present, launch is present.
+Add every live dispatch name so a user who accidentally
+passes a full argv still does not treat the verb as a
+package name. After Phase 1, rest should not contain the
+verb, so this is belt-and-braces.
+
+Also add init/bot/publish to the skip list now, because
+pm_arg_name is the shared helper.
+
+### T1.5 Audit remaining cli/cmd_*.oo
+
+Grep for `i: Int = 1` and `i: Int = 2` in cli/.
+Known remaining after T1.1–T1.3: none in cmd_* handlers
+except path-walk loops (publish mkdir_p, string scans).
+Those are not argv. Leave them.
+
+cmd_add, cmd_launch, cmd_ops, cmd_pack, cmd_ingest,
+cmd_tree already use pm_arg_name. Confirm. Do not "fix"
+string-scan loops.
+
+### T1.6 Re-run P0.1 and P0.2. Both must pass twice.
+
+
+## Phase 2 — Honest command surface
+
+### T2.1 cli/main.oo print_help
+
+Rewrite to the live set only. Suggested text:
+
+  opm — openOODA package manager
+  usage: opm <subcommand> [args]
+
+  add audit sbom bot ingest init launch
+  remove update outdated why
+  pack pkg publish
+  reg registry regs
+  search tree vendor clean
+
+Do not list cat, git, io, more, pick, ops.
+Keep aliases on the same line as the real command if you
+want: `reg, registry, regs` and `tree, vendor, clean`.
+
+### T2.2 sbom
+
+Change main.oo:
+
+  if sub == "audit" { run_ooda_pm_audit(...); return Ok(0); }
+  if sub == "sbom"  { run_ooda_pm_sbom(...);  return Ok(0); }
+
+Do not map sbom to audit. run_ooda_pm_sbom already prints
+CycloneDX-lite. P0.6 must pass.
+
+### T2.3 Kill cli/cmd_more.oo
+
+It only re-exports cmd_ops, cmd_tree, cmd_pkg "so older
+cmd_pm_more imports still resolve". That is a compat barrel.
+Delete the file.
+Remove import from cli/main.oo and cli/ANCHOR.oo.
+cmd_ops, cmd_tree, cmd_pkg stay. They are real handlers.
+
+### T2.4 Rename helpers so they are not commands
+
+Do this as git mv + import rewrite. No behavior change.
+
+  cli/cmd_cat.oo  -> cli/catalog.oo     (catalog loader for add)
+  cli/cmd_io.oo   -> cli/argv.oo        (flags, slurp, json escape)
+                    if that file is still large, split slurp
+                    into cli/slurp.oo in the same commit
+  cli/cmd_pick.oo -> cli/vendor_pick.oo (store/vendor selector)
+  cli/cmd_git.oo  stays a helper file; not a subcommand.
+                    Optional rename: cli/git_clone.oo
+  cli/cmd_reg.oo  stays a helper; user command is regs/registry.
+                    Optional rename: cli/reg_fetch.oo
+
+Update every import. Grep cmd_cat.oo, cmd_io.oo, cmd_pick.oo.
+main.oo must not import helpers it does not dispatch, except
+through the handlers that need them.
+
+### T2.5 cli/ANCHOR.oo
+
+Stop claiming 19 user subcommands.
+List two groups:
+
+  Handlers (dispatched from main.oo): the live set in T2.1.
+  Helpers (not commands): catalog, argv, vendor_pick, git,
+  reg_fetch, find_compiler, host_run.
+
+Fix the Setup line that still says these files are
+"copied from ooda/cli/build/" as if that is the plan.
+After Phase 3 they shrink or die.
+
+### T2.6 docs/cli.oot
+
+Today it lists cat, git, io, more, pick, ops as user
+commands. Paths say `cli/opm/main.oo` (old monorepo).
+Rewrite section 2 to the live set. Delete 5.4 cat, 5.5 git,
+5.8 io, 5.10 more, 5.11 ops-as-a-command, 5.13 pick.
+
+Aliases section: keep reg/registry, vendor/clean.
+sbom is not an alias of audit after T2.2 — document sbom
+as its own command.
+
+Do not claim NetCap/HttpCap until Phase 4 actually takes
+them. Today main takes FsRead, FsWrite, Process, Env.
+
+### T2.7 examples/ if they name fake commands
+
+Grep examples/ and README.md for `opm cat`, `opm git`,
+`opm io`, `opm more`, `opm pick`, `opm ops`. Fix or delete
+those lines.
+
+### T2.8 P0.3 and P0.6 must pass twice.
+
+
+## Phase 3 — Compiler spawn, no copies, no shell in host_run
+
+opm is not ooda build. Do not keep a fork of ooda/build.
+
+### T3.1 cli/find_compiler.oo
+
+OODA_COMPILER only. Delete:
+
+  take_compiler(fs, "bin/oodac")
+  take_compiler(fs, "ooda/oodac_bin")
+
+Unset or missing file is Err. No PATH. No HOME.
+find_src_root uses OODA_HOME then OODA_SRC_ROOT. After T3.2,
+grep who calls find_src_root. If nobody, delete it.
+
+Return Result[String, String] from resolve_oodac. Callers
+print ERR and exit. Do not process_exit inside the helper
+(proofs cannot catch that).
+
+### T3.2 cli/host_run.oo
+
+Delete sq() if nothing else in this file needs it.
+(cmd_git, cmd_reg, cmd_bot import host_run for sq. After
+Phase 4 they must not. If they still import sq in Phase 3,
+move sq to a tiny quote helper or delete with them.)
+
+Replace:
+
+  sys_exec(proc, "sh", "-c", cmd)
+
+with argv exec:
+
+  sys_exec(proc, oodac, arg0, arg1, ...)
+
+run_oodac_check already does this for the check path. Make
+run_oodac do the same. Kill the string join.
+
+Delete run_ooda_eval and run_ooda_repl. No main.oo branch
+calls them. Grep after delete.
+
+refuse_cli that runs `path --version` and checks the first
+token is "oodac" can stay if launch still needs it. It must
+use sys_exec(proc, path, "--version"), not sh.
+
+### T3.3 cli/host_build.oo
+
+This is an ooda-build clone (target, LTO, sanitizers, PGO).
+cmd_launch.oo imports it.
+
+Read run_ooda_pm_launch --exec path. If it only needs
+`oodac run <file>`, delete host_build.oo and call host_run
+/ sys_exec(proc, oodac, "run", file) from launch.
+
+If launch needs a flag or two, write a tiny
+cli/launch_exec.oo (< 80 lines). Do not keep PGO/LTO/wasm
+flags inside a package manager.
+
+### T3.4 cli/cmd_launch.oo
+
+Require EnvCap + OODA_COMPILER for --exec. No PATH.
+OODA_UNTRUSTED already refuses exec. Keep that.
+Missing compiler is Err, not a hunt.
+
+### T3.5 One find_oodac
+
+Today copies live in:
+
+  cli/find_compiler.oo     (has fallbacks — the bug)
+  scripts/build.oo         (already OODA_COMPILER only)
+  scripts/test.oo          (already OODA_COMPILER only)
+  scripts/release.oo       (already OODA_COMPILER only)
+
+Product code (cli/) uses find_compiler.oo.
+Scripts may keep a local 15-line copy so a script does not
+import cli/. That is allowed if the copy has no fallbacks
+and matches the contract. Do not invent a fourth copy.
+
+### T3.6 P0.4 must pass. P0.5 must pass for host_run.oo.
+
+host_run.oo must contain zero `sh -c`. cmd_git / cmd_reg /
+cmd_bot / registry/regs.oo still fail P0.5 until Phase 4.
+That is expected. Split the probe per-file or keep a
+known-fail list in the proof with a phase comment — better:
+P0.5 lists files; after T3.2, remove host_run.oo from the
+fail-set by making it clean. The other four stay in the
+fail-set until Phase 4.
+
+
+## Phase 4 — Network and git fail-closed
+
+ProcessCap is not a NetCap. PATH is not a minisign token.
+$HOME is not a registry root.
+
+### T4.1 cli/cmd_git.oo  (pm_git_clone_head)
+
+Today one sh -c does: rm -rf dest; git clone; checkout;
+rev-parse HEAD. exit 0 always, so git failure becomes
+"err git" only after a HEAD mismatch.
+
+Replace with argv execs, each checked:
+
+  sys_exec(proc, git, "clone", "--", url, dest)
+  sys_exec(proc, git, "-C", dest, "checkout", commit)
+  sys_exec(proc, git, "-C", dest, "rev-parse", "HEAD")
+
+Git binary: do not PATH-hunt. Either
+
+  require env OODA_GIT (like OODA_COMPILER), or
+  refuse with err git until a ProcessCap git helper exists.
+
+Allow-list (pm_url_allowed) stays. First. No clone if the
+url is not allowed.
+
+Do not keep `exit 0` at the end of a shell string.
+
+### T4.2 cli/cmd_reg.oo
+
+pm_reg_minisign_ok: delete `command -v minisign`. Missing
+binary is Err, not echo 127. Require OODA_MINISIGN or a
+fixed spawn path under OODACODEX. No PATH.
+
+pm_reg_pull: delete `curl` via sh -c. Options:
+
+  A. Refuse network in this repo until a NetCap fetch
+     primitive exists. File vendor / --from only.
+  B. sys_exec(proc, curl_path, "-fsS", "--max-time", "30",
+     "-o", dest, "--", url) with curl_path from env
+     OODA_CURL, and the function takes an explicit token
+     in the signature so HTTPS is not ambient.
+
+Prefer A if B needs a new cap type that oodac does not
+have. Do not fake NetCap with ProcessCap.
+
+mkdir: use fs_mkdir_p / pm_mkdir, not `mkdir -p` in sh.
+
+### T4.3 registry/regs.oo  pm_regs_home
+
+Today: sh -c `printf %s "$HOME/.config/ooda"`.
+That is ambient HOME plus shell.
+
+Replace: EnvCap env_get "OODA_CONFIG" or "XDG_CONFIG_HOME"
+only if the function already receives EnvCap. Today it
+does not — it takes FsReadCap + ProcessCap. Fail closed:
+
+  extras file under the project (e.g. .ooda-cache/registries)
+  or require EnvCap and OODA_CONFIG.
+
+Do not read $HOME. Stock registry URL may stay first.
+
+### T4.4 cli/cmd_bot.oo
+
+Delete sh -c that writes catalog with printf/cp.
+Use write_file / pm_place.
+
+Delete sh -c minisign sign. Same rule as T4.2: missing
+minisign is Err when --sign is set; without --sign, do
+not sign. Do not `|| true`.
+
+Hardcoded package list hello/mid/world/evilcap/tooyank:
+bot currently warns and continues on a failed package.
+Fail closed: first failed verify is Err, or skip only
+packages that are absent (not packages that fail sha).
+Do this in the same pass. A warning path is a fallback.
+
+### T4.5 HTTPS and caps
+
+main.oo takes FsRead, FsWrite, Process, Env. HTTPS fetch
+must either:
+
+  disappear (file vendor only), or
+  take a real network token in the handler signature.
+
+Do not add a NetCap type in this repo if oodac does not
+export one. Ask before inventing a cap.
+
+cmd_reg Setup comment says SysCap. Lie. Fix the comment
+when the function changes.
+
+### T4.6 cli/cmd_pick.oo  (vendor_pick.oo after T2.4)
+
+Delete:
+
+  if path_exists(fr, "../registry") { return "../registry"; }
+
+Bare add: --vendor, --from, or a listed store only.
+Missing store is Err. No sibling-repo fallback.
+That path is a polyrepo leak (opm assuming ../registry).
+
+### T4.7 P0.5 must pass on all five files. Twice.
+
+
+## Phase 5 — Names, size, docs
+
+### T5.1 Split cli/cmd_add.oo (256 lines)
+
+Next edit cannot land until this splits. Suggested cut:
+
+  cli/add_select.oo   vendor + name + min_pin gate
+  cli/add_lock.oo     resolve + lock merge
+  cli/cmd_add.oo      run_ooda_pm_add glue only
+
+Keep one concept per file. Imports stay in ANCHOR if
+needed. Each file <= 256.
+
+### T5.2 Rename core/core.oo
+
+Banned generic name. File is sha/cas/int-parse plus
+re-exports. Suggested: core/hash.oo or core/cas.oo
+(semver lives in the same file today — if both live
+there, split: core/hash.oo and keep semver in a named
+file; qa/semver_proof.oo must still import the parser).
+
+Ban the filename core.oo. Update core/ANCHOR.oo.
+
+### T5.3 min_pin=v0.210.0
+
+Hardcoded in:
+
+  cli/cmd_init.oo   pm_init_manifest
+  cli/cmd_add.oo    pm_min_pin_ok(..., "0.210.0")
+  cli/cmd_bot.oo    pm_pin_min_ok(..., "0.210.0")
+  qa/init_proof.oo  asserts min_pin=v0.210.0
+
+Drop the pin from the starter manifest, or set it from a
+single constant that matches the current tag contract.
+Do not leave v0.210.0 as a magic floor.
+Update qa/init_proof.oo in the same commit.
+
+### T5.4 Comments vs caps
+
+cmd_init.oo header: SysCap / FsCap. Signature: ProcessCap,
+FsReadCap, FsWriteCap.
+cmd_bot.oo header: &FsCap and &SysCap.
+cmd_reg.oo header: SysCap.
+cmd_git.oo header: SysCap.
+cmd_io.oo header: FsCap.
+
+Rewrite headers to the real tokens. No broad cap names.
+
+### T5.5 docs/INSTALL.oot
+
+Delete VERSION-file claims (sections 1, 2, 3).
+Version is the git tag (RFC-0006).
+opm is its own repo, not a subdir of ooda.
+Entry is `opm <subcommand>` (or `ooda opm` only if ooda
+still wraps it — do not invent; match README.md).
+Fix `cli/opm/main.oo` paths to `cli/main.oo`.
+
+docs/versioning.oot: read it. If it still requires a
+VERSION file, align with RFC-0006 or mark the conflict
+in one sentence. Do not keep both stories.
+
+### T5.6 docs/cli.oot and examples
+
+Finish anything Phase 2 left. Help text == main.oo.
+
+### T5.7 .github/workflows
+
+ci.yml is auto-release only. No ANCHOR.oo.
+Either:
+
+  add .github/ANCHOR.oo (and maybe workflows/ANCHOR.oo)
+  stating "release wiring, not product", or
+  document once in scripts/ANCHOR.oo that .github is
+  outside api_surface=10.
+
+Do not grow api_surface without changing scripts/verify.oo
+in the same commit.
+
+### T5.8 store/store.oo pm_root_abs
+
+Uses sys_exec(proc, "pwd"). Not sh -c, but cwd via process
+is still a host leak. Later: pass root in, or EnvCap.
+Not a Phase 0–4 blocker. Note it. Ask before changing
+every caller.
+
+
+## Phase 6 — Tests and release gate
+
+### T6.1 scripts/test.oo
+
+Today: oodac check on 8 qa drivers. is_ok is pass.
+oodac check can print ERRimportmissing and still exit 0
+(known oodac bug; Gemini owns oodac).
+
+When oodac check exits 1 on ERR, keep check as a type gate
+in scripts/build.oo.
+
+Change test.oo to `oodac run` on each qa/*.oo once run
+does not duplicate-link (scripts/test.oo already documents
+that emit bug). Until then, proofs must process_exit(1)
+themselves and test.oo must treat any ERR in stdout as
+fail even if the Result is Ok.
+
+Fail on first Err. Double-run.
+
+Add the Phase 0 proofs to the driver list (P0.7). Also:
+
+  registry/git_ingest_proof.oo
+  registry/reg_proof.oo
+
+Move those two into qa/ OR import/run them from test.oo.
+Proofs that never run are dead.
+
+### T6.2 scripts/build.oo
+
+Keep oodac check on public ANCHOR.oo + cli/main.oo.
+After T2.4 renames, the ANCHOR imports must still check.
+
+### T6.3 scripts/verify.oo
+
+Add refuses:
+
+  VERSION file                 (already)
+  missing ANCHOR.oo            (already, 10 dirs)
+  sh -c in cli/ and registry/  (after Phase 4)
+  cmd_more.oo exists           (after T2.3)
+  host_build.oo exists         (if T3.3 deleted it)
+  find_compiler fallbacks      (bin/oodac, ooda/oodac_bin)
+
+api_surface=10 stays unless you add a public dir on
+purpose.
+
+### T6.4 CI
+
+.github/workflows/ci.yml is auto-release only.
+Add a test job before auto-release, same idea as ooda:
+OODA_COMPILER in CI, run scripts/verify.oo then
+scripts/test.oo.
+
+Blocked on oodac: import of `std/...` and honest check
+exit codes. Do not enable the test job until check is
+honest, or the job will green-wash.
+
+Do not auto-release if test is red.
+
+### T6.5 qa/ANCHOR.oo
+
+Index every proof, including Phase 0. Beat list must
+match the files on disk.
+
+
+## Phase 7 — Later, not now. Ask first.
+
+- T7.1 opm/std is a symlink to ../std. Compile convenience
+  and a topology leak. Keep or drop; ask before changing
+  polyrepo layout.
+- T7.2 lock/lock.oo (v1 lines) vs lock/v2.oo (replace,
+  override, git pin). One lock format. Kill the other
+  after a proof that every writer uses the survivor.
+- T7.3 New subcommands. Forbidden until Phase 1–3 are
+  green. No cat/git/io/more/pick as user commands.
+- T7.4 Token / MCP / LSP. Not this repo.
+- T7.5 store/store.oo pwd (see T5.8).
+- T7.6 cmd_bot hardcoded fixture package names. After
+  T4.4 fail-closed, decide whether bot walks the target
+  dir or reads a list file. Ask.
+- T7.7 ooda wrap (`ooda opm ...`) vs standalone `opm`.
+  Docs disagree. Ask which entry is the product.
+
+
+## File kill list (by phase)
+
+Phase 2: cli/cmd_more.oo
+Phase 3: cli/host_build.oo (if launch does not need it);
+         run_ooda_eval, run_ooda_repl in host_run.oo
+Phase 5: core/core.oo filename (rename, not delete logic)
+
+No VERSION file. No new .md. No CLAUDE.md.
+
+
+## Import / rename map (Phase 2)
+
+Who imports the helper files today (grep before mv):
+
+  cmd_io.oo     — almost every cmd_*.oo
+  cmd_cat.oo    — cmd_add.oo, cmd_audit.oo, cmd_launch.oo
+  cmd_pick.oo   — cmd_add.oo
+  cmd_git.oo    — ingest path (confirm via grep at edit time)
+  cmd_reg.oo    — cmd_pick.oo, cmd_regs.oo
+  cmd_more.oo   — main.oo, cli/ANCHOR.oo only
+  host_run.oo   — find_compiler users, cmd_git, cmd_reg,
+                  cmd_bot, cmd_launch, registry/regs.oo
+  host_build.oo — cmd_launch.oo
+
+Do the rename in one commit per file (or one commit for
+all renames). Do not mix with argv behavior fixes.
+
+
+## Done means
+
+Every Phase 0 probe fails on the previous commit, then
+passes twice after the fix.
+
+No new subcommands.
+No VERSION file.
+No sh -c in cli/ or registry/.
+Help names == main.oo dispatch names.
+cmd_add.oo split; every .oo file <= 256 lines.
+OODA_COMPILER only. No bin/oodac fallback.
+sbom calls run_ooda_pm_sbom.
+../registry is not a silent vendor.
+min_pin is not a stale v0.210.0 floor.
+
+Say "go" to start at Phase 0 (probes only).

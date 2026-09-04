@@ -1,0 +1,43 @@
+// # No shell proof
+//
+// Logline: cli/ and registry/ must not sys_exec sh -c or PATH-hunt via command -v.
+//
+// Setup: Reads listed source files under FsReadCap.
+//
+// Beats:
+//   1. No sys_exec(proc, "sh".
+//   2. No "sh", "-c".
+//   3. No command -v.
+
+fn fail(msg: String) {
+    println("FAIL " + msg);
+    process_exit(1);
+}
+
+fn scan(fs: &FsReadCap, path: String) {
+    if !path_exists(fs, path) {
+        return;
+    }
+    let rr: Result[String, String] = read_file(fs, path);
+    let t: String = match rr { Ok(s) => s, Err(_) => "" };
+    if str_index_of(t, "sys_exec(proc, \"sh\"") >= 0 {
+        fail("sh exec in " + path);
+    }
+    if str_index_of(t, "\"sh\", \"-c\"") >= 0 {
+        fail("sh -c in " + path);
+    }
+    if str_index_of(t, "command -v") >= 0 {
+        fail("command -v in " + path);
+    }
+}
+
+pub fn main(fs: &FsReadCap) {
+    scan(fs, "cli/host_run.oo");
+    scan(fs, "cli/git_clone.oo");
+    scan(fs, "cli/reg_fetch.oo");
+    scan(fs, "cli/cmd_bot.oo");
+    scan(fs, "registry/regs.oo");
+    scan(fs, "cli/cmd_git.oo");
+    scan(fs, "cli/cmd_reg.oo");
+    println("no_shell_proof: PASSED");
+}

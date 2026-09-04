@@ -1,16 +1,17 @@
 // # Pick a store or a local vendor for add
 //
-// Logline: Bare add searches listed HTTPS stores, then falls back to ../registry.
+// Logline: --vendor and --from are file paths. --registry fetches one origin. No sibling fallback.
 //
-// Setup: --vendor is a folder. --from is a package dir. --registry still fetches one origin.
+// Setup: Missing store is Err. HTTPS fetch needs OODA_CURL.
 //
 // Beats:
 //   1. Honor --from and --vendor.
 //   2. Find the first listed store that names the package.
-//   3. Use ../registry when no store answers.
+//   3. No ../registry. No silent path.
 
-import "cmd_io.oo";
-import "cmd_reg.oo";
+import "argv.oo";
+import "slurp.oo";
+import "reg_fetch.oo";
 import "registry/reg.oo";
 import "registry/regs.oo";
 import "resolve/ANCHOR.oo";
@@ -33,11 +34,11 @@ fn pm_cat_has_name(cat: String, name: String) -> Bool {
     return false;
 }
 
-pub fn pm_regs_pick(fr: &FsReadCap, proc: &ProcessCap, name: String, dest: String) -> String {
+pub fn pm_regs_pick(fr: &FsReadCap, fw: &FsWriteCap, proc: &ProcessCap, env: &EnvCap, name: String, dest: String) -> String {
     if name == "" {
         return "err missing";
     }
-    let urls: String = pm_regs_urls(fr, proc);
+    let urls: String = pm_regs_urls(fr, env);
     let n: Int = chars_len(urls);
     let scan: String = dest + "-scan";
     let mut start: Int = 0;
@@ -48,9 +49,9 @@ pub fn pm_regs_pick(fr: &FsReadCap, proc: &ProcessCap, name: String, dest: Strin
                 let url: String = str_slice(urls, start, i);
                 let base: String = pm_reg_base(url);
                 if base != "" {
-                    if pm_reg_pull(fr, proc, base + "/catalog", scan, "catalog") {
+                    if pm_reg_pull(fr, fw, proc, env, base + "/catalog", scan, "catalog") {
                         if pm_cat_has_name(pm_slurp(fr, scan + "/catalog"), name) {
-                            return pm_reg_materialize(fr, proc, url, dest);
+                            return pm_reg_materialize(fr, fw, proc, env, url, dest);
                         }
                     }
                 }
@@ -62,7 +63,7 @@ pub fn pm_regs_pick(fr: &FsReadCap, proc: &ProcessCap, name: String, dest: Strin
     return "err missing";
 }
 
-pub fn pm_select_vendor(fr: &FsReadCap, proc: &ProcessCap, args: List[String]) -> String {
+pub fn pm_select_vendor(fr: &FsReadCap, fw: &FsWriteCap, proc: &ProcessCap, env: &EnvCap, args: List[String]) -> String {
     let from: String = pm_opt(args, "--from");
     if from != "" {
         return from;
@@ -74,24 +75,20 @@ pub fn pm_select_vendor(fr: &FsReadCap, proc: &ProcessCap, args: List[String]) -
         }
         return v;
     }
+    if path_exists(fr, "vendor") {
+        return "vendor";
+    }
     let dest: String = ".ooda-cache/ooda-tmp/regcache";
     if pm_flag(args, "--registry") {
         let mut ru: String = pm_opt(args, "--registry");
         if ru == "" {
             ru = pm_reg_default();
         }
-        let fr: String = pm_reg_materialize(fr, proc, ru, dest);
-        if fr == "ok" {
+        let frs: String = pm_reg_materialize(fr, fw, proc, env, ru, dest);
+        if frs == "ok" {
             return dest;
         }
-        return fr;
+        return frs;
     }
-    let fr2: String = pm_regs_pick(fr, proc, pm_arg_name(args), dest);
-    if fr2 == "ok" {
-        return dest;
-    }
-    if path_exists(fr, "../registry") {
-        return "../registry";
-    }
-    return fr2;
+    return pm_regs_pick(fr, fw, proc, env, pm_arg_name(args), dest);
 }

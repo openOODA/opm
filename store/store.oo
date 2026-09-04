@@ -2,29 +2,19 @@
 //
 // Logline: Place lock and CAS bytes with fs_mkdir and write_file. No shell copies.
 //
-// Setup: Absolute paths under OODA_FS_WRITEDIR. cwd is discovered with pwd.
+// Setup: Project root is OODA_FS_WRITEDIR. Missing token is empty root; callers fail closed.
 //
 // Beats:
-//   1. Resolve an absolute project root.
+//   1. Resolve the write root from EnvCap. No pwd. No HOME.
 //   2. mkdir .ooda_modules and cas dirs.
 //   3. write_file lock and payload. Fail closed on deny.
 
-pub fn pm_root_abs(fr: &FsReadCap, proc: &ProcessCap) -> String {
-    let r: Result[String, String] = sys_exec(proc, "pwd");
-    if r.is_err() {
-        return "";
-    }
-    let mut s: String = match r { Ok(t) => t, Err(_) => "" };
-    let n: Int = chars_len(s);
-    if n > 0 {
-        if char_at(s, n - 1) == "\n" {
-            s = str_slice(s, 0, n - 1);
-        }
-    }
-    return s;
+pub fn pm_root_abs(env: &EnvCap) -> String {
+    let r: Result[String, String] = env_get(env, "OODA_FS_WRITEDIR");
+    return match r { Ok(s) => s, Err(_) => "" };
 }
 
-fn pm_mkdir(fr: &FsReadCap, fw: &FsWriteCap, abs: String) -> Bool {
+pub fn pm_mkdir(fr: &FsReadCap, fw: &FsWriteCap, abs: String) -> Bool {
     if path_exists(fr, abs) {
         return true;
     }
@@ -33,6 +23,23 @@ fn pm_mkdir(fr: &FsReadCap, fw: &FsWriteCap, abs: String) -> Bool {
         return true;
     }
     return path_exists(fr, abs);
+}
+
+pub fn pm_mkdir_p(fr: &FsReadCap, fw: &FsWriteCap, abs: String) -> Bool {
+    if abs == "" { return false; }
+    if path_exists(fr, abs) { return true; }
+    let n: Int = chars_len(abs);
+    let mut i: Int = 1;
+    while i < n {
+        if char_at(abs, i) == "/" {
+            let prefix: String = str_slice(abs, 0, i);
+            if prefix != "" && prefix != "/" {
+                if !pm_mkdir(fr, fw, prefix) { return false; }
+            }
+        }
+        i = i + 1;
+    }
+    return pm_mkdir(fr, fw, abs);
 }
 
 pub fn pm_put(fw: &FsWriteCap, abs: String, body: String) -> Bool {

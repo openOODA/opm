@@ -1,0 +1,141 @@
+// # Add lock: install resolved nodes and write the v2 lock
+//
+// Logline: For each resolved token, verify yank/license/sha, write CAS and vendor, merge lock.
+//
+// Setup: File vendor only. Root is OODA_FS_WRITEDIR.
+//
+// Beats:
+//   1. Refuse yank, license miss, sha/sig miss, extra name.
+//   2. Keep prior lock lines whose name is not in the new set.
+//   3. Write v2 header plus merged lines.
+
+import "add_select.oo";
+import "argv.oo";
+import "catalog.oo";
+import "slurp.oo";
+import "core/pin.oo";
+import "policy/ANCHOR.oo";
+import "store/ANCHOR.oo";
+import "lock/v2.oo";
+
+pub fn pm_add_write(fr: &FsReadCap, fw: &FsWriteCap, env: &EnvCap, args: List[String], vendor: String, name: String, body: String) {
+    let pkg: String = pm_slurp(fr, "ooda.pkg");
+    let ov: String = pm_override_ver(name, pm_kv(pkg, "overrides"));
+    if ov != "" {
+        if str_index_of(body, name + "@" + ov) < 0 {
+            println("ERR\tpm\toverride");
+            println("opm add: override");
+            process_exit(2);
+        }
+    }
+    let yank: String = pm_slurp(fr, vendor + "/yank");
+    let allow: String = pm_kv(pkg, "licenses");
+    let root: String = pm_root_abs(env);
+    let live_o: String = pm_oodac_sha(fr);
+    let live_s: String = pm_std_sha(fr);
+    let prev: String = pm_first_nonempty(pm_slurp(fr, root + "/.ooda_modules/lock"), pm_slurp(fr, ".ooda_modules/lock"));
+    if !pm_pin_ok(prev, live_o, live_s) {
+        println("ERR\tpm\tpin");
+        println("opm add: pin");
+        process_exit(2);
+    }
+    let n: Int = chars_len(body);
+    let mut start: Int = 0;
+    let mut i: Int = 0;
+    let mut acc: String = "";
+    let js: Bool = pm_flag(args, "--json");
+    while i <= n {
+        let mut sep: Bool = false;
+        if i == n {
+            sep = true;
+        } else {
+            if char_at(body, i) == "\n" {
+                sep = true;
+            }
+        }
+        if sep {
+            if i > start {
+                let tok: String = str_slice(body, start, i);
+                let pname: String = pm_tok_name(tok);
+                if pname != "" {
+                    if !pm_name_ok(pname) {
+                        println("ERR\tpm\trefuse name");
+                        process_exit(2);
+                    }
+                    let ver: String = pm_tok_ver(tok);
+                    if pm_yanked(yank, pname, ver) {
+                        println("ERR\tpm\tyank " + pname);
+                        process_exit(2);
+                    }
+                    let base: String = pm_pkg_dir(fr, vendor, pname);
+                    let man: String = pm_slurp(fr, base + "/manifest");
+                    let paykind: String = pm_kv(man, "pay");
+                    if paykind != "" {
+                        if paykind != "free" {
+                            println("opm add: package lists a price pay=" + paykind);
+                        }
+                    }
+                    if !pm_license_ok(allow, pm_kv(man, "license")) {
+                        println("ERR\tpm\tlicense " + pname);
+                        process_exit(2);
+                    }
+                    let pay: String = pm_kv(man, "payload");
+                    let mut pn: String = pay;
+                    if pn == "" { pn = pname + ".oo"; }
+                    let src: String = pm_slurp(fr, base + "/" + pn);
+                    let live: String = pm_cas_id(src);
+                    let bad: String = pm_check_pkg(fr, base, pname, live);
+                    if bad != "" {
+                        println("ERR\tpm\t" + bad);
+                        process_exit(2);
+                    }
+                    if !pm_put_cas(fr, fw, root, live, pn, src) {
+                        println("ERR\tpm\tinstall failed " + pname);
+                        process_exit(2);
+                    }
+                    let oname: String = pm_kv(man, "outline");
+                    if oname != "" {
+                        let ot: String = pm_slurp(fr, base + "/" + oname);
+                        if ot != "" {
+                            let _o: Bool = pm_put_cas(fr, fw, root, live, oname, ot);
+                        }
+                    }
+                    let _v: Bool = pm_put_vendor(fr, fw, root, pn, src);
+                    acc = acc + tok + "\n";
+                    if js == false {
+                        println("opm add: installed " + pname + " cas=" + live);
+                    }
+                }
+            }
+            start = i + 1;
+        }
+        i = i + 1;
+    }
+    let pn2: Int = chars_len(prev);
+    let mut kept: String = "";
+    let mut ps: Int = 0;
+    let mut pi: Int = 0;
+    while pi <= pn2 {
+        if pi == pn2 || char_at(prev, pi) == "\n" {
+            if pi > ps {
+                let pline: String = str_slice(prev, ps, pi);
+                if pm_is_pkg_line(pline) {
+                    let pnm: String = pm_tok_name(pline);
+                    if str_index_of(acc, pnm + "@") < 0 {
+                        kept = kept + pline + "\n";
+                    }
+                }
+            }
+            ps = pi + 1;
+        }
+        pi = pi + 1;
+    }
+    acc = pm_lock_hdr(live_o, live_s) + kept + acc;
+    if !pm_put_lock(fr, fw, root, acc) {
+        println("ERR\tpm\tlock write failed");
+        process_exit(2);
+    }
+    if js {
+        println("{\"ok\":true,\"cmd\":\"add\",\"packages\":" + pm_lock_json(acc) + "}");
+    }
+}

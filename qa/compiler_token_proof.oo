@@ -1,0 +1,27 @@
+// # Compiler token proof
+//
+// Logline: find_compiler.oo has no bin/oodac or ooda/oodac_bin fallback.
+//
+// Setup: Reads the source file under FsReadCap.
+//
+// Beats:
+//   1. File contains OODA_COMPILER.
+//   2. File does not contain the two fallback paths.
+
+fn fail(msg: String) {
+    println("FAIL " + msg);
+    process_exit(1);
+}
+
+pub fn main(fs: &FsReadCap) {
+    if !path_exists(fs, "cli/find_compiler.oo") {
+        fail("missing find_compiler.oo");
+    }
+    let rr: Result[String, String] = read_file(fs, "cli/find_compiler.oo");
+    let t: String = match rr { Ok(s) => s, Err(_) => "" };
+    if t == "" { fail("empty find_compiler"); }
+    if str_index_of(t, "OODA_COMPILER") < 0 { fail("OODA_COMPILER"); }
+    if str_index_of(t, "bin/oodac") >= 0 { fail("bin/oodac fallback"); }
+    if str_index_of(t, "ooda/oodac_bin") >= 0 { fail("ooda/oodac_bin fallback"); }
+    println("compiler_token_proof: PASSED");
+}

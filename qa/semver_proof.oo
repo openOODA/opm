@@ -10,7 +10,7 @@
 //   3. Compound `>=2.0.0 <3.0.0` AND-satisfies; `^1.2.0,>=2.0.0,<3.0.0` is the canonical compound.
 //   4. `*` and empty spec still pass.
 
-import "core/core.oo";
+import "core/semver.oo";
 
 fn fail(msg: String) {
     println("FAIL " + msg);

@@ -2,7 +2,7 @@
 //
 // Logline: Write the local `ooda.pkg` manifest + payload to a registry directory tree. Sign with HMAC. Default registry is `.ooda-cache/registry`; `--to <dir>` overrides.
 //
-// Setup: The runtime has no `fetch_put` primitive, so this ships a local-registry simulation. The user can `rsync` the registry to a real server, or extend this dispatcher to use `sys_exec` + `curl --upload-file` when the runtime gains a PUT path.
+// Setup: Local tree only. No network. rest[0] is not skipped; --to is the first flag.
 //
 // Beats:
 //   1. Read `ooda.pkg`. Refuse if missing or empty.
@@ -10,45 +10,15 @@
 //   3. Create `<root>/<name>/<version>/` and write `ooda.pkg`, the payload, and a signed `index`.
 //   4. `--json` prints the path; otherwise text.
 
-import "cmd_io.oo";
+import "argv.oo";
+import "slurp.oo";
 import "resolve/ANCHOR.oo";
 import "sign/ANCHOR.oo";
 import "store/ANCHOR.oo";
 
-fn pm_mkdir_p(fr: &FsReadCap, fw: &FsWriteCap, abs: String) -> Bool {
-    if path_exists(fr, abs) { return true; }
-    // Walk the path and create each missing parent. The runtime's `mkdir` does not create parents.
-    let n: Int = chars_len(abs);
-    let mut i: Int = 1;
-    while i < n {
-        if char_at(abs, i) == "/" {
-            let prefix: String = str_slice(abs, 0, i);
-            if !path_exists(fr, prefix) {
-                if !pm_mkdir(fr, fw, prefix) { return false; }
-            }
-        }
-        i = i + 1;
-    }
-    return pm_mkdir(fr, fw, abs);
-}
-
-pub fn run_ooda_pm_publish(fr: &FsReadCap, fw: &FsWriteCap, proc: &ProcessCap, args: List[String]) {
-    let mut to_dir: String = ".ooda-cache/registry";
-    let mut json: Bool = false;
-    let mut i: Int = 1;
-    while i < list_len(args) {
-        let a: String = list_get(args, i);
-        if a == "--to" {
-            if i + 1 < list_len(args) {
-                to_dir = list_get(args, i + 1);
-                i = i + 1;
-            }
-        } else if a == "--json" {
-            json = true;
-        }
-        i = i + 1;
-    }
-
+pub fn run_ooda_pm_publish(fr: &FsReadCap, fw: &FsWriteCap, proc: &ProcessCap, env: &EnvCap, args: List[String]) {
+    let to_dir: String = pm_publish_to(args);
+    let json: Bool = pm_publish_json(args);
     let pkg_path: String = "ooda.pkg";
     let man: String = pm_slurp(fr, pkg_path);
     if man == "" {
@@ -67,9 +37,11 @@ pub fn run_ooda_pm_publish(fr: &FsReadCap, fw: &FsWriteCap, proc: &ProcessCap, a
         println("ERR\tpm publish\tmissing payload " + payload_name);
         process_exit(1);
     }
-
-    // Resolve the registry root to an absolute path. The runtime's `path_under_writedir` check rejects relative paths.
-    let root: String = pm_root_abs(fr, proc);
+    let root: String = pm_root_abs(env);
+    if root == "" {
+        println("ERR\tpm publish\tOODA_FS_WRITEDIR required");
+        process_exit(1);
+    }
     let mut abs_root: String = root;
     if to_dir == "" || str_slice(to_dir, 0, 1) != "/" {
         abs_root = root + "/" + to_dir;
@@ -104,5 +76,6 @@ pub fn run_ooda_pm_publish(fr: &FsReadCap, fw: &FsWriteCap, proc: &ProcessCap, a
         println("{\"ok\":true,\"path\":\"" + pkg_dir + "\",\"name\":\"" + name + "\",\"version\":\"" + ver + "\"}");
         return;
     }
-    println("ooda pkg publish: wrote " + pkg_dir + " (name=" + name + ", version=" + ver + ")");
+    println("opm publish: wrote " + pkg_dir + " (name=" + name + ", version=" + ver + ")");
+    let _p: &ProcessCap = proc;
 }

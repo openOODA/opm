@@ -1,13 +1,15 @@
 // # Opm Lockfile
 //
-// Logline: Lockfile format and the v2 pin/replace/override protocol.
+// Logline: One lock format: v2 header plus sorted package lines.
 //
-// Setup: Lockfile: v1 lock lines and v2 toolchain pin, replace, and override operations.
+// Setup: lock.oo is the line, sort, and hash layer.
+//        v2.oo is replace, override, and local git pin on the same file.
+//        There is not a second lock format.
 //
 // Beats:
-//   1. Opm Lockfile — primary purpose.
-//   2. Fail-closed: every function returns Result[T, E] or asserts a precondition.
-//   3. Granular capability tokens (per RFC-0001); no broad caps.
+//   1. Package lines are name@version#sha256#commit#CapName.
+//   2. Header is v2 / oodac# / std#.
+//   3. Fail-closed: every function returns Result[T, E] or asserts a precondition.
 
 import "lock.oo";
 import "v2.oo";

@@ -1,17 +1,16 @@
 // # Test Opm — Run Self-Tests
 //
-// Logline: Typecheck each qa/ break-test driver through oodac check.
-//          Fail closed if OODA_COMPILER is unset or any driver fails.
+// Logline: Run each qa/ driver through oodac run. Fail closed. Double-run.
 //
-// Setup: Run from the opm repo root. Requires &ProcessCap, &FsReadCap,
-//        and &EnvCap. OODA_COMPILER must point at oodac. No PATH hunt.
-//        oodac run currently duplicate-links spliced imports; check is
-//        the live gate until that emit bug is closed in oodac.
+// Setup: Run from the opm repo root. Requires ProcessCap, FsReadCap, EnvCap.
+//        OODA_COMPILER must point at oodac. No PATH hunt.
 //
 // Beats:
 //   1. Resolve oodac from OODA_COMPILER only.
-//   2. Invoke oodac check on each of the 8 qa/ drivers.
-//   3. Return Err on the first non-zero check.
+//   2. oodac run each driver twice. Fail on the first Err.
+//   3. Registry proofs in registry/ also run.
+
+import "std/fs/process/env.oo";
 
 fn find_oodac(fs: &FsReadCap, env: &EnvCap) -> String {
     let r: Result[String, String] = env_get(env, "OODA_COMPILER");
@@ -27,29 +26,48 @@ fn find_oodac(fs: &FsReadCap, env: &EnvCap) -> String {
     return p;
 }
 
+fn run_one(p: &ProcessCap, oodac: String, path: String) -> Bool {
+    println("  Running " + path);
+    let r1: Result[String, String] = sys_exec(p, oodac, "run", path);
+    if r1.is_err() {
+        let err: String = match r1 { Ok(_) => "", Err(e) => e };
+        println(err);
+        return false;
+    }
+    let out1: String = match r1 { Ok(s) => s, Err(_) => "" };
+    println(out1);
+    let r2: Result[String, String] = sys_exec(p, oodac, "run", path);
+    if r2.is_err() {
+        let err2: String = match r2 { Ok(_) => "", Err(e) => e };
+        println(err2);
+        return false;
+    }
+    let out2: String = match r2 { Ok(s) => s, Err(_) => "" };
+    if str_index_of(out1, "FAIL ") >= 0 || str_index_of(out2, "FAIL ") >= 0 {
+        println("ERR\ttest\tFAIL in stdout " + path);
+        return false;
+    }
+    return true;
+}
+
 pub fn main(p: &ProcessCap, fs_r: &FsReadCap, env: &EnvCap, args: List[String]) -> Result[Int, String] {
     let oodac: String = find_oodac(fs_r, env);
     let drivers: List[String] = [
-        "today_proof", "tomorrow_proof", "extract_proof",
-        "ingest_proof", "init_proof", "lock_format_proof",
-        "pubgrub_proof", "semver_proof"
+        "qa/today_proof.oo", "qa/tomorrow_proof.oo", "qa/extract_proof.oo",
+        "qa/ingest_proof.oo", "qa/init_proof.oo", "qa/lock_format_proof.oo",
+        "qa/pubgrub_proof.oo", "qa/semver_proof.oo",
+        "qa/argv_init_proof.oo", "qa/argv_bot_proof.oo", "qa/argv_publish_proof.oo",
+        "qa/help_surface_proof.oo", "qa/sbom_dispatch_proof.oo",
+        "qa/compiler_token_proof.oo", "qa/no_shell_proof.oo",
+        "registry/git_ingest_proof.oo", "registry/reg_proof.oo"
     ];
-    let mut passed: Int = 0;
     let mut failed: Int = 0;
     let mut i: Int = 0;
     while i < list_len(drivers) {
-        let d: String = list_get(drivers, i);
-        let path: String = "qa/" + d + ".oo";
-        println("  Running " + path);
-        let r: Result[String, String] = sys_exec(p, oodac, "check", path);
-        if r.is_ok() {
-            let out: String = match r { Ok(s) => s, Err(_) => "" };
-            println(out);
-            passed = passed + 1;
-        } else {
-            let err: String = match r { Ok(_) => "", Err(e) => e };
-            println(err);
+        let path: String = list_get(drivers, i);
+        if !run_one(p, oodac, path) {
             failed = failed + 1;
+            return Err("self-test failures");
         }
         i = i + 1;
     }
@@ -58,5 +76,6 @@ pub fn main(p: &ProcessCap, fs_r: &FsReadCap, env: &EnvCap, args: List[String]) 
         return Err("self-test failures");
     }
     println("self-test passed");
+    let _a: Int = list_len(args);
     return Ok(0);
 }

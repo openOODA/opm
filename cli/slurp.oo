@@ -1,68 +1,13 @@
-// # Shared PM command helpers
+// # File slurp, lock tokens, JSON escape
 //
-// Logline: Parse argv, slurp files, split lock fields, and escape JSON.
+// Logline: Read files, split lock fields, and escape JSON. No HTTP.
 //
-// Setup: FsCap. No HTTP. No org std.
+// Setup: FsReadCap for slurp. FsWriteCap for place. Missing file is empty, not a throw.
 //
 // Beats:
-//   1. Walk flags, options, and the first package name.
-//   2. Split name@version#sha#caps lock fields.
-//   3. Structured ERR and JSON string escape.
-
-pub fn pm_die(cmd: String, msg: String) {
-    println("ERR\t" + cmd + "\t" + msg);
-    process_exit(2);
-}
-
-pub fn pm_flag(args: List[String], name: String) -> Bool {
-    let mut i: Int = 0;
-    while i < list_len(args) {
-        if list_get(args, i) == name {
-            return true;
-        }
-        i = i + 1;
-    }
-    return false;
-}
-
-pub fn pm_opt(args: List[String], name: String) -> String {
-    let mut i: Int = 0;
-    while i < list_len(args) {
-        if list_get(args, i) == name {
-            if i + 1 < list_len(args) {
-                return list_get(args, i + 1);
-            }
-        }
-        i = i + 1;
-    }
-    return "";
-}
-
-fn pm_is_verb(a: String) -> Bool {
-    if a == "add" || a == "pkg" || a == "pm" { return true; }
-    if a == "remove" || a == "update" || a == "outdated" { return true; }
-    if a == "why" || a == "tree" || a == "vendor" || a == "clean" { return true; }
-    if a == "audit" || a == "sbom" || a == "pack" || a == "ingest" || a == "launch" { return true; }
-    if a == "search" || a == "registry" { return true; }
-    return false;
-}
-
-pub fn pm_arg_name(args: List[String]) -> String {
-    let mut i: Int = 0;
-    while i < list_len(args) {
-        let a: String = list_get(args, i);
-        if a == "--vendor" || a == "--from" || a == "--path" || a == "--registry" {
-            i = i + 2;
-        } else if pm_is_verb(a) {
-            i = i + 1;
-        } else if str_slice(a, 0, 1) != "-" {
-            return a;
-        } else {
-            i = i + 1;
-        }
-    }
-    return "";
-}
+//   1. slurp returns "" on miss. place writes or returns false.
+//   2. Lock tokens are name@version#sha#commit#cap.
+//   3. JSON string escape for --json lines.
 
 pub fn pm_slurp(fr: &FsReadCap, path: String) -> String {
     if !path_exists(fr, path) {

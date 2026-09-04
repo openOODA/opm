@@ -1,40 +1,34 @@
 // # Opm Main — Package Entry Point
 //
-// Logline: Parse argv under the opm binary and dispatch to the right run_ooda_pm_* handler. This is the standalone entry.
+// Logline: Parse argv under the opm binary and dispatch to the matching run_ooda_pm_* handler.
 //
-// Setup: argv[0] is the subcommand. argv[1..] are its args. Unknown subcommand is ERR exit 2. The 19 subcommands correspond to the 19 cmd_*.oo files in this dir.
+// Setup: argv[0] is the subcommand. argv[1..] are its args. Unknown subcommand is ERR exit 2.
 //
 // Beats:
 //   1. Parse the subcommand from argv[0].
-//   2. Match the subcommand to the 19 known handlers (add, audit, ingest, etc.).
-//   3. Pass argv[1..] plus the required capability tokens (FsReadCap, FsWriteCap, ProcessCap, EnvCap) to the handler.
-//   4. Unknown subcommand prints help and exits 2.
+//   2. Match it to a live handler. Help lists only those names.
+//   3. Pass rest plus FsRead, FsWrite, Process, Env. Unknown prints help and exits 2.
 
+import "argv.oo";
 import "cmd_add.oo";
 import "cmd_audit.oo";
 import "cmd_bot.oo";
-import "cmd_cat.oo";
-import "cmd_git.oo";
 import "cmd_ingest.oo";
 import "cmd_init.oo";
-import "cmd_io.oo";
 import "cmd_launch.oo";
-import "cmd_more.oo";
 import "cmd_ops.oo";
 import "cmd_pack.oo";
-import "cmd_pick.oo";
 import "cmd_pkg.oo";
 import "cmd_publish.oo";
-import "cmd_reg.oo";
 import "cmd_regs.oo";
 import "cmd_search.oo";
 import "cmd_tree.oo";
 
 fn print_help() {
-    println("opm — openOODA package manager\nusage: opm <subcommand> [args]\n\nsubcommands:\n  add, audit, bot, cat, git, ingest, init, io, launch, more,\n  ops (remove|update|outdated|why), pack, pick, pkg, publish,\n  reg, regs, search, tree (tree|vendor|clean)");
+    println(pm_help_text());
 }
 
-pub fn main(fr: &FsReadCap, fw: &FsWriteCap, proc: &ProcessCap, env: &EnvCap, args: List[String]) -> Result<Int, String] {
+pub fn main(fr: &FsReadCap, fw: &FsWriteCap, proc: &ProcessCap, env: &EnvCap, args: List[String]) -> Result[Int, String] {
     if list_len(args) < 1 {
         print_help();
         return Err("opm: missing subcommand");
@@ -42,52 +36,26 @@ pub fn main(fr: &FsReadCap, fw: &FsWriteCap, proc: &ProcessCap, env: &EnvCap, ar
     let sub: String = list_get(args, 0);
     let rest: List[String] = list_slice(args, 1, list_len(args));
 
-    // add
-    if sub == "add" { run_ooda_pm_add(fr, fw, proc, rest); return Ok(0); }
-
-    // audit (also exposes sbom)
-    if sub == "audit" || sub == "sbom" { run_ooda_pm_audit(fr, proc, rest); return Ok(0); }
-
-    // bot
-    if sub == "bot" { cmd_pm_bot_run(fr, proc, rest); return Ok(0); }
-
-    // ingest
-    if sub == "ingest" { run_ooda_pm_ingest(fr, fw, proc, rest); return Ok(0); }
-
-    // init
-    if sub == "init" { run_ooda_pm_init(fr, fw, proc, rest); return Ok(0); }
-
-    // launch
+    if sub == "add" { run_ooda_pm_add(fr, fw, proc, env, rest); return Ok(0); }
+    if sub == "audit" { run_ooda_pm_audit(fr, proc, env, rest); return Ok(0); }
+    if sub == "sbom" { run_ooda_pm_sbom(fr, proc, env, rest); return Ok(0); }
+    if sub == "bot" { cmd_pm_bot_run(fr, fw, proc, env, rest); return Ok(0); }
+    if sub == "ingest" { run_ooda_pm_ingest(fr, fw, proc, env, rest); return Ok(0); }
+    if sub == "init" { run_ooda_pm_init(fr, fw, proc, env, rest); return Ok(0); }
     if sub == "launch" { run_ooda_pm_launch(fr, fw, proc, env, rest); return Ok(0); }
+    if sub == "remove" { run_ooda_pm_remove(fr, fw, proc, env, rest); return Ok(0); }
+    if sub == "update" { run_ooda_pm_update(fr, fw, proc, env, rest); return Ok(0); }
+    if sub == "outdated" { run_ooda_pm_outdated(fr, proc, env, rest); return Ok(0); }
+    if sub == "why" { run_ooda_pm_why(fr, proc, env, rest); return Ok(0); }
+    if sub == "pack" { run_ooda_pm_pack(fr, fw, proc, env, rest); return Ok(0); }
+    if sub == "pkg" { run_ooda_pm_pkg(fr, proc, env, rest); return Ok(0); }
+    if sub == "publish" { run_ooda_pm_publish(fr, fw, proc, env, rest); return Ok(0); }
+    if sub == "regs" || sub == "reg" || sub == "registry" { run_ooda_pm_regs(fr, fw, proc, env, rest); return Ok(0); }
+    if sub == "search" { run_ooda_pm_search(fr, fw, proc, env, rest); return Ok(0); }
+    if sub == "tree" { run_ooda_pm_tree(fr, proc, env, rest); return Ok(0); }
+    if sub == "vendor" { run_ooda_pm_vendor(fr, fw, proc, env, rest); return Ok(0); }
+    if sub == "clean" { run_ooda_pm_clean(fr, fw, proc, env, rest); return Ok(0); }
 
-    // ops subcommands
-    if sub == "remove" { run_ooda_pm_remove(fr, fw, proc, rest); return Ok(0); }
-    if sub == "update" { run_ooda_pm_update(fr, fw, proc, rest); return Ok(0); }
-    if sub == "outdated" { run_ooda_pm_outdated(fr, proc, rest); return Ok(0); }
-    if sub == "why" { run_ooda_pm_why(fr, proc, rest); return Ok(0); }
-
-    // pack
-    if sub == "pack" { run_ooda_pm_pack(fr, fw, proc, rest); return Ok(0); }
-
-    // pkg
-    if sub == "pkg" { run_ooda_pm_pkg(fr, proc, rest); return Ok(0); }
-
-    // publish
-    if sub == "publish" { run_ooda_pm_publish(fr, fw, proc, rest); return Ok(0); }
-
-    // regs (the reg subdir's wrapper)
-    if sub == "regs" { run_ooda_pm_regs(fr, fw, proc, rest); return Ok(0); }
-    if sub == "reg" || sub == "registry" { run_ooda_pm_regs(fr, fw, proc, rest); return Ok(0); }
-
-    // search
-    if sub == "search" { run_ooda_pm_search(fr, proc, rest); return Ok(0); }
-
-    // tree (also vendor, clean)
-    if sub == "tree" { run_ooda_pm_tree(fr, proc, rest); return Ok(0); }
-    if sub == "vendor" { run_ooda_pm_vendor(fr, fw, proc, rest); return Ok(0); }
-    if sub == "clean" { run_ooda_pm_clean(fr, fw, proc, rest); return Ok(0); }
-
-    // unknown
     print_help();
     return Err("opm: unknown subcommand: " + sub);
 }

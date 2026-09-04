@@ -1,13 +1,13 @@
-// # File-backed package manager core
+// # SemVer pick and CAS id
 //
-// Logline: Name, SemVer, caps, SHA-256 lock, and catalog resolve with no network.
+// Logline: Parse SemVer ranges and hash payload bytes. No network.
 //
 // Setup: String catalog lines name|version|caps|deps. SHA-256 is crypto_sha256_internal.
 //
 // Beats:
-//   1. Refuse traversal names. Refuse child caps the parent did not grant.
-//   2. Pick the highest SemVer that satisfies = ^ ~ * >= <= > < and compound (a b means AND of all parts).
-//   3. Lock hash matches on the same payload and differs when tampered.
+//   1. Pick the highest SemVer that satisfies = ^ ~ * >= <= > < and compound AND.
+//   2. CAS id is the payload hash.
+//   3. Lock hash aliases the lock digest helpers.
 
 import "policy/caps.oo";
 import "lock/lock.oo";
@@ -148,7 +148,6 @@ pub fn pm_semver_sat(actual: String, spec: String) -> Bool {
     if spec == "*" || spec == "" {
         return true;
     }
-    // Compound: split on space and ',' then AND all parts. Empty parts are skipped.
     let n: Int = chars_len(spec);
     let mut start: Int = 0;
     let mut i: Int = 0;

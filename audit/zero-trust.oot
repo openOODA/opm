@@ -1,0 +1,111 @@
+# AUDIT — opm zero-trust (power-law 20%)
+File: opm/audit/zero-trust.oot
+
+Scope: this repo only. Date: 2026-09-04. Tag at audit: v2.11.1.
+Working tree was clean on main.
+
+## 1. Verdict
+
+opm is a real package manager, not theater. The 20% that works is
+resolve, lock, caps, and the qa proofs. The CLI wrapper is dishonest:
+help lists commands that main.oo never dispatches, and several handlers
+still skip the first rest argument.
+
+CI only auto-releases. scripts/test uses oodac check; if check exits 0
+on ERR (current oodac), proofs can fake-pass.
+
+## 2. Keep (the product)
+
+- resolve/resolve.oo, graph.oo, pubgrub.oo
+- core name/semver/caps; lock/; sign/; policy/caps
+- qa proofs: today, pubgrub, semver, extract, ingest (they assert)
+
+This is the unique move: resolve that refuses extra caps. Do not grow
+more subcommands until dispatch is honest.
+
+## 3. Kill or wire (dead / lying)
+
+Help lists cat, git, io, more, pick. main.oo does not dispatch them.
+Those files are helpers, not commands. Help lies.
+
+cmd_more.oo is a compat barrel ("older cmd_pm_more imports still resolve").
+Kill it. Do not deprecate.
+
+cli/host_run.oo, host_build.oo, find_compiler.oo are copies of old ooda
+build code. They still:
+- fall through to bin/oodac and ooda/oodac_bin
+- run sys_exec(sh, -c)
+- export unused eval/repl
+
+opm is not the compiler CLI. Kill the copies. Launch payloads through
+OODA_COMPILER only, same as scripts/.
+
+run_ooda_eval / run_ooda_repl: no main branch.
+
+run_ooda_pm_sbom exists; main maps `sbom` to run_ooda_pm_audit, not sbom.
+
+## 4. Argv (P0)
+
+main.oo passes rest. Handlers that start at index 1 or 2 skip the payload:
+
+- cmd_init.oo starts at i=2. `opm init myapp` becomes name "pkg".
+- cmd_bot.oo and cmd_publish.oo start at i=1.
+
+pm_arg_name in cmd_io.oo skips verb words. That is safer. Use it
+everywhere. Do not skip by magic index.
+
+## 5. Shell and ambient authority (P0 — Red 4)
+
+sh -c in: host_run.oo, cmd_git.oo (git clone), cmd_reg.oo (curl +
+minisign via command -v), cmd_bot.oo, registry/regs.oo.
+
+cmd_reg.oo Setup says curl under SysCap. The function takes ProcessCap
+and shells out. PATH hunt for minisign is a fallback.
+
+No NetCap on HTTPS fetch. Fail closed: require an explicit fetch
+primitive or refuse network.
+
+## 6. Names vs function
+
+| File | Name claims | File does |
+|---|---|---|
+| core/core.oo | banned generic name | semver + catalog resolve |
+| cmd_cat.oo | cat command | catalog loader for add |
+| cmd_io.oo | io command | argv/slurp helpers |
+| cmd_more.oo | more command | re-export barrel |
+| cmd_pick.oo | pick command | vendor picker; falls back to ../registry |
+| host_build.oo | ooda build | compiler flags inside a package manager |
+| docs/INSTALL.oot | VERSION file at repo root | RFC-0006 banned VERSION |
+
+cmd_add.oo is 256 lines. Next edit must split it.
+
+.github/workflows has no ANCHOR.oo.
+
+opm/std is a symlink to ../std. Convenient; also a topology leak.
+
+## 7. Ocaps
+
+main takes FsRead, FsWrite, Process, Env. HTTPS and git use ProcessCap
+as a stand-in for NetCap. That is ambient network.
+
+cmd_init comments say SysCap; the signature has ProcessCap.
+
+init manifest still pins min_pin=v0.210.0.
+
+## 8. Tests
+
+qa/ proofs look real. scripts/test.oo runs oodac check, not oodac run,
+and treats is_ok as pass. Wire run once oodac check exits 1 on ERR.
+
+CI: auto-release only. No test job.
+
+## 9. Next five (this repo only)
+
+1. Fix argv: init/bot/publish read rest[0]. Hostile probes first.
+2. Make help match main.oo. Kill cmd_more.oo.
+3. Kill find_compiler fallbacks and host_run sh -c. OODA_COMPILER only.
+4. Stop sh -c git/curl/minisign. Refuse network without a real NetCap path.
+5. Split cmd_add.oo. Rename core.oo.
+
+Do not start more subcommands until 1-3 land.
+Do not leave this repo for ooda/ or oodac/ without asking.

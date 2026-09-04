@@ -1,0 +1,26 @@
+// # Explicit tool tokens
+//
+// Logline: Resolve a host binary from one OODA_ env key. No PATH. No HOME.
+//
+// Setup: Same contract as OODA_COMPILER. Missing or empty is Err.
+//
+// Beats:
+//   1. env_get the key. Empty is Err.
+//   2. path must exist under FsReadCap.
+//   3. Callers pass the Result. No hunt.
+
+pub fn pm_env_token(env: &EnvCap, key: String) -> String {
+    let r: Result[String, String] = env_get(env, key);
+    return match r { Ok(s) => s, Err(_) => "" };
+}
+
+pub fn pm_tool_path(fs: &FsReadCap, env: &EnvCap, key: String) -> Result[String, String] {
+    let p: String = pm_env_token(env, key);
+    if p == "" {
+        return Err(key + " required");
+    }
+    if !path_exists(fs, p) {
+        return Err(key + " missing: " + p);
+    }
+    return Ok(p);
+}

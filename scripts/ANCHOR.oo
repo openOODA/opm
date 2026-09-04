@@ -3,11 +3,12 @@
 // Logline: Index of the 4 build entry points for opm.
 //
 // Setup: Each script has a single purpose. They compose: build -> test -> verify -> release.
+//        .github/ is release wiring, not product. It is outside api_surface=10.
 //
 // Beats:
 //   1. build.oo — oodac check on each public ANCHOR.oo and cli/main.oo.
-//   2. test.oo — oodac check on all 8 break-test drivers in qa/.
-//   3. verify.oo — refuse VERSION; assert 10 public subdirs have ANCHOR.oo.
+//   2. test.oo — oodac run on qa/ drivers and registry proofs. Double-run.
+//   3. verify.oo — refuse VERSION, cmd_more, host_build, core.oo, sh -c; assert 10 ANCHOR.oo.
 //   4. release.oo — verify + test. Push to main is the release.
 
 import "build.oo";

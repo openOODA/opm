@@ -5,11 +5,11 @@
 // Setup: Per-package docs (RFC-0005). They travel with the package when opm ships independently.
 //
 // Beats:
-//   1. INSTALL.oot — how to install opm and how it relates to the rest of the toolchain.
+//   1. INSTALL.oot — how to run opm. Git tag. No VERSION file.
 //   2. versioning.oot — git-tag version, api_surface=10, no VERSION file.
-//   3. cli.oot — user-facing CLI reference for `ooda opm <subcommand>`.
-//   4. MANIFEST.oot — the package manifest format: fields, types, required vs optional, examples.
-//   5. REGISTRY.oot — how the openOODA registry works: CAS hashes, capability declarations, search, install.
+//   3. cli.oot — user-facing CLI reference for `opm <subcommand>`.
+//   4. MANIFEST.oot — the package manifest format.
+//   5. REGISTRY.oot — CAS hashes, capability declarations, search, install.
 
 import "INSTALL.oot";
 import "versioning.oot";

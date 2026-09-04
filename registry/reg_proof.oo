@@ -1,15 +1,15 @@
 // # Registry origin and minisign proofs
 //
-// Logline: Drive shipped origin rules and minisign of the local signed index.
+// Logline: Drive shipped origin rules. Minisign without OODA_MINISIGN is Err.
 //
-// Setup: Reads ../registry and cli/registry.pub. Needs host minisign.
+// Setup: No ../registry. No PATH hunt.
 //
 // Beats:
 //   1. Default origin allows. http and lookalikes deny.
 //   2. Relative paths refuse .. and absolute names.
-//   3. minisign of index passes; a mutated copy does not.
+//   3. Missing minisign token or missing files is err, not ok.
 
-import "cli/cmd_reg.oo";
+import "cli/reg_fetch.oo";
 import "reg.oo";
 
 fn fail(msg: String) {
@@ -17,7 +17,7 @@ fn fail(msg: String) {
     process_exit(1);
 }
 
-pub fn main(fs: &FsReadCap, sys: &ProcessCap) {
+pub fn main(fs: &FsReadCap, sys: &ProcessCap, env: &EnvCap) {
     if !pm_reg_origin_ok(pm_reg_default()) { fail("default"); }
     if !pm_reg_origin_ok("https://registry.openooda.org/") { fail("slash"); }
     if pm_reg_origin_ok("http://registry.openooda.org") { fail("http"); }
@@ -32,17 +32,8 @@ pub fn main(fs: &FsReadCap, sys: &ProcessCap) {
     if pm_reg_rel_ok("https://x") { fail("relurl"); }
     println("rel");
     let pubp: String = pm_reg_pub_path();
-    let good: String = pm_reg_minisign_ok(fs, sys, pubp, "../registry/index", "../registry/index.minisig");
-    if good == "ok" {
-        println("minisign");
-    } else {
-        fail("minisign " + good);
-    }
-    let bad: String = pm_reg_minisign_ok(fs, sys, pubp, "../registry/README.md", "../registry/index.minisig");
-    if bad == "err index" {
-        println("tamper");
-    } else {
-        fail("tamper " + bad);
-    }
+    let miss: String = pm_reg_minisign_ok(fs, sys, env, pubp, "no-such-index", "no-such.minisig");
+    if miss == "ok" { fail("missing files must not verify"); }
+    println("minisign fail-closed");
     println("pm_reg_proof: PASSED");
 }

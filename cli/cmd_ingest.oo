@@ -2,16 +2,17 @@
 //
 // Logline: Read a dir, local git, or hashed blob recipe and lock the payload.
 //
-// Setup: --from DIR. File-backed only. Reuses store, pin, policy. Not ooda add.
+// Setup: --from DIR. File-backed only. Git clone needs OODA_GIT. Not opm add.
 //
 // Beats:
 //   1. Refuse HTTP, bad names, extra caps, yank, and license misses.
 //   2. Verify sha256 and local git commit. Write CAS, wrapper, and lock v2.
 //   3. --json prints a machine object. Wrapper does not claim transmutation.
 
-import "cmd_cat.oo";
-import "cmd_git.oo";
-import "cmd_io.oo";
+import "catalog.oo";
+import "git_clone.oo";
+import "argv.oo";
+import "slurp.oo";
 import "policy/caps.oo";
 import "store/extract.oo";
 import "lock/ANCHOR.oo";
@@ -24,7 +25,7 @@ import "lock/v2.oo";
 
 fn ing_die(msg: String) {
     println("ERR\tpm\t" + msg);
-    println("ooda ingest: " + msg);
+    println("opm ingest: " + msg);
     process_exit(2);
 }
 
@@ -36,7 +37,7 @@ fn ing_recipe_dir(args: List[String]) -> String {
     return from;
 }
 
-pub fn run_ooda_pm_ingest(fr: &FsReadCap, fw: &FsWriteCap, proc: &ProcessCap, args: List[String]) {
+pub fn run_ooda_pm_ingest(fr: &FsReadCap, fw: &FsWriteCap, proc: &ProcessCap, env: &EnvCap, args: List[String]) {
     if pm_flag(args, "--registry") || pm_is_http(pm_opt(args, "--vendor")) || pm_is_http(pm_opt(args, "--from")) {
         ing_die("file vendor required");
     }
@@ -74,14 +75,14 @@ pub fn run_ooda_pm_ingest(fr: &FsReadCap, fw: &FsWriteCap, proc: &ProcessCap, ar
     if !pm_license_ok(pm_kv(pkg, "licenses"), pm_kv(man, "license")) {
         ing_die("license");
     }
-    let ydir: String = pm_first_nonempty(pm_opt(args, "--vendor"), "../registry");
+    let ydir: String = pm_pick_vendor(args);
     if pm_is_http(ydir) {
         ing_die("file vendor required");
     }
     if pm_yanked(pm_slurp(fr, ydir + "/yank"), name, ver) {
         ing_die("yank " + name);
     }
-    let root: String = pm_root_abs(fr, proc);
+    let root: String = pm_root_abs(env);
     let mut payp: String = rec + "/" + pn;
     if origin == "git" {
         if path_exists(fr, rec + "/commit") {
@@ -91,14 +92,12 @@ pub fn run_ooda_pm_ingest(fr: &FsReadCap, fw: &FsWriteCap, proc: &ProcessCap, ar
         } else {
             let url: String = pm_kv(man, "url");
             let _m: Bool = pm_ensure_mod(fr, fw, root);
-            let mk: Result[Void, String] = oo_fs_mkdir(fw, root + "/.ooda_modules/git");
-            if mk.is_err() {
-                if !path_exists(fr, root + "/.ooda_modules/git") {
-                    ing_die("git");
-                }
+            let gdir: String = root + "/.ooda_modules/git";
+            if !pm_mkdir_p(fr, fw, gdir) {
+                ing_die("git");
             }
-            let dest: String = root + "/.ooda_modules/git/" + name;
-            let cr: String = pm_git_clone_head(fr, proc, url, pm_recipe_commit_want(man), dest);
+            let dest: String = gdir + "/" + name;
+            let cr: String = pm_git_clone_head(fr, proc, env, url, pm_recipe_commit_want(man), dest);
             if cr == "ok" {
                 payp = dest + "/" + pn;
             } else {
@@ -116,7 +115,7 @@ pub fn run_ooda_pm_ingest(fr: &FsReadCap, fw: &FsWriteCap, proc: &ProcessCap, ar
     let names: String = pm_ar_walk(raw);
     let walk: String = pm_deb_extract(raw);
     let mut payb: String = raw;
-    if origin == "deb" {
+    if origin == "deb" || origin == "rpm" {
         if str_slice(names, 0, 8) == "err path" {
             ing_die("path");
         }
@@ -126,20 +125,7 @@ pub fn run_ooda_pm_ingest(fr: &FsReadCap, fw: &FsWriteCap, proc: &ProcessCap, ar
         if str_slice(walk, 0, 3) == "ok " {
             payb = str_slice(walk, 3, chars_len(walk));
         } else {
-            println("ooda ingest: blob-only");
-        }
-    }
-    if origin == "rpm" {
-        if str_slice(names, 0, 8) == "err path" {
-            ing_die("path");
-        }
-        if str_slice(walk, 0, 8) == "err path" {
-            ing_die("path");
-        }
-        if str_slice(walk, 0, 3) == "ok " {
-            payb = str_slice(walk, 3, chars_len(walk));
-        } else {
-            println("ooda ingest: blob-only");
+            println("opm ingest: blob-only");
         }
     }
     let live: String = pm_cas_id(payb);
@@ -189,5 +175,5 @@ pub fn run_ooda_pm_ingest(fr: &FsReadCap, fw: &FsWriteCap, proc: &ProcessCap, ar
         println("{\"ok\":true,\"cmd\":\"ingest\",\"packages\":" + pm_lock_json(acc) + "}");
         return;
     }
-    println("ooda ingest: installed " + name + " cas=" + live);
+    println("opm ingest: installed " + name + " cas=" + live);
 }

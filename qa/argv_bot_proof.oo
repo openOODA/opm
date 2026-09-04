@@ -1,0 +1,27 @@
+// # Bot argv rest proof
+//
+// Logline: bot reads the target dir from rest[0], not index 1.
+//
+// Setup: Pure list checks. No file write.
+//
+// Beats:
+//   1. First positional is the target dir.
+//   2. --sign does not skip the dir.
+//   3. Empty rest defaults to registry.
+
+import "cli/argv.oo";
+
+fn fail(msg: String) {
+    println("FAIL " + msg);
+    process_exit(1);
+}
+
+pub fn main() {
+    if pm_bot_target(["mydir"]) != "mydir" { fail("mydir"); }
+    if pm_bot_target(["--sign", "mydir"]) != "mydir" { fail("sign then dir"); }
+    if pm_bot_target(["mydir", "--sign"]) != "mydir" { fail("dir then sign"); }
+    if pm_bot_target([]) != "registry" { fail("default"); }
+    if pm_bot_sign(["--sign"]) == false { fail("sign flag"); }
+    if pm_bot_sign([]) == true { fail("no sign"); }
+    println("argv_bot_proof: PASSED");
+}

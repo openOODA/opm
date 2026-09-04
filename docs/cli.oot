@@ -2,154 +2,77 @@
 
 File: opm/docs/cli.oot
 
-This document is the user-facing reference for the opm command set. opm is the openOODA package manager. It runs as a subcommand of the ooda toolchain. After install, the entry point is `ooda opm <subcommand>`.
+opm is the openOODA package manager. Entry is `opm <subcommand>`.
+`ooda` may wrap this; that wrap lives in the ooda repo.
 
 ## 1. Top-Level Command
 
-The dispatcher lives at `cli/opm/main.oo`. It parses `argv[0]` as the subcommand and routes the rest of `argv` plus the four root capability tokens (`&FsReadCap`, `&FsWriteCap`, `&ProcessCap`, `&EnvCap`) to the right `run_ooda_pm_*` handler. An unknown subcommand prints the help line and exits 2.
+The dispatcher is `cli/main.oo`. It parses `argv[0]` as the subcommand
+and routes rest plus `&FsReadCap`, `&FsWriteCap`, `&ProcessCap`,
+`&EnvCap` to the handler. Unknown subcommand prints help and exits 2.
 
-The full form is `ooda opm <subcommand> [args]`. Every subcommand is fail-closed. A bad name, a yanked version, a sha mismatch, a missing lock file, or a cap outside the allow-list is an error, not a warning.
+Every subcommand is fail-closed.
 
 ## 2. Subcommand Index
 
-opm exposes 19 user-facing subcommand handlers. Each one maps to a `cli/opm/cmd_*.oo` file.
+Live commands (help lists only these):
 
-| Subcommand | Purpose | Handler file |
+| Subcommand | Purpose | Handler |
 |---|---|---|
-| `add` | Resolve and install one or more packages | `cli/opm/cmd_add.oo` |
-| `audit` | Walk the lock against yank, advisory, and pins | `cli/opm/cmd_audit.oo` |
-| `bot` | Run the package bot script | `cli/opm/cmd_bot.oo` |
-| `cat` | Print a catalog row | `cli/opm/cmd_cat.oo` |
-| `git` | Resolve a local git pin to a commit | `cli/opm/cmd_git.oo` |
-| `ingest` | Lock a file-backed recipe (dir, git, deb, rpm, appimage) | `cli/opm/cmd_ingest.oo` |
-| `init` | Write a starter `ooda.pkg` manifest | `cli/opm/cmd_init.oo` |
-| `io` | File and stream helpers | `cli/opm/cmd_io.oo` |
-| `launch` | Re-verify and optionally run a pinned payload | `cli/opm/cmd_launch.oo` |
-| `more` | Print the full help text | `cli/opm/cmd_more.oo` |
-| `ops` | The lifecycle group (remove, update, outdated, why) | `cli/opm/cmd_ops.oo` |
-| `pack` | Build an offline pack from the lock | `cli/opm/cmd_pack.oo` |
-| `pick` | Pick the best version from a range | `cli/opm/cmd_pick.oo` |
-| `pkg` | Inspect or print the current `ooda.pkg` | `cli/opm/cmd_pkg.oo` |
-| `publish` | Write a manifest + payload to a local registry tree | `cli/opm/cmd_publish.oo` |
-| `reg` | Configure a registry URL (alias of `regs`) | `cli/opm/cmd_reg.oo` |
-| `regs` | Walk and list configured registries | `cli/opm/cmd_regs.oo` |
-| `search` | Search every added HTTPS store by substring | `cli/opm/cmd_search.oo` |
-| `tree` | Print a dep tree, the file vendor, or prune CAS | `cli/opm/cmd_tree.oo` |
+| `add` | Resolve and install packages | `cli/cmd_add.oo` |
+| `audit` | Walk the lock against yank, advisory, and pins | `cli/cmd_audit.oo` |
+| `sbom` | CycloneDX-lite from the lock | `cli/cmd_audit.oo` |
+| `bot` | Verify a registry folder and write catalog | `cli/cmd_bot.oo` |
+| `ingest` | Lock a file-backed recipe | `cli/cmd_ingest.oo` |
+| `init` | Write a starter `ooda.pkg` | `cli/cmd_init.oo` |
+| `launch` | Re-verify and optionally run a pinned payload | `cli/cmd_launch.oo` |
+| `remove` | Drop a package from the lock | `cli/cmd_ops.oo` |
+| `update` | Re-resolve and refresh the lock | `cli/cmd_ops.oo` |
+| `outdated` | List newer compatible versions | `cli/cmd_ops.oo` |
+| `why` | Print why a package is in the lock | `cli/cmd_ops.oo` |
+| `pack` | Build an offline pack from the lock | `cli/cmd_pack.oo` |
+| `pkg` | Print the current lock | `cli/cmd_pkg.oo` |
+| `publish` | Write manifest + payload to a local registry tree | `cli/cmd_publish.oo` |
+| `reg`, `registry`, `regs` | List or edit HTTPS stores | `cli/cmd_regs.oo` |
+| `search` | Search added stores by substring | `cli/cmd_search.oo` |
+| `tree` | Print a dep tree | `cli/cmd_tree.oo` |
+| `vendor` | List the file vendor | `cli/cmd_tree.oo` |
+| `clean` | Drop CAS dirs not in the lock | `cli/cmd_tree.oo` |
 
-## 3. Aliases and Short Forms
+Helpers (not commands): `catalog.oo`, `argv.oo`, `slurp.oo`,
+`vendor_pick.oo`, `git_clone.oo`, `reg_fetch.oo`.
 
-The dispatcher maps a few short names to the same handler. The aliases are:
+## 3. Aliases
 
 - `reg`, `registry` → `regs`
-- `sbom` → `audit`
-- `remove`, `update`, `outdated`, `why` → `ops` (with a sub-arg)
-- `vendor`, `clean` → `tree` (with a sub-arg)
+- `vendor`, `clean` are their own names, not tree flags
 
-Use the long form in scripts. The aliases exist for interactive shells.
+`sbom` is not an alias of `audit`.
 
 ## 4. Common Flags
 
-Every subcommand supports a small set of common flags:
+- `--json` — machine object instead of text
+- `--vendor <path>` — file vendor directory
+- `--from <dir>` — local directory recipe
 
-- `--json` — print a machine object instead of text. Every subcommand that produces output supports this.
-- `--vendor <path>` — point at a non-stock file vendor (a directory that has a `catalog`, `index`, `yank`, and `advisory` file).
-- `--from <dir>` — for `add` and `ingest`, install from a local directory recipe instead of the catalog.
+HTTPS fetch needs `OODA_CURL`. Git clone needs `OODA_GIT`.
+Minisign needs `OODA_MINISIGN`. Compiler spawn needs `OODA_COMPILER`.
+Writes need `OODA_FS_WRITEDIR`. Missing token is Err.
 
-Subcommand-specific flags are listed below.
+## 5. Notes
 
-## 5. Subcommand Reference
+`init [name]` reads the name from rest[0]. Default name is `pkg`.
 
-### 5.1 `ooda opm add <name> [--vendor path] [--from dir] [--pubgrub] [--json]`
+`launch <name> [--exec]` re-hashes CAS. `--exec` runs `oodac run`
+on the pinned `.oo`. `OODA_UNTRUSTED` refuses exec.
 
-Resolve a named package or all roots in `ooda.pkg`, then write to CAS, the file vendor, and a v2 lock. Refuses bad names, yanks, license misses, extra caps, sha drift, and missing pins. `--pubgrub` opts into the backtracking resolver (default is single-pass with the standard selector).
+`add` refuses extra caps. That is the unique move. Do not add
+helper names as user commands.
 
-### 5.2 `ooda opm audit [--json]` (alias: `sbom`)
+## 6. Exit Codes
 
-Read `.ooda_modules/lock`, the vendor `yank` and `advisory` files, and the std/oodac pins. Print any hit. With no hits, print `ooda audit: ok`. The `sbom` form prints a CycloneDX-lite object.
+- `0` — success
+- `1` — manifest or payload missing
+- `2` — bad name, yank, license, cap, sha, sig, or pin miss
 
-### 5.3 `ooda opm bot [args]`
-
-Run the package bot. The bot is a small script the user can ship beside their package. It runs with the same caps as `add` and prints structured output.
-
-### 5.4 `ooda opm cat <name>`
-
-Print the catalog row for a name: name, version, caps, deps, sha. Used to debug resolution.
-
-### 5.5 `ooda opm git <name>`
-
-Resolve a local git pin to its commit hash. Used by `ingest` to verify that a `git:name#commit` line has a matching local commit file.
-
-### 5.6 `ooda opm ingest --from <dir> [--json]`
-
-Read a dir, local git, or hashed blob recipe and lock the payload. Refuses HTTP, bad names, extra caps, yanks, and license misses. Verifies `sha256` and the local git commit. Writes CAS, an ingest wrapper, and a v2 lock.
-
-### 5.7 `ooda opm init [name] [--json]`
-
-Write a starter `ooda.pkg` manifest with name, version `0.1.0`, `min_pin`, empty `deps`, two starter caps, an MIT license, and empty signature fields. Refuses to overwrite an existing `ooda.pkg`.
-
-### 5.8 `ooda opm io [args]`
-
-File and stream helpers used by other subcommands. Not for direct end-user use; listed for completeness.
-
-### 5.9 `ooda opm launch <name> [--exec]`
-
-Re-hash the CAS blob. Refuse yank, extra caps, or sha drift. Without `--exec`, print the path to the pinned payload. With `--exec`, run the pinned `.oo` after the gate passes. If `OODA_UNTRUSTED` is set, exec is refused even with the flag.
-
-### 5.10 `ooda opm more`
-
-Print the full help text with every subcommand listed.
-
-### 5.11 `ooda opm ops <subaction> [args]`
-
-The lifecycle group. Subactions are:
-
-- `remove <name>` — drop a package from the lock and CAS.
-- `update [name]` — re-resolve and refresh the lock.
-- `outdated` — list packages with a newer compatible version.
-- `why <name>` — print why a package is in the lock (its parents).
-
-### 5.12 `ooda opm pack [name] [--json]`
-
-Build an offline pack. The default output dir is `.ooda_pack`. The pack contains the lock, a signed index, and one directory per locked package with its `manifest` and payload. No tar, no network.
-
-### 5.13 `ooda opm pick <name> <range>`
-
-Pick the highest version of a name that satisfies a range. Used by tools that want to test resolve without installing.
-
-### 5.14 `ooda opm pkg [--json]`
-
-Inspect or print the current `ooda.pkg`. Reads name, version, deps, caps, license, payload, and sig.
-
-### 5.15 `ooda opm publish [--to dir] [--json]`
-
-Write the local `ooda.pkg` manifest and the payload to a registry tree. The default is `.ooda-cache/registry`. `--to <dir>` overrides. Creates `<root>/<name>/<version>/`, writes `ooda.pkg`, the payload, and a signed `index`. HMAC signs the index. No network. The user can `rsync` the tree to a real server.
-
-### 5.16 `ooda opm reg <url>`, `ooda opm registry <url>`
-
-Add or list a registry URL. Alias of `regs`. Only HTTPS hosts are accepted. The default is `https://registry.openooda.org`.
-
-### 5.17 `ooda opm regs`
-
-Walk the configured store URLs and print their `name|version|caps|deps|sha` rows.
-
-### 5.18 `ooda opm search <query>`
-
-Fetch each catalog and print names that match the query (a substring of the package name). Empty query lists all.
-
-### 5.19 `ooda opm tree [--json]`, `ooda opm vendor`, `ooda opm clean`
-
-- `tree` walks the catalog deps with indent and prints the resolved tree. `--json` emits nodes.
-- `vendor` lists the file vendor: every name and version in `vendor/`.
-- `clean` removes CAS dirs whose sha is not in the current lock.
-
-## 6. Capability Requirements
-
-Every opm subcommand takes only the granular capability it needs. The minimum is one of `&FsReadCap`, `&FsWriteCap`, `&NetCap`, `&HttpCap`, or `&ProcessCap`. opm never requires broad caps (`&FsCap`, `&SysCap`). The dispatcher itself is the only place that takes `&EnvCap` (used to read `OODA_UNTRUSTED` and `OODA_FS_WRITEDIR`).
-
-## 7. Exit Codes
-
-- `0` — success.
-- `1` — manifest or payload missing.
-- `2` — bad name, yank, license, cap, sha, sig, or pin miss.
-
-The exact code per handler is listed in `cli/opm/cmd_*.oo`. Scripts should treat any non-zero as a hard fail.
+Scripts treat any non-zero as a hard fail.

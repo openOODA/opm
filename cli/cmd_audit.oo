@@ -6,25 +6,26 @@
 //
 // Beats:
 //   1. audit walks lock package lines against yank, advisory, and toolchain pins.
-//   2. No hits prints ooda audit: ok.
-//   3. sbom prints a CycloneDX-lite object. --json is the same shape.
+//   2. No hits prints opm audit: ok.
+//   3. sbom prints a CycloneDX-lite object.
 
-import "cmd_cat.oo";
-import "cmd_io.oo";
+import "catalog.oo";
+import "argv.oo";
+import "slurp.oo";
 import "core/pin.oo";
 import "policy/ANCHOR.oo";
 import "store/ANCHOR.oo";
 
-fn pm_lock_now(fr: &FsReadCap, proc: &ProcessCap) -> String {
-    let root: String = pm_root_abs(fr, proc);
+fn pm_lock_now(fr: &FsReadCap, env: &EnvCap) -> String {
+    let root: String = pm_root_abs(env);
     return pm_first_nonempty(pm_slurp(fr, root + "/.ooda_modules/lock"), pm_slurp(fr, ".ooda_modules/lock"));
 }
 
-pub fn run_ooda_pm_audit(fr: &FsReadCap, proc: &ProcessCap, args: List[String]) {
+pub fn run_ooda_pm_audit(fr: &FsReadCap, proc: &ProcessCap, env: &EnvCap, args: List[String]) {
     let vendor: String = pm_pick_vendor(args);
     let yank: String = pm_slurp(fr, vendor + "/yank");
     let adv: String = pm_slurp(fr, vendor + "/advisory");
-    let acc: String = pm_lock_now(fr, proc);
+    let acc: String = pm_lock_now(fr, env);
     let live_o: String = pm_oodac_sha(fr);
     let live_s: String = pm_std_sha(fr);
     let js: Bool = pm_flag(args, "--json") || pm_flag(args, "-json");
@@ -37,7 +38,7 @@ pub fn run_ooda_pm_audit(fr: &FsReadCap, proc: &ProcessCap, args: List[String]) 
         hits = hits + "pin";
         nh = 1;
         if js == false {
-            println("ooda audit: pin");
+            println("opm audit: pin");
         }
     }
     while i <= n {
@@ -52,7 +53,7 @@ pub fn run_ooda_pm_audit(fr: &FsReadCap, proc: &ProcessCap, args: List[String]) 
                         if hits != "" { hits = hits + ","; }
                         hits = hits + "yank:" + nm;
                         if js == false {
-                            println("ooda audit: yank " + nm + "@" + ver);
+                            println("opm audit: yank " + nm + "@" + ver);
                         }
                     }
                     let ah: String = pm_advisory_hit(adv, nm, ver);
@@ -61,7 +62,7 @@ pub fn run_ooda_pm_audit(fr: &FsReadCap, proc: &ProcessCap, args: List[String]) 
                         if hits != "" { hits = hits + ","; }
                         hits = hits + "advisory:" + nm;
                         if js == false {
-                            println("ooda audit: advisory " + ah);
+                            println("opm audit: advisory " + ah);
                         }
                     }
                 }
@@ -75,12 +76,13 @@ pub fn run_ooda_pm_audit(fr: &FsReadCap, proc: &ProcessCap, args: List[String]) 
         return;
     }
     if nh == 0 {
-        println("ooda audit: ok");
+        println("opm audit: ok");
     }
+    let _p: &ProcessCap = proc;
 }
 
-pub fn run_ooda_pm_sbom(fr: &FsReadCap, proc: &ProcessCap, args: List[String]) {
-    let acc: String = pm_lock_now(fr, proc);
+pub fn run_ooda_pm_sbom(fr: &FsReadCap, proc: &ProcessCap, env: &EnvCap, args: List[String]) {
+    let acc: String = pm_lock_now(fr, env);
     let n: Int = chars_len(acc);
     let mut start: Int = 0;
     let mut i: Int = 0;
@@ -104,4 +106,5 @@ pub fn run_ooda_pm_sbom(fr: &FsReadCap, proc: &ProcessCap, args: List[String]) {
         i = i + 1;
     }
     println("]}");
+    let _p: &ProcessCap = proc;
 }

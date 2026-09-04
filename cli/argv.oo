@@ -1,0 +1,152 @@
+// # Argv rest helpers
+//
+// Logline: Read flags and positionals from rest. Index 0 is the first payload.
+//
+// Setup: main.oo slices argv[1..] before dispatch. No verb skip by magic index.
+//
+// Beats:
+//   1. Flags, --opt values, and the first positional name.
+//   2. init/bot/publish parsers start at 0.
+//   3. Help text and dispatch names are one list.
+
+pub fn pm_die(cmd: String, msg: String) {
+    println("ERR\t" + cmd + "\t" + msg);
+    process_exit(2);
+}
+
+pub fn pm_flag(args: List[String], name: String) -> Bool {
+    let mut i: Int = 0;
+    while i < list_len(args) {
+        if list_get(args, i) == name {
+            return true;
+        }
+        i = i + 1;
+    }
+    return false;
+}
+
+pub fn pm_opt(args: List[String], name: String) -> String {
+    let mut i: Int = 0;
+    while i < list_len(args) {
+        if list_get(args, i) == name {
+            if i + 1 < list_len(args) {
+                return list_get(args, i + 1);
+            }
+        }
+        i = i + 1;
+    }
+    return "";
+}
+
+fn pm_is_verb(a: String) -> Bool {
+    if a == "add" || a == "audit" || a == "sbom" || a == "bot" { return true; }
+    if a == "ingest" || a == "init" || a == "launch" { return true; }
+    if a == "remove" || a == "update" || a == "outdated" || a == "why" { return true; }
+    if a == "pack" || a == "pkg" || a == "publish" { return true; }
+    if a == "reg" || a == "registry" || a == "regs" || a == "search" { return true; }
+    if a == "tree" || a == "vendor" || a == "clean" { return true; }
+    if a == "pm" { return true; }
+    return false;
+}
+
+fn pm_is_opt_key(a: String) -> Bool {
+    if a == "--vendor" || a == "--from" || a == "--path" { return true; }
+    if a == "--registry" || a == "--to" || a == "--key" { return true; }
+    return false;
+}
+
+pub fn pm_arg_name(args: List[String]) -> String {
+    let mut i: Int = 0;
+    while i < list_len(args) {
+        let a: String = list_get(args, i);
+        if pm_is_opt_key(a) {
+            i = i + 2;
+        } else if pm_is_verb(a) {
+            i = i + 1;
+        } else if str_slice(a, 0, 1) != "-" {
+            return a;
+        } else {
+            i = i + 1;
+        }
+    }
+    return "";
+}
+
+pub fn pm_init_name(args: List[String]) -> String {
+    let mut i: Int = 0;
+    let mut name: String = "";
+    while i < list_len(args) {
+        let a: String = list_get(args, i);
+        if pm_is_opt_key(a) {
+            i = i + 2;
+        } else if str_slice(a, 0, 1) == "-" {
+            i = i + 1;
+        } else {
+            if name == "" { name = a; }
+            i = i + 1;
+        }
+    }
+    if name == "" { return "pkg"; }
+    return name;
+}
+
+pub fn pm_bot_target(args: List[String]) -> String {
+    let mut i: Int = 0;
+    let mut dir: String = "";
+    while i < list_len(args) {
+        let a: String = list_get(args, i);
+        if a == "--sign" {
+            i = i + 1;
+        } else if a == "--key" {
+            i = i + 2;
+        } else if str_slice(a, 0, 1) == "-" {
+            i = i + 1;
+        } else {
+            if dir == "" { dir = a; }
+            i = i + 1;
+        }
+    }
+    if dir == "" { return "registry"; }
+    return dir;
+}
+
+pub fn pm_bot_sign(args: List[String]) -> Bool {
+    return pm_flag(args, "--sign");
+}
+
+pub fn pm_publish_to(args: List[String]) -> String {
+    let t: String = pm_opt(args, "--to");
+    if t == "" { return ".ooda-cache/registry"; }
+    return t;
+}
+
+pub fn pm_publish_json(args: List[String]) -> Bool {
+    return pm_flag(args, "--json") || pm_flag(args, "-json");
+}
+
+pub fn pm_help_text() -> String {
+    return "opm — openOODA package manager\nusage: opm <subcommand> [args]\n\nsubcommands:\n  add, audit, sbom, bot, ingest, init, launch,\n  remove, update, outdated, why,\n  pack, pkg, publish,\n  reg, registry, regs,\n  search, tree, vendor, clean";
+}
+
+pub fn pm_dispatch_handler(sub: String) -> String {
+    if sub == "add" { return "add"; }
+    if sub == "audit" { return "audit"; }
+    if sub == "sbom" { return "sbom"; }
+    if sub == "bot" { return "bot"; }
+    if sub == "ingest" { return "ingest"; }
+    if sub == "init" { return "init"; }
+    if sub == "launch" { return "launch"; }
+    if sub == "remove" { return "remove"; }
+    if sub == "update" { return "update"; }
+    if sub == "outdated" { return "outdated"; }
+    if sub == "why" { return "why"; }
+    if sub == "pack" { return "pack"; }
+    if sub == "pkg" { return "pkg"; }
+    if sub == "publish" { return "publish"; }
+    if sub == "regs" || sub == "reg" || sub == "registry" { return "regs"; }
+    if sub == "search" { return "search"; }
+    if sub == "tree" { return "tree"; }
+    if sub == "vendor" { return "vendor"; }
+    if sub == "clean" { return "clean"; }
+    return "";
+}

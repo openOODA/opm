@@ -1,0 +1,12 @@
+// # Opm GitHub wiring
+//
+// Logline: CI auto-release and the test job. Not product code.
+//
+// Setup: Outside api_surface=10. Version is the git tag (RFC-0006).
+//
+// Beats:
+//   1. workflows/ci.yml runs test then auto-release.
+//   2. Test needs OODA_COMPILER. Missing compiler is fail closed.
+//   3. No VERSION file.
+
+// workflows/ci.yml is YAML. Not imported.

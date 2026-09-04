@@ -9,13 +9,14 @@
 //   2. vendor lists name and version from the file vendor.
 //   3. clean removes CAS dirs whose sha is not in the lock.
 
-import "cmd_cat.oo";
-import "cmd_io.oo";
+import "catalog.oo";
+import "argv.oo";
+import "slurp.oo";
 import "resolve/ANCHOR.oo";
 import "store/ANCHOR.oo";
 
-fn pm_lock_text2(fr: &FsReadCap, proc: &ProcessCap) -> String {
-    let root: String = pm_root_abs(fr, proc);
+fn pm_lock_text2(fr: &FsReadCap, env: &EnvCap) -> String {
+    let root: String = pm_root_abs(env);
     let a: String = pm_slurp(fr, root + "/.ooda_modules/lock");
     let b: String = pm_slurp(fr, ".ooda_modules/lock");
     return pm_first_nonempty(a, b);
@@ -76,10 +77,11 @@ fn pm_tree_walk(cat: String, name: String, depth: Int, seen: String, js: Bool) -
     return next;
 }
 
-pub fn run_ooda_pm_tree(fr: &FsReadCap, proc: &ProcessCap, args: List[String]) {
+pub fn run_ooda_pm_tree(fr: &FsReadCap, proc: &ProcessCap, env: &EnvCap, args: List[String]) {
     let vendor: String = pm_pick_vendor(args);
-    let cat: String = pm_load_catalog(fr, proc, vendor);
-    let lock: String = pm_lock_text2(fr, proc);
+    let cat: String = pm_load_catalog(fr, vendor);
+    let lock: String = pm_lock_text2(fr, env);
+    let _p: &ProcessCap = proc;
     let mut name: String = pm_arg_name(args);
     if name == "" {
         name = pm_first_lock_name(lock);
@@ -99,14 +101,15 @@ pub fn run_ooda_pm_tree(fr: &FsReadCap, proc: &ProcessCap, args: List[String]) {
     let _t: String = pm_tree_walk(cat, name, 0, "", false);
 }
 
-pub fn run_ooda_pm_vendor(fr: &FsReadCap, fw: &FsWriteCap, proc: &ProcessCap, args: List[String]) {
+pub fn run_ooda_pm_vendor(fr: &FsReadCap, fw: &FsWriteCap, proc: &ProcessCap, env: &EnvCap, args: List[String]) {
     let vendor: String = pm_pick_vendor(args);
     if pm_is_http(vendor) {
         pm_die("vendor", "file vendor required");
     }
-    let cat: String = pm_load_catalog(fr, proc, vendor);
-    println("ooda vendor: " + vendor);
-    let root: String = pm_root_abs(fr, proc);
+    let cat: String = pm_load_catalog(fr, vendor);
+    println("opm vendor: " + vendor);
+    let root: String = pm_root_abs(env);
+    let _p: &ProcessCap = proc;
     let n: Int = chars_len(cat);
     let mut start: Int = 0;
     let mut i: Int = 0;
@@ -137,14 +140,15 @@ pub fn run_ooda_pm_vendor(fr: &FsReadCap, fw: &FsWriteCap, proc: &ProcessCap, ar
     println("ooda vendor: ok");
 }
 
-pub fn run_ooda_pm_clean(fr: &FsReadCap, fw: &FsWriteCap, proc: &ProcessCap, args: List[String]) {
-    let root: String = pm_root_abs(fr, proc);
-    let lock: String = pm_lock_text2(fr, proc);
+pub fn run_ooda_pm_clean(fr: &FsReadCap, fw: &FsWriteCap, proc: &ProcessCap, env: &EnvCap, args: List[String]) {
+    let root: String = pm_root_abs(env);
+    let lock: String = pm_lock_text2(fr, env);
+    let _p: &ProcessCap = proc;
     let mut cas: String = ".ooda_modules/cas";
     if root != "" {
         cas = root + "/.ooda_modules/cas";
     }
-    let names: String = pm_list_dir(fr, proc, cas);
+    let names: String = pm_list_dir(fr, cas);
     let n: Int = chars_len(names);
     let mut start: Int = 0;
     let mut i: Int = 0;

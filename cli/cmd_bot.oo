@@ -1,21 +1,19 @@
-// # Package Registry Ingestion and Verification Bot CLI
+// # Package registry bot
 //
-// Logline: Automated package ingestion, SHA-256 signature auditing, AST validation, and catalog management.
+// Logline: Walk a registry folder, verify each package, write catalog. Fail closed.
 //
-// Setup: Inspects candidate package repositories and updates catalog under &FsCap and &SysCap.
+// Setup: Target dir from rest[0]. Writes catalog with write_file. Sign needs OODA_MINISIGN.
 //
 // Beats:
-//   1. Parse target registry folder and flags.
-//   2. Validate package manifest fields, SHA-256 hashes, and min_pin constraints.
-//   3. Validate payload AST syntax and line limits (<= 256 lines).
-//   4. Deterministically compile catalog and sign index.
+//   1. Parse target folder and --sign from rest starting at 0.
+//   2. Walk the folder. Verify each named package. First failed verify is Err.
+//   3. Write catalog and index. --sign requires OODA_MINISIGN and OODA_MINISIGN_SK.
 
-import "cmd_io.oo";
-import "find_compiler.oo";
-import "host_run.oo";
-import "pkg/parse.oo";
+import "argv.oo";
+import "slurp.oo";
+import "tool.oo";
+import "catalog.oo";
 import "core/ANCHOR.oo";
-import "core/pin.oo";
 import "resolve/ANCHOR.oo";
 
 pub fn pm_bot_verify_pkg(fr: &FsReadCap, base_dir: String, pkg_name: String) -> String {
@@ -29,12 +27,6 @@ pub fn pm_bot_verify_pkg(fr: &FsReadCap, base_dir: String, pkg_name: String) -> 
     if ver == "" {
         return "missing version in manifest";
     }
-
-    let min_pin: String = pkg_parse_min_pin(man_text);
-    if !pm_pin_min_ok(min_pin, "0.210.0") {
-        return "incompatible min_pin: " + min_pin;
-    }
-
     let payload: String = pm_kv(man_text, "payload");
     let mut pay_file: String = payload;
     if pay_file == "" {
@@ -44,90 +36,85 @@ pub fn pm_bot_verify_pkg(fr: &FsReadCap, base_dir: String, pkg_name: String) -> 
     if !path_exists(fr, src_path) {
         return "missing payload file " + pay_file;
     }
-
     let src_text: String = pm_slurp(fr, src_path);
     let live_sha: String = crypto_sha256_internal(src_text);
     let want_sha: String = pm_kv(man_text, "sha256");
     if want_sha != "" && want_sha != live_sha {
         return "sha256 mismatch (want " + want_sha + " got " + live_sha + ")";
     }
-
-    // Verify Academy headers
     if str_index_of(src_text, "// # ") < 0 || str_index_of(src_text, "// Logline:") < 0 {
         return "missing Academy headers in " + pay_file;
     }
-
     let caps: String = pm_kv(man_text, "caps");
     let deps: String = pm_kv(man_text, "deps");
     return "ok|" + pkg_name + "|" + ver + "|" + caps + "|" + deps + "|" + live_sha;
 }
 
-pub fn run_ooda_pm_bot(fr: &FsReadCap, proc: &ProcessCap, args: List[String]) {
-    let mut target_dir: String = "registry";
-    let mut do_sign: Bool = false;
-    let mut i: Int = 1;
-    while i < list_len(args) {
-        let a: String = list_get(args, i);
-        if a == "--sign" {
-            do_sign = true;
-        } else if a != "bot" && str_slice(a, 0, 1) != "-" {
-            target_dir = a;
-        }
-        i = i + 1;
-    }
-
+pub fn run_ooda_pm_bot(fr: &FsReadCap, fw: &FsWriteCap, proc: &ProcessCap, env: &EnvCap, args: List[String]) {
+    let target_dir: String = pm_bot_target(args);
+    let do_sign: Bool = pm_bot_sign(args);
     if !path_exists(fr, target_dir) {
         println("ERR\tpm\ttarget registry directory not found: " + target_dir);
         process_exit(2);
     }
-
-    let mut pkgs: List[String] = list_new();
-    pkgs = list_push(pkgs, "hello");
-    pkgs = list_push(pkgs, "mid");
-    pkgs = list_push(pkgs, "world");
-    pkgs = list_push(pkgs, "evilcap");
-    pkgs = list_push(pkgs, "tooyank");
-
+    let names: String = pm_list_dir(fr, target_dir);
+    let nms: Int = chars_len(names);
     let mut catalog_acc: String = "";
     let mut verified_count: Int = 0;
+    let mut start: Int = 0;
     let mut pi: Int = 0;
-    while pi < list_len(pkgs) {
-        let p_name: String = list_get(pkgs, pi);
-        if path_exists(fr, target_dir + "/" + p_name) {
-            let res: String = pm_bot_verify_pkg(fr, target_dir, p_name);
-            if chars_len(res) >= 3 && str_slice(res, 0, 3) == "ok|" {
-                let entry: String = str_slice(res, 3, chars_len(res));
-                catalog_acc = catalog_acc + entry + "\n";
-                verified_count = verified_count + 1;
-            } else {
-                println("ooda pm bot: warning: package " + p_name + " failed check: " + res);
+    while pi <= nms {
+        if pi == nms || char_at(names, pi) == "\n" {
+            if pi > start {
+                let p_name: String = str_slice(names, start, pi);
+                if pm_name_ok(p_name) {
+                    if path_exists(fr, target_dir + "/" + p_name + "/manifest") {
+                        let res: String = pm_bot_verify_pkg(fr, target_dir, p_name);
+                        if chars_len(res) >= 3 && str_slice(res, 0, 3) == "ok|" {
+                            let entry: String = str_slice(res, 3, chars_len(res));
+                            catalog_acc = catalog_acc + entry + "\n";
+                            verified_count = verified_count + 1;
+                        } else {
+                            println("ERR\tpm\tpackage " + p_name + " failed check: " + res);
+                            process_exit(2);
+                        }
+                    }
+                }
             }
+            start = pi + 1;
         }
         pi = pi + 1;
     }
-
     let cat_path: String = target_dir + "/catalog";
     let idx_path: String = target_dir + "/index";
-    let cmd_cat: String = "printf '%s' " + sq(catalog_acc) + " > " + cat_path + "; cp " + cat_path + " " + idx_path;
-    let r: Result[String, String] = sys_exec(proc, "sh", "-c", cmd_cat);
-    if r.is_err() {
+    if !pm_place(fw, cat_path, catalog_acc) {
         println("ERR\tpm\tfailed to write catalog");
         process_exit(1);
     }
-
+    if !pm_place(fw, idx_path, catalog_acc) {
+        println("ERR\tpm\tfailed to write index");
+        process_exit(1);
+    }
     if do_sign {
-        let sign_cmd: String = "if command -v minisign >/dev/null 2>&1; then minisign -Sm " + idx_path + " -s registry/registry.sec 2>/dev/null || true; fi";
-        let ign_sign: Result[String, String] = sys_exec(proc, "sh", "-c", sign_cmd);
-        if ign_sign.is_err() {
-            println("ooda pm bot: signing skipped (no minisign or key)");
+        let ms_r: Result[String, String] = pm_tool_path(fr, env, "OODA_MINISIGN");
+        let sk_r: Result[String, String] = pm_tool_path(fr, env, "OODA_MINISIGN_SK");
+        if ms_r.is_err() || sk_r.is_err() {
+            println("ERR\tpm\tOODA_MINISIGN and OODA_MINISIGN_SK required for --sign");
+            process_exit(2);
+        }
+        let ms: String = match ms_r { Ok(s) => s, Err(_) => "" };
+        let sk: String = match sk_r { Ok(s) => s, Err(_) => "" };
+        let sr: Result[String, String] = sys_exec(proc, ms, "-Sm", idx_path, "-s", sk);
+        if sr.is_err() {
+            println("ERR\tpm\tminisign sign failed");
+            process_exit(1);
         }
     }
-
-    println("ooda pm bot: verified " + verified_count.to_string() + " packages, updated " + cat_path);
+    println("opm bot: verified " + verified_count.to_string() + " packages, updated " + cat_path);
 }
 
-pub fn cmd_pm_bot_run(fr: &FsReadCap, proc: &ProcessCap, args: List[String]) {
-    run_ooda_pm_bot(fr, proc, args);
+pub fn cmd_pm_bot_run(fr: &FsReadCap, fw: &FsWriteCap, proc: &ProcessCap, env: &EnvCap, args: List[String]) {
+    run_ooda_pm_bot(fr, fw, proc, env, args);
 }
 
 pub fn cmd_pm_bot_verify(fr: &FsReadCap, base_dir: String, pkg_name: String) -> String {

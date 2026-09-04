@@ -1,0 +1,53 @@
+// # Allow-listed git clone for ingest
+//
+// Logline: Clone a pinned commit only when the url is on the allow-list. Argv exec. No shell.
+//
+// Setup: Git binary from OODA_GIT. Offline --from with a commit file does not clone.
+//
+// Beats:
+//   1. Refuse a url that is not on the allow-list.
+//   2. Require OODA_GIT. Missing token is err git.
+//   3. Existing dest is err git. No rm -rf.
+
+import "slurp.oo";
+import "tool.oo";
+import "policy/allow.oo";
+import "resolve/ANCHOR.oo";
+import "lock/v2.oo";
+
+pub fn pm_load_allow(fr: &FsReadCap) -> String {
+    let a: String = pm_slurp(fr, "ingest.allow");
+    let b: String = pm_kv(pm_slurp(fr, "ooda.pkg"), "allow");
+    return a + "\n" + b + "\n";
+}
+
+pub fn pm_git_clone_head(fr: &FsReadCap, proc: &ProcessCap, env: &EnvCap, url: String, commit: String, dest: String) -> String {
+    if !pm_url_allowed(pm_load_allow(fr), url) {
+        return "err allow";
+    }
+    let git_r: Result[String, String] = pm_tool_path(fr, env, "OODA_GIT");
+    if git_r.is_err() {
+        return "err git";
+    }
+    let git: String = match git_r { Ok(s) => s, Err(_) => "" };
+    if path_exists(fr, dest) {
+        return "err git";
+    }
+    let c1: Result[String, String] = sys_exec(proc, git, "clone", "--", url, dest);
+    if c1.is_err() {
+        return "err git";
+    }
+    let c2: Result[String, String] = sys_exec(proc, git, "-C", dest, "checkout", commit);
+    if c2.is_err() {
+        return "err git";
+    }
+    let c3: Result[String, String] = sys_exec(proc, git, "-C", dest, "rev-parse", "HEAD");
+    if c3.is_err() {
+        return "err git";
+    }
+    let head: String = match c3 { Ok(s) => s, Err(_) => "" };
+    if !pm_git_ok(head, commit) {
+        return "err git";
+    }
+    return "ok";
+}

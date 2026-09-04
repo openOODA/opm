@@ -1,0 +1,50 @@
+// # Help equals dispatch proof
+//
+// Logline: Help names are the live dispatch set. Helpers are not commands.
+//
+// Setup: Pure string checks against pm_help_text.
+//
+// Beats:
+//   1. Live names appear in help.
+//   2. cat, git, io, more, pick, ops do not appear as commands.
+
+import "cli/argv.oo";
+
+fn fail(msg: String) {
+    println("FAIL " + msg);
+    process_exit(1);
+}
+
+fn has(s: String, w: String) -> Bool {
+    return str_index_of(s, w) >= 0;
+}
+
+pub fn main() {
+    let h: String = pm_help_text();
+    if !has(h, "add") { fail("add"); }
+    if !has(h, "audit") { fail("audit"); }
+    if !has(h, "sbom") { fail("sbom"); }
+    if !has(h, "bot") { fail("bot"); }
+    if !has(h, "ingest") { fail("ingest"); }
+    if !has(h, "init") { fail("init"); }
+    if !has(h, "launch") { fail("launch"); }
+    if !has(h, "remove") { fail("remove"); }
+    if !has(h, "update") { fail("update"); }
+    if !has(h, "outdated") { fail("outdated"); }
+    if !has(h, "why") { fail("why"); }
+    if !has(h, "pack") { fail("pack"); }
+    if !has(h, "pkg") { fail("pkg"); }
+    if !has(h, "publish") { fail("publish"); }
+    if !has(h, "regs") { fail("regs"); }
+    if !has(h, "search") { fail("search"); }
+    if !has(h, "tree") { fail("tree"); }
+    if !has(h, "vendor") { fail("vendor"); }
+    if !has(h, "clean") { fail("clean"); }
+    if has(h, " cat") || has(h, "cat,") { fail("cat is not a command"); }
+    if has(h, " git") || has(h, "git,") { fail("git is not a command"); }
+    if has(h, " io") || has(h, "io,") { fail("io is not a command"); }
+    if has(h, " more") || has(h, "more,") { fail("more is not a command"); }
+    if has(h, " pick") || has(h, "pick,") { fail("pick is not a command"); }
+    if has(h, " ops") || has(h, "ops,") { fail("ops is not a command"); }
+    println("help_surface_proof: PASSED");
+}

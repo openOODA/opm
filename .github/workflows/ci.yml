@@ -5,5 +5,20 @@ on:
     branches: [main]
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: OODA_COMPILER required
+        run: |
+          if [ -z "${OODA_COMPILER}" ]; then
+            echo "OODA_COMPILER required"
+            exit 1
+          fi
+      - name: verify
+        run: "${OODA_COMPILER}" run scripts/verify.oo
+      - name: test
+        run: "${OODA_COMPILER}" run scripts/test.oo
   auto-release:
+    needs: test
     uses: openOODA/openOODA/.github/workflows/auto-release.yml@v1.0.14

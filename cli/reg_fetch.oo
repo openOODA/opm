@@ -2,25 +2,26 @@
 //
 // Logline: GET catalog and index.minisig. Verify minisign. Then add is file-backed.
 //
-// Setup: curl and minisign under SysCap. Stock pubkey is cli/registry.pub.
+// Setup: curl from OODA_CURL. minisign from OODA_MINISIGN. No PATH. No shell.
 //
 // Beats:
 //   1. Refuse a host that is not stock and not listed.
-//   2. minisign -V must pass. Missing minisign or HMAC-only is not ok.
+//   2. minisign -V must pass. Missing binary is Err.
 //   3. Fetch each catalog name's manifest and payload.
 
-import "cmd_io.oo";
-import "host_run.oo";
+import "slurp.oo";
+import "tool.oo";
 import "core/name.oo";
 import "registry/reg.oo";
 import "registry/regs.oo";
 import "resolve/ANCHOR.oo";
+import "store/store.oo";
 
 pub fn pm_reg_pub_path() -> String {
     return "cli/registry.pub";
 }
 
-pub fn pm_reg_minisign_ok(fr: &FsReadCap, proc: &ProcessCap, pubp: String, msgp: String, sigp: String) -> String {
+pub fn pm_reg_minisign_ok(fr: &FsReadCap, proc: &ProcessCap, env: &EnvCap, pubp: String, msgp: String, sigp: String) -> String {
     if !path_exists(fr, pubp) {
         return "err minisign";
     }
@@ -30,34 +31,32 @@ pub fn pm_reg_minisign_ok(fr: &FsReadCap, proc: &ProcessCap, pubp: String, msgp:
     if !path_exists(fr, sigp) {
         return "err index";
     }
-    let rc: String = msgp + ".msrc";
-    let cmd: String = "if command -v minisign >/dev/null 2>&1; then minisign -V -p " + sq(pubp) + " -m " + sq(msgp) + " -x " + sq(sigp) + " >/dev/null 2>&1; echo $? > " + sq(rc) + "; else echo 127 > " + sq(rc) + "; fi; exit 0";
-    let r: Result[String, String] = sys_exec(proc, "sh", "-c", cmd);
-    if r.is_err() {
+    let ms_r: Result[String, String] = pm_tool_path(fr, env, "OODA_MINISIGN");
+    if ms_r.is_err() {
         return "err minisign";
     }
-    let out: String = pm_slurp(fr, rc);
-    if str_slice(out, 0, 3) == "127" {
-        return "err minisign";
-    }
-    if str_slice(out, 0, 1) == "0" {
-        if chars_len(out) == 1 {
-            return "ok";
-        }
-        if char_at(out, 1) == "\n" {
-            return "ok";
-        }
+    let ms: String = match ms_r { Ok(s) => s, Err(_) => "" };
+    let r: Result[String, String] = sys_exec(proc, ms, "-V", "-p", pubp, "-m", msgp, "-x", sigp);
+    if r.is_ok() {
+        return "ok";
     }
     return "err index";
 }
 
-pub fn pm_reg_pull(fr: &FsReadCap, proc: &ProcessCap, url: String, dir: String, leaf: String) -> Bool {
+pub fn pm_reg_pull(fr: &FsReadCap, fw: &FsWriteCap, proc: &ProcessCap, env: &EnvCap, url: String, dir: String, leaf: String) -> Bool {
     if !pm_reg_rel_ok(leaf) {
         return false;
     }
+    let curl_r: Result[String, String] = pm_tool_path(fr, env, "OODA_CURL");
+    if curl_r.is_err() {
+        return false;
+    }
+    let curl: String = match curl_r { Ok(s) => s, Err(_) => "" };
+    if !pm_mkdir_p(fr, fw, dir) {
+        return false;
+    }
     let dest: String = dir + "/" + leaf;
-    let cmd: String = "mkdir -p " + sq(dir) + " && curl -fsS --max-time 30 -o " + sq(dest) + " -- " + sq(url) + "; exit 0";
-    let r: Result[String, String] = sys_exec(proc, "sh", "-c", cmd);
+    let r: Result[String, String] = sys_exec(proc, curl, "-fsS", "-o", dest, url);
     if r.is_err() {
         return false;
     }
@@ -70,12 +69,12 @@ pub fn pm_reg_pull(fr: &FsReadCap, proc: &ProcessCap, url: String, dir: String, 
     return true;
 }
 
-fn pm_reg_fetch_pkg(fr: &FsReadCap, proc: &ProcessCap, base: String, dest: String, name: String) -> Bool {
+fn pm_reg_fetch_pkg(fr: &FsReadCap, fw: &FsWriteCap, proc: &ProcessCap, env: &EnvCap, base: String, dest: String, name: String) -> Bool {
     if !pm_name_ok(name) {
         return false;
     }
     let dir: String = dest + "/" + name;
-    if !pm_reg_pull(fr, proc, base + "/" + name + "/manifest", dir, "manifest") {
+    if !pm_reg_pull(fr, fw, proc, env, base + "/" + name + "/manifest", dir, "manifest") {
         return false;
     }
     let man: String = pm_slurp(fr, dir + "/manifest");
@@ -86,7 +85,7 @@ fn pm_reg_fetch_pkg(fr: &FsReadCap, proc: &ProcessCap, base: String, dest: Strin
     if !pm_reg_rel_ok(pay) {
         return false;
     }
-    if !pm_reg_pull(fr, proc, base + "/" + name + "/" + pay, dir, pay) {
+    if !pm_reg_pull(fr, fw, proc, env, base + "/" + name + "/" + pay, dir, pay) {
         return false;
     }
     let outl: String = pm_kv(man, "outline");
@@ -96,46 +95,44 @@ fn pm_reg_fetch_pkg(fr: &FsReadCap, proc: &ProcessCap, base: String, dest: Strin
     if !pm_reg_rel_ok(outl) {
         return true;
     }
-    let _o: Bool = pm_reg_pull(fr, proc, base + "/" + name + "/" + outl, dir, outl);
+    let _o: Bool = pm_reg_pull(fr, fw, proc, env, base + "/" + name + "/" + outl, dir, outl);
     return true;
 }
 
-fn pm_reg_key(fr: &FsReadCap, proc: &ProcessCap, url: String) -> String {
+fn pm_reg_key(fr: &FsReadCap, env: &EnvCap, url: String) -> String {
     if pm_reg_origin_ok(url) {
         return pm_reg_pub_path();
     }
-    return pm_regs_key_path(fr, proc, url);
+    return pm_regs_key_path(fr, env, url);
 }
 
-pub fn pm_reg_allowed(fr: &FsReadCap, proc: &ProcessCap, url: String) -> Bool {
+pub fn pm_reg_allowed(fr: &FsReadCap, env: &EnvCap, url: String) -> Bool {
     if pm_reg_origin_ok(url) {
         return true;
     }
     if !pm_reg_https_ok(url) {
         return false;
     }
-    return pm_regs_has(fr, proc, url);
+    return pm_regs_has(fr, env, url);
 }
 
-pub fn pm_reg_materialize(fr: &FsReadCap, proc: &ProcessCap, url: String, dest: String) -> String {
-    if !pm_reg_allowed(fr, proc, url) {
+pub fn pm_reg_materialize(fr: &FsReadCap, fw: &FsWriteCap, proc: &ProcessCap, env: &EnvCap, url: String, dest: String) -> String {
+    if !pm_reg_allowed(fr, env, url) {
         return "err allow";
     }
     let base: String = pm_reg_base(url);
-    if !pm_reg_pull(fr, proc, base + "/catalog", dest, "catalog") {
+    if !pm_reg_pull(fr, fw, proc, env, base + "/catalog", dest, "catalog") {
         return "err fetch";
     }
-    if !pm_reg_pull(fr, proc, base + "/index.minisig", dest, "index.minisig") {
+    if !pm_reg_pull(fr, fw, proc, env, base + "/index.minisig", dest, "index.minisig") {
         return "err fetch";
     }
-    let vr: String = pm_reg_minisign_ok(fr, proc, pm_reg_key(fr, proc, url), dest + "/catalog", dest + "/index.minisig");
-    if vr == "ok" {
-        let _v: String = vr;
-    } else {
+    let vr: String = pm_reg_minisign_ok(fr, proc, env, pm_reg_key(fr, env, url), dest + "/catalog", dest + "/index.minisig");
+    if vr != "ok" {
         return vr;
     }
     let idx: String = pm_slurp(fr, dest + "/catalog");
-    let _y: Bool = pm_reg_pull(fr, proc, base + "/yank", dest, "yank");
+    let _y: Bool = pm_reg_pull(fr, fw, proc, env, base + "/yank", dest, "yank");
     let n: Int = chars_len(idx);
     let mut start: Int = 0;
     let mut i: Int = 0;
@@ -145,7 +142,7 @@ pub fn pm_reg_materialize(fr: &FsReadCap, proc: &ProcessCap, url: String, dest: 
                 let line: String = str_slice(idx, start, i);
                 let nm: String = pm_line_field(line, 0);
                 if nm != "" {
-                    if !pm_reg_fetch_pkg(fr, proc, base, dest, nm) {
+                    if !pm_reg_fetch_pkg(fr, fw, proc, env, base, dest, nm) {
                         return "err fetch";
                     }
                 }

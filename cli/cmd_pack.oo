@@ -9,8 +9,9 @@
 //   2. Write a signed index and the lock.
 //   3. --json prints the output dir.
 
-import "cmd_cat.oo";
-import "cmd_io.oo";
+import "catalog.oo";
+import "argv.oo";
+import "slurp.oo";
 import "sign/index.oo";
 import "core/pin.oo";
 import "store/ANCHOR.oo";
@@ -50,8 +51,9 @@ fn pm_pack_one(fr: &FsReadCap, fw: &FsWriteCap, root: String, out: String, line:
     return pm_put(fw, dir + "/manifest", man);
 }
 
-pub fn run_ooda_pm_pack(fr: &FsReadCap, fw: &FsWriteCap, proc: &ProcessCap, args: List[String]) {
-    let root: String = pm_root_abs(fr, proc);
+pub fn run_ooda_pm_pack(fr: &FsReadCap, fw: &FsWriteCap, proc: &ProcessCap, env: &EnvCap, args: List[String]) {
+    let root: String = pm_root_abs(env);
+    let _p: &ProcessCap = proc;
     let acc: String = pm_first_nonempty(pm_slurp(fr, root + "/.ooda_modules/lock"), pm_slurp(fr, ".ooda_modules/lock"));
     let mut out: String = pm_arg_name(args);
     if out == "" {

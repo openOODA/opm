@@ -9,7 +9,7 @@
 //   2. A real ar extracts regular file bytes.
 //   3. Unknown magic is err magic so ingest can stay blob-only.
 
-import "core/core.oo";
+import "core/semver.oo";
 
 pub fn pm_member_ok(name: String) -> Bool {
     if name == "" {

@@ -5,17 +5,18 @@
 // Setup: 9 library subdirs (core, resolve, lock, store, registry,
 //        policy, sign, launch, qa) + cli/ = 10 public subdirs.
 //        scripts/, docs/, examples/ are non-public siblings.
-//        Each subdir has its own ANCHOR.oo. No VERSION file.
+//        std/ is a local compile pointer to the std repo; OODA_STD is the contract.
+//        Each public subdir has its own ANCHOR.oo. No VERSION file.
 //
 // Beats:
 //   1. The 9 library subdirs are: core, resolve, lock, store, registry, policy, sign, launch, qa.
-//   2. cli/ has 19 subcommand handlers (add, audit, ingest, launch, etc.) and the package's main.oo entry.
-//   3. qa/ has 8 break-test drivers that ship with the package.
+//   2. cli/ has the live subcommand handlers and main.oo. Helpers are not commands.
+//   3. qa/ has the break-test drivers that ship with the package.
 //   4. scripts/ has build, test, verify, release entry points.
 //   5. docs/ has versioning.oot, cli.oot, and ANCHOR.oo.
 //   6. examples/ has manifest, recipe, and lockfile samples.
-//   7. api_surface=10 (core resolve lock store registry policy sign
-//      launch qa cli). Version is the git tag. No VERSION file.
+//   7. api_surface=10. Version is the git tag. No VERSION file.
+//   8. Unique move: resolve that refuses extra caps. Do not grow commands.
 
 import "core/ANCHOR.oo";
 import "resolve/ANCHOR.oo";
