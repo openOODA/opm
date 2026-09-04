@@ -2,7 +2,8 @@
 //
 // Logline: Index of the user-facing docs for opm.
 //
-// Setup: Per-package docs (RFC-0005). They travel with the package when opm ships independently.
+// Setup: RFC-0005. Website Source: openOODA/opm/docs/.
+//        They travel with the package.
 //
 // Beats:
 //   1. INSTALL.oot — how to run opm. Git tag. No VERSION file.
