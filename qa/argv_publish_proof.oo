@@ -28,6 +28,7 @@ fn two(a: String, b: String) -> List[String] {
 }
 
 pub fn main() {
+    let _h: String = pm_help_text();
     if pm_publish_to(two("--to", "/tmp/r")) != "/tmp/r" { fail("to"); }
     if pm_publish_json(one("--json")) == false { fail("json"); }
     let empty: List[String] = list_new();

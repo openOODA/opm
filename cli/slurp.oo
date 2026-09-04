@@ -104,6 +104,13 @@ pub fn pm_tok_cap(tok: String) -> String {
     return str_slice(after2, h3 + 1, chars_len(after2));
 }
 
+pub fn pm_first_nonempty(a: String, b: String) -> String {
+    if a != "" {
+        return a;
+    }
+    return b;
+}
+
 pub fn pm_place(fw: &FsWriteCap, path: String, body: String) -> Bool {
     let wr: Result[Void, String] = write_file(fw, path, body);
     if wr.is_ok() {

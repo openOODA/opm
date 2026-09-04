@@ -28,6 +28,7 @@ fn two(a: String, b: String) -> List[String] {
 }
 
 pub fn main() {
+    let _h: String = pm_help_text();
     if pm_init_name(one("myapp")) != "myapp" { fail("myapp"); }
     if pm_init_name(two("--json", "myapp")) != "myapp" { fail("flag then name"); }
     if pm_init_name(two("myapp", "--json")) != "myapp" { fail("name then flag"); }

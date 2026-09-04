@@ -171,13 +171,6 @@ pub fn pm_pick_vendor(args: List[String]) -> String {
     return "vendor";
 }
 
-pub fn pm_first_nonempty(a: String, b: String) -> String {
-    if a != "" {
-        return a;
-    }
-    return b;
-}
-
 pub fn pm_first_lock_name(lock: String) -> String {
     let n: Int = chars_len(lock);
     let mut start: Int = 0;

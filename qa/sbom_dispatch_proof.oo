@@ -17,6 +17,7 @@ fn fail(msg: String) {
 }
 
 pub fn main() {
+    let _h: String = pm_help_text();
     if pm_dispatch_handler("sbom") != "sbom" { fail("sbom"); }
     if pm_dispatch_handler("audit") != "audit" { fail("audit"); }
     if pm_dispatch_handler("reg") != "regs" { fail("reg alias"); }

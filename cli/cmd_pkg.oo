@@ -9,7 +9,6 @@
 //   2. Empty lock prints ooda pkg: empty.
 //   3. --json prints a packages array.
 
-import "catalog.oo";
 import "argv.oo";
 import "slurp.oo";
 import "store/ANCHOR.oo";

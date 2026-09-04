@@ -28,6 +28,7 @@ fn two(a: String, b: String) -> List[String] {
 }
 
 pub fn main() {
+    let _h: String = pm_help_text();
     if pm_bot_target(one("mydir")) != "mydir" { fail("mydir"); }
     if pm_bot_target(two("--sign", "mydir")) != "mydir" { fail("sign then dir"); }
     if pm_bot_target(two("mydir", "--sign")) != "mydir" { fail("dir then sign"); }
