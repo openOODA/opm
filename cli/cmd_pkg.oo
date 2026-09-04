@@ -5,13 +5,13 @@
 // Setup: Reads .ooda_modules/lock. Not a live registry.
 //
 // Beats:
-//   1. Print ooda pkg: cas then lock lines.
-//   2. Empty lock prints ooda pkg: empty.
+//   1. Print opm pkg: cas then lock lines.
+//   2. Empty lock prints opm pkg: empty.
 //   3. --json prints a packages array.
 
 import "argv.oo";
 import "slurp.oo";
-import "store/ANCHOR.oo";
+import "store/store.oo";
 
 pub fn run_ooda_pm_pkg(fr: &FsReadCap, proc: &ProcessCap, env: &EnvCap, args: List[String]) {
     let root: String = pm_root_abs(env);
@@ -23,9 +23,9 @@ pub fn run_ooda_pm_pkg(fr: &FsReadCap, proc: &ProcessCap, env: &EnvCap, args: Li
         println("{\"ok\":true,\"cmd\":\"pkg\",\"packages\":" + pm_lock_json(lk) + "}");
         return;
     }
-    println("ooda pkg: cas");
+    println("opm pkg: cas");
     if lk == "" {
-        println("ooda pkg: empty");
+        println("opm pkg: empty");
         return;
     }
     println(lk);

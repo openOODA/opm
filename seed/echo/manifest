@@ -1,0 +1,9 @@
+name=echo
+version=0.1.0
+caps=FsRead
+deps=
+license=MIT
+payload=echo.oo
+commit=
+sha256=8029d938971696a7e2903d368775356809ccf0fc121ac7f4dd24e46380d64fce
+sig=

@@ -92,7 +92,7 @@ pub fn run_ooda_pm_remove(fr: &FsReadCap, fw: &FsWriteCap, proc: &ProcessCap, en
         println("{\"ok\":true,\"cmd\":\"remove\",\"name\":\"" + pm_jesc(name) + "\"}");
         return;
     }
-    println("ooda remove: " + name);
+    println("opm remove: " + name);
 }
 
 pub fn run_ooda_pm_update(fr: &FsReadCap, fw: &FsWriteCap, proc: &ProcessCap, env: &EnvCap, args: List[String]) {
@@ -110,7 +110,7 @@ pub fn run_ooda_pm_update(fr: &FsReadCap, fw: &FsWriteCap, proc: &ProcessCap, en
         println("{\"ok\":true,\"cmd\":\"update\",\"name\":\"" + pm_jesc(name) + "\"}");
         return;
     }
-    println("ooda update: " + name);
+    println("opm update: " + name);
 }
 
 pub fn run_ooda_pm_outdated(fr: &FsReadCap, proc: &ProcessCap, env: &EnvCap, args: List[String]) {
@@ -132,7 +132,7 @@ pub fn run_ooda_pm_outdated(fr: &FsReadCap, proc: &ProcessCap, env: &EnvCap, arg
                 if row != "" {
                     let best: String = pm_line_field(row, 1);
                     if pm_semver_cmp(best, have) == 1 {
-                        println("ooda outdated: " + nm + " " + have + " -> " + best);
+                        println("opm outdated: " + nm + " " + have + " -> " + best);
                         found = true;
                     }
                 }
@@ -146,7 +146,7 @@ pub fn run_ooda_pm_outdated(fr: &FsReadCap, proc: &ProcessCap, env: &EnvCap, arg
             println("{\"ok\":true,\"cmd\":\"outdated\",\"packages\":[]}");
             return;
         }
-        println("ooda outdated: none");
+        println("opm outdated: none");
         return;
     }
     if pm_flag(args, "--json") || pm_flag(args, "-json") {
@@ -168,7 +168,7 @@ pub fn run_ooda_pm_why(fr: &FsReadCap, proc: &ProcessCap, env: &EnvCap, args: Li
             println("{\"ok\":true,\"cmd\":\"why\",\"name\":\"" + pm_jesc(name) + "\",\"parents\":\"\"}");
             return;
         }
-        println("ooda why: " + name + " not in lock");
+        println("opm why: " + name + " not in lock");
         return;
     }
     let n: Int = chars_len(cat);
@@ -198,8 +198,8 @@ pub fn run_ooda_pm_why(fr: &FsReadCap, proc: &ProcessCap, env: &EnvCap, args: Li
         return;
     }
     if parents == "" {
-        println("ooda why: " + name + " root");
+        println("opm why: " + name + " root");
     } else {
-        println("ooda why: " + name + " dep of " + parents);
+        println("opm why: " + name + " dep of " + parents);
     }
 }

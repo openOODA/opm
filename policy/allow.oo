@@ -2,7 +2,7 @@
 //
 // Logline: Clone only https or git@ hosts that match an exact prefix.
 //
-// Setup: Comma or newline prefixes. registry.openooda.org is never allowed.
+// Setup: Comma or newline prefixes. The catalog host is never allowed as git.
 //
 // Beats:
 //   1. Default prefix is github.com/.
@@ -154,6 +154,9 @@ pub fn pm_allow_default() -> String {
 
 pub fn pm_url_allowed(allow: String, url: String) -> Bool {
     if url == "" {
+        return false;
+    }
+    if str_index_of(url, "catalog.openooda.org") >= 0 {
         return false;
     }
     if str_index_of(url, "registry.openooda.org") >= 0 {

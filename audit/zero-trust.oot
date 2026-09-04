@@ -4,6 +4,10 @@ File: opm/audit/zero-trust.oot
 Scope: this repo only. Date: 2026-09-04. Tag at audit: v2.11.1.
 Working tree was clean on main.
 
+Status: the kill list in section 9 is executed. See todo.oot
+for landed vs blocked. The text below is the audit snapshot,
+not today's code.
+
 ## 1. Verdict
 
 opm is a real package manager, not theater. The 20% that works is

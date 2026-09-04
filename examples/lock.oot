@@ -2,15 +2,28 @@
 
 File: opm/examples/lock.oot
 
-A lockfile pins the exact set of installed packages and their hashes. It is regenerated on every successful install.
+A lockfile pins the exact set of installed packages. It is regenerated on every successful install. Path: `.ooda_modules/lock`.
+
+There is one format. Header lines, then package lines:
 
 ```
-[lock]
-hello-world|1.2.3|sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08
-json-parser|2.1.0|sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
-http-client|1.5.4|sha256:5d41402abc4b2a76b9719d911017c592a2b5a8e0c6b7c4e8a3c2d3a4b5c6d7e8
+v2
+oodac#<sha>
+std#<sha>
+hello-world@1.2.3#9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#unpinned#FsRead
+json-parser@2.1.0#e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855#unpinned#FsRead
+http-client@1.5.4#5d41402abc4b2a76b9719d911017c592a2b5a8e0c6b7c4e8a3c2d3a4b5c6d7e8#unpinned#FsWrite
 ```
 
 ## Format
 
-`<name>|<version>|<algo>:<digest>`, one per line. Read at install time; fail-closed on any mismatch.
+Header:
+
+- `v2`
+- `oodac#<sha>` — hash of the compiler pin
+- `std#<sha>` — hash of `std.pin`
+
+Each package line is `name@version#sha256#commit#CapName`.
+`lock/lock.oo` sorts and hashes those lines. `lock/v2.oo` is replace, override, and local git pin on the same file. Not a second format.
+
+A mismatch against live CAS bytes is a hard fail.

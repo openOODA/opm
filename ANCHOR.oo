@@ -4,7 +4,7 @@
 //
 // Setup: 9 library subdirs (core, resolve, lock, store, registry,
 //        policy, sign, launch, qa) + cli/ = 10 public subdirs.
-//        scripts/, docs/, examples/ are non-public siblings.
+//        scripts/, docs/, examples/, seed/ are non-public siblings.
 //        std/ is a local compile pointer to the std repo; OODA_STD is the contract.
 //        Each public subdir has its own ANCHOR.oo. No VERSION file.
 //
@@ -15,8 +15,9 @@
 //   4. scripts/ has build, test, verify, release entry points.
 //   5. docs/ has versioning.oot, cli.oot, and ANCHOR.oo.
 //   6. examples/ has manifest, recipe, and lockfile samples.
-//   7. api_surface=10. Version is the git tag. No VERSION file.
-//   8. Unique move: resolve that refuses extra caps. Do not grow commands.
+//   7. seed/ is the stock openOODA catalog. opm search reads it first.
+//   8. api_surface=10. Version is the git tag. No VERSION file.
+//   9. Unique move: resolve that refuses extra caps. Do not grow commands.
 
 import "core/ANCHOR.oo";
 import "resolve/ANCHOR.oo";
@@ -31,3 +32,4 @@ import "cli/ANCHOR.oo";
 import "scripts/ANCHOR.oo";
 import "docs/ANCHOR.oo";
 import "examples/ANCHOR.oo";
+import "seed/ANCHOR.oo";

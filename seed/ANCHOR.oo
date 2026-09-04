@@ -1,0 +1,12 @@
+// # OpenOODA stock catalog
+//
+// Logline: Seed packages for opm search and add. Not a public api_surface dir.
+//
+// Setup: Each child folder is one package (manifest + payload). catalog is the search index.
+//        opm search reads this file first. opm add uses these folders when the name hits.
+//        Rebuild the catalog with: opm bot seed
+//
+// Beats:
+//   1. hello — print hello.
+//   2. echo — print echo.
+//   3. catalog — name|version|caps|deps|sha lines.

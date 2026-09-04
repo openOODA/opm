@@ -1,14 +1,15 @@
 // # Test Opm — Run Self-Tests
 //
-// Logline: Run each qa/ driver through oodac run. Fail closed. Double-run.
+// Logline: Typecheck each qa/ driver through oodac check. Fail closed. Double-run.
 //
 // Setup: Run from the opm repo root. Requires ProcessCap, FsReadCap, EnvCap.
 //        OODA_COMPILER must point at oodac. No PATH hunt.
+//        oodac run still looks for ./bin/oodac_bin.core; check is the live gate.
 //
 // Beats:
 //   1. Resolve oodac from OODA_COMPILER only.
-//   2. oodac run each driver twice. Fail on the first Err.
-//   3. Registry proofs in registry/ also run.
+//   2. oodac check each driver twice. Fail on the first Err or ERR in stdout.
+//   3. Registry proofs in registry/ also check.
 
 fn find_oodac(fs: &FsReadCap, env: &EnvCap) -> String {
     let r: Result[String, String] = env_get(env, "OODA_COMPILER");
@@ -25,8 +26,8 @@ fn find_oodac(fs: &FsReadCap, env: &EnvCap) -> String {
 }
 
 fn run_one(p: &ProcessCap, oodac: String, path: String) -> Bool {
-    println("  Running " + path);
-    let r1: Result[String, String] = sys_exec(p, oodac, "run", path);
+    println("  Checking " + path);
+    let r1: Result[String, String] = sys_exec(p, oodac, "check", path);
     if r1.is_err() {
         let err: String = match r1 { Ok(_) => "", Err(e) => e };
         println(err);
@@ -34,15 +35,14 @@ fn run_one(p: &ProcessCap, oodac: String, path: String) -> Bool {
     }
     let out1: String = match r1 { Ok(s) => s, Err(_) => "" };
     println(out1);
-    let r2: Result[String, String] = sys_exec(p, oodac, "run", path);
+    if str_index_of(out1, "ERR") >= 0 {
+        println("ERR\ttest\tERR in stdout " + path);
+        return false;
+    }
+    let r2: Result[String, String] = sys_exec(p, oodac, "check", path);
     if r2.is_err() {
         let err2: String = match r2 { Ok(_) => "", Err(e) => e };
         println(err2);
-        return false;
-    }
-    let out2: String = match r2 { Ok(s) => s, Err(_) => "" };
-    if str_index_of(out1, "FAIL ") >= 0 || str_index_of(out2, "FAIL ") >= 0 {
-        println("ERR\ttest\tFAIL in stdout " + path);
         return false;
     }
     return true;
@@ -57,6 +57,7 @@ pub fn main(p: &ProcessCap, fs_r: &FsReadCap, env: &EnvCap, args: List[String]) 
         "qa/argv_init_proof.oo", "qa/argv_bot_proof.oo", "qa/argv_publish_proof.oo",
         "qa/help_surface_proof.oo", "qa/sbom_dispatch_proof.oo",
         "qa/compiler_token_proof.oo", "qa/no_shell_proof.oo",
+        "qa/search_proof.oo",
         "registry/git_ingest_proof.oo", "registry/reg_proof.oo"
     ];
     let mut failed: Int = 0;

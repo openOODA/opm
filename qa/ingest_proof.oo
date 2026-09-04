@@ -6,7 +6,7 @@
 //
 // Beats:
 //   1. Origins and sha match/refuse.
-//   2. Local git commit match and miss.
+//   2. Git commit must be hex. After the name is locked, sha256 is required.
 //   3. Wrapper names the payload and does not claim transmutation.
 
 import "core/recipe.oo";
@@ -34,6 +34,14 @@ pub fn main() {
     } else {
         fail("commit want");
     }
+    if pm_git_commit_pin_ok("") { fail("empty commit"); }
+    if pm_git_commit_pin_ok("main") { fail("branch main"); }
+    if pm_git_commit_pin_ok("HEAD") { fail("HEAD"); }
+    if !pm_git_commit_pin_ok("abcdef0") { fail("hex pin"); }
+    if !pm_git_sha_after_lock_ok("foo", "", "") { fail("first lock empty sha"); }
+    if pm_git_sha_after_lock_ok("foo", "", "foo@1.0.0#abc#unpinned#FsRead\n") { fail("relock empty sha"); }
+    if !pm_git_sha_after_lock_ok("foo", "aabbccdd", "foo@1.0.0#abc#unpinned#FsRead\n") { fail("relock with sha"); }
+    println("git pin");
     let wrap: String = pm_recipe_wrap("ingdir", "abc", "ingdir.oo");
     if str_index_of(wrap, "ingdir.oo") < 0 { fail("wrap payload"); }
     if str_index_of(wrap, "transmut") >= 0 { fail("wrap transmut"); }

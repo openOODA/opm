@@ -1,0 +1,12 @@
+// # Hello
+//
+// Logline: Print hello. A first package for the openOODA catalog.
+//
+// Setup: No extra caps. Safe to launch.
+//
+// Beats:
+//   1. Print hello.
+
+pub fn main() {
+    println("hello");
+}

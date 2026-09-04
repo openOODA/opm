@@ -19,12 +19,13 @@ fn fail(msg: String) {
 
 pub fn main(fs: &FsReadCap, sys: &ProcessCap, env: &EnvCap) {
     if !pm_reg_origin_ok(pm_reg_default()) { fail("default"); }
-    if !pm_reg_origin_ok("https://registry.openooda.org/") { fail("slash"); }
-    if pm_reg_origin_ok("http://registry.openooda.org") { fail("http"); }
-    if pm_reg_origin_ok("https://registry.openooda.org.evil") { fail("dotevil"); }
-    if pm_reg_origin_ok("https://evil.example/registry.openooda.org") { fail("embed"); }
-    if pm_reg_origin_ok("https://registry.openooda.org/x") { fail("path"); }
-    if pm_reg_origin_ok("https://notregistry.openooda.org") { fail("not"); }
+    if !pm_reg_origin_ok("https://catalog.openooda.org/") { fail("slash"); }
+    if pm_reg_origin_ok("http://catalog.openooda.org") { fail("http"); }
+    if pm_reg_origin_ok("https://catalog.openooda.org.evil") { fail("dotevil"); }
+    if pm_reg_origin_ok("https://evil.example/catalog.openooda.org") { fail("embed"); }
+    if pm_reg_origin_ok("https://catalog.openooda.org/x") { fail("path"); }
+    if pm_reg_origin_ok("https://notcatalog.openooda.org") { fail("not"); }
+    if pm_reg_origin_ok("https://registry.openooda.org") { fail("old host"); }
     println("origin");
     if !pm_reg_rel_ok("hello/manifest") { fail("rel"); }
     if pm_reg_rel_ok("../evil") { fail("dotdot"); }

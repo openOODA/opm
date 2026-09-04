@@ -46,5 +46,6 @@ pub fn main() {
     if has(h, " more") || has(h, "more,") { fail("more is not a command"); }
     if has(h, " pick") || has(h, "pick,") { fail("pick is not a command"); }
     if has(h, " ops") || has(h, "ops,") { fail("ops is not a command"); }
+    if !pm_argv_self_test() { fail("argv self test"); }
     println("help_surface_proof: PASSED");
 }

@@ -11,7 +11,6 @@ The manifest is one line per key, in `key=value` form. Comments start with `#`. 
 ```
 name=hello-world
 version=1.2.3
-min_pin=v0.210.0
 deps=json-parser@^2.0.0,http-client@~1.5.0
 caps=FsRead,FsWrite,Net
 license=MIT
@@ -27,7 +26,7 @@ sig=
 |---|---|---|
 | `name` | yes | The unique package name. Lowercase letters, digits, and hyphens. No traversal. |
 | `version` | yes | The package version in `MAJOR.MINOR.PATCH` form. |
-| `min_pin` | yes | The minimum opm version that can install this package. |
+| `min_pin` | no | Optional toolchain floor. The starter from `opm init` omits it. Empty is ok. |
 | `deps` | no | Comma-separated list of `name@range` pairs. |
 | `caps` | yes | Comma-separated list of capability tokens the package needs. |
 | `license` | yes | The SPDX license id. Compared to the project allow-list. |
@@ -62,9 +61,12 @@ Example: `deps=json-parser@^2.0.0,http-client@~1.5.0,cli-helper@1.4.2`.
 
 ## 5. Pinned Git Dependencies
 
-For a local git pin, use a `git:` prefix in the dep string. The format is `git:name#commit`. The `commit` is verified against a local file `fixtures/pm_name/commit` (or `<name>/commit`) before the install proceeds. No git clone, no network.
+Two git paths:
 
-Example: `deps=git:local-tool#a1b2c3d4e5f6`.
+- **Local pin (no network).** `deps=git:name#commit` in `ooda.pkg`. The commit is checked against a local file `fixtures/pm_name/commit` or `<name>/commit`. No clone.
+- **Ingest clone.** A recipe dir with `origin=git`, `url=` (allow-listed host, default `github.com/`), and `commit=` as 7+ hex digits. `opm ingest --from <dir>` clones with `OODA_GIT`, checks out that commit, hashes the payload. `main`, `HEAD`, and empty commit refuse. After that name is in the lock, `sha256=` is required.
+
+Example local pin: `deps=git:local-tool#a1b2c3d4e5f6`.
 
 ## 6. Integrity Fields
 
@@ -78,7 +80,6 @@ If either is set and the live value does not match, the install is refused with 
 ```
 name=cli-helper
 version=0.4.1
-min_pin=v0.210.0
 deps=json-parser@^2.0.0,http-client@~1.5.0
 caps=FsRead,FsWrite,Http
 license=MIT

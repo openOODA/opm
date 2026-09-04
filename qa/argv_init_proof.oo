@@ -2,10 +2,10 @@
 //
 // Logline: opm init reads the project name from rest[0], not index 2.
 //
-// Setup: Pure list checks. No file write.
+// Setup: Calls pm_argv_self_test in argv.oo.
 //
 // Beats:
-//   1. ["myapp"] is name myapp.
+//   1. rest[0] is the name.
 //   2. Flags do not steal the name.
 //   3. Empty rest defaults to pkg.
 
@@ -16,24 +16,7 @@ fn fail(msg: String) {
     process_exit(1);
 }
 
-fn one(a: String) -> List[String] {
-    let mut xs: List[String] = list_new();
-    return list_push(xs, a);
-}
-
-fn two(a: String, b: String) -> List[String] {
-    let mut xs: List[String] = list_new();
-    xs = list_push(xs, a);
-    return list_push(xs, b);
-}
-
 pub fn main() {
-    let _h: String = pm_help_text();
-    if pm_init_name(one("myapp")) != "myapp" { fail("myapp"); }
-    if pm_init_name(two("--json", "myapp")) != "myapp" { fail("flag then name"); }
-    if pm_init_name(two("myapp", "--json")) != "myapp" { fail("name then flag"); }
-    let empty: List[String] = list_new();
-    if pm_init_name(empty) != "pkg" { fail("empty default"); }
-    if pm_init_name(one("--json")) != "pkg" { fail("json only"); }
+    if !pm_argv_self_test() { fail("argv self test"); }
     println("argv_init_proof: PASSED");
 }

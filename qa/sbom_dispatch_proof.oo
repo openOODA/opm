@@ -2,12 +2,11 @@
 //
 // Logline: sbom is its own handler. audit is audit.
 //
-// Setup: Pure name map. No lock file.
+// Setup: Covered by pm_argv_self_test.
 //
 // Beats:
 //   1. sbom maps to sbom.
-//   2. audit maps to audit.
-//   3. Unknown is empty.
+//   2. cat and more do not dispatch.
 
 import "cli/argv.oo";
 
@@ -17,11 +16,6 @@ fn fail(msg: String) {
 }
 
 pub fn main() {
-    let _h: String = pm_help_text();
-    if pm_dispatch_handler("sbom") != "sbom" { fail("sbom"); }
-    if pm_dispatch_handler("audit") != "audit" { fail("audit"); }
-    if pm_dispatch_handler("reg") != "regs" { fail("reg alias"); }
-    if pm_dispatch_handler("cat") != "" { fail("cat must not dispatch"); }
-    if pm_dispatch_handler("more") != "" { fail("more must not dispatch"); }
+    if !pm_argv_self_test() { fail("argv self test"); }
     println("sbom_dispatch_proof: PASSED");
 }

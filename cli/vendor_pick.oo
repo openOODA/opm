@@ -75,6 +75,12 @@ pub fn pm_select_vendor(fr: &FsReadCap, fw: &FsWriteCap, proc: &ProcessCap, env:
         }
         return v;
     }
+    let name: String = pm_arg_name(args);
+    if path_exists(fr, "seed/catalog") {
+        if pm_cat_has_name(pm_slurp(fr, "seed/catalog"), name) {
+            return "seed";
+        }
+    }
     if path_exists(fr, "vendor") {
         return "vendor";
     }
@@ -90,5 +96,5 @@ pub fn pm_select_vendor(fr: &FsReadCap, fw: &FsWriteCap, proc: &ProcessCap, env:
         }
         return frs;
     }
-    return pm_regs_pick(fr, fw, proc, env, pm_arg_name(args), dest);
+    return pm_regs_pick(fr, fw, proc, env, name, dest);
 }

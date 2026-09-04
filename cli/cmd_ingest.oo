@@ -6,7 +6,7 @@
 //
 // Beats:
 //   1. Refuse HTTP, bad names, extra caps, yank, and license misses.
-//   2. Verify sha256 and local git commit. Write CAS, wrapper, and lock v2.
+//   2. Git origin needs a hex commit pin. After the name is locked, sha256 is required.
 //   3. --json prints a machine object. Wrapper does not claim transmutation.
 
 import "catalog.oo";
@@ -83,21 +83,32 @@ pub fn run_ooda_pm_ingest(fr: &FsReadCap, fw: &FsWriteCap, proc: &ProcessCap, en
         ing_die("yank " + name);
     }
     let root: String = pm_root_abs(env);
+    let prev: String = pm_first_nonempty(pm_slurp(fr, root + "/.ooda_modules/lock"), pm_slurp(fr, ".ooda_modules/lock"));
     let mut payp: String = rec + "/" + pn;
     if origin == "git" {
+        let commit: String = pm_recipe_commit_want(man);
+        if !pm_git_commit_pin_ok(commit) {
+            ing_die("git");
+        }
+        if !pm_git_sha_after_lock_ok(name, pm_kv(man, "sha256"), prev) {
+            ing_die("sha256");
+        }
         if path_exists(fr, rec + "/commit") {
-            if !pm_git_ok(pm_slurp(fr, rec + "/commit"), pm_recipe_commit_want(man)) {
+            if !pm_git_ok(pm_slurp(fr, rec + "/commit"), commit) {
                 ing_die("git");
             }
         } else {
             let url: String = pm_kv(man, "url");
+            if url == "" {
+                ing_die("git");
+            }
             let _m: Bool = pm_ensure_mod(fr, fw, root);
             let gdir: String = root + "/.ooda_modules/git";
             if !pm_mkdir_p(fr, fw, gdir) {
                 ing_die("git");
             }
             let dest: String = gdir + "/" + name;
-            let cr: String = pm_git_clone_head(fr, proc, env, url, pm_recipe_commit_want(man), dest);
+            let cr: String = pm_git_clone_head(fr, proc, env, url, commit, dest);
             if cr == "ok" {
                 payp = dest + "/" + pn;
             } else {
@@ -134,7 +145,6 @@ pub fn run_ooda_pm_ingest(fr: &FsReadCap, fw: &FsWriteCap, proc: &ProcessCap, en
     }
     let live_o: String = pm_oodac_sha(fr);
     let live_s: String = pm_std_sha(fr);
-    let prev: String = pm_first_nonempty(pm_slurp(fr, root + "/.ooda_modules/lock"), pm_slurp(fr, ".ooda_modules/lock"));
     if !pm_pin_ok(prev, live_o, live_s) {
         ing_die("pin");
     }
@@ -147,7 +157,7 @@ pub fn run_ooda_pm_ingest(fr: &FsReadCap, fw: &FsWriteCap, proc: &ProcessCap, en
         ing_die("wrapper failed");
     }
     let _v: Bool = pm_put_vendor(fr, fw, root, wname, wrap);
-    let tok: String = pm_lock_line(name, ver, live, pm_kv(man, "commit"), pm_cap_name(pm_cap_parse(pm_kv(man, "caps"))));
+    let tok: String = pm_lock_line(name, ver, live, pm_recipe_commit_want(man), pm_cap_name(pm_cap_parse(pm_kv(man, "caps"))));
     let n: Int = chars_len(prev);
     let mut kept: String = "";
     let mut ps: Int = 0;

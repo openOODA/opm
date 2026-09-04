@@ -1,0 +1,24 @@
+// # Catalog search proof
+//
+// Logline: Substring match on package names. Empty query matches all.
+//
+// Setup: Pure string checks. No HTTP.
+//
+// Beats:
+//   1. Empty query hits.
+//   2. Substring hits hello. Miss on absent name.
+
+import "cli/search_match.oo";
+
+fn fail(msg: String) {
+    println("FAIL " + msg);
+    process_exit(1);
+}
+
+pub fn main() {
+    if !pm_search_hit("hello", "") { fail("empty query"); }
+    if !pm_search_hit("hello", "hello") { fail("exact"); }
+    if !pm_search_hit("hello", "ell") { fail("sub"); }
+    if pm_search_hit("hello", "echo") { fail("miss"); }
+    println("search_proof: PASSED");
+}

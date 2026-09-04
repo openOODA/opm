@@ -90,6 +90,7 @@ pub fn main() {
     if !pm_url_allowed("fixtures/pm_ingest_repo.bundle\n", "fixtures/pm_ingest_repo.bundle") {
         fail("bundle");
     }
+    if pm_url_allowed("", "https://catalog.openooda.org/x") { fail("catalog git"); }
     if pm_url_allowed("", "https://registry.openooda.org/x") { fail("reg"); }
     if pm_url_allowed("", "https://notgithub.com/x.git") { fail("notgh"); }
     if pm_url_allowed("", "https://evil.example/github.com/x") { fail("embed"); }

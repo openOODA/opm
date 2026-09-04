@@ -128,6 +128,35 @@ pub fn pm_help_text() -> String {
     return "opm — openOODA package manager\nusage: opm <subcommand> [args]\n\nsubcommands:\n  add, audit, sbom, bot, ingest, init, launch,\n  remove, update, outdated, why,\n  pack, pkg, publish,\n  reg, registry, regs,\n  search, tree, vendor, clean";
 }
 
+pub fn pm_argv_self_test() -> Bool {
+    let mut a: List[String] = list_new();
+    a = list_push(a, "myapp");
+    if pm_init_name(a) != "myapp" { return false; }
+    let mut b: List[String] = list_new();
+    b = list_push(b, "--json");
+    b = list_push(b, "myapp");
+    if pm_init_name(b) != "myapp" { return false; }
+    let empty: List[String] = list_new();
+    if pm_init_name(empty) != "pkg" { return false; }
+    let mut d: List[String] = list_new();
+    d = list_push(d, "mydir");
+    if pm_bot_target(d) != "mydir" { return false; }
+    let mut s: List[String] = list_new();
+    s = list_push(s, "--sign");
+    s = list_push(s, "mydir");
+    if pm_bot_target(s) != "mydir" { return false; }
+    if pm_bot_sign(empty) == true { return false; }
+    let mut t: List[String] = list_new();
+    t = list_push(t, "--to");
+    t = list_push(t, "/tmp/r");
+    if pm_publish_to(t) != "/tmp/r" { return false; }
+    if pm_dispatch_handler("sbom") != "sbom" { return false; }
+    if pm_dispatch_handler("audit") != "audit" { return false; }
+    if pm_dispatch_handler("cat") != "" { return false; }
+    if pm_dispatch_handler("more") != "" { return false; }
+    return true;
+}
+
 pub fn pm_dispatch_handler(sub: String) -> String {
     if sub == "add" { return "add"; }
     if sub == "audit" { return "audit"; }

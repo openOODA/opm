@@ -5,8 +5,8 @@
 // Setup: Outside api_surface=10. Version is the git tag (RFC-0006).
 //
 // Beats:
-//   1. workflows/ci.yml is auto-release only.
-//   2. scripts/test.oo and scripts/verify.oo run locally with OODA_COMPILER.
+//   1. workflows/ci.yml is auto-release only until OODA_COMPILER is in CI.
+//   2. scripts/verify.oo and scripts/test.oo run locally with OODA_COMPILER.
 //   3. No VERSION file.
 
 // workflows/ci.yml is YAML. Not imported.

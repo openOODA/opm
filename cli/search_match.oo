@@ -1,0 +1,19 @@
+// # Catalog name match
+//
+// Logline: A query hits a package name when it is empty or a substring.
+//
+// Setup: Pure strings. No HTTP. No files.
+//
+// Beats:
+//   1. Empty query matches every name.
+//   2. A non-empty query matches a substring of the name.
+
+pub fn pm_search_hit(name: String, q: String) -> Bool {
+    if q == "" {
+        return true;
+    }
+    if str_index_of(name, q) >= 0 {
+        return true;
+    }
+    return false;
+}

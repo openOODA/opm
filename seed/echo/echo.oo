@@ -1,0 +1,12 @@
+// # Echo
+//
+// Logline: Print echo. A second package for the openOODA catalog.
+//
+// Setup: No extra caps. Safe to launch.
+//
+// Beats:
+//   1. Print echo.
+
+pub fn main() {
+    println("echo");
+}

@@ -69,6 +69,15 @@ on the pinned `.oo`. `OODA_UNTRUSTED` refuses exec.
 `add` refuses extra caps. That is the unique move. Do not add
 helper names as user commands.
 
+`search <query>` reads `seed/catalog` first, then `vendor/catalog`,
+then listed HTTPS stores. Empty query lists every name. `add <name>`
+installs from `seed/` when that catalog has the name.
+
+`ingest --from <dir>` reads a recipe `manifest`. `origin=git` needs
+`commit=` as 7+ hex digits (not `main` / `HEAD`). Clone uses
+`url=` plus `OODA_GIT` and the allow-list (default `github.com/`).
+If that name is already in the lock, `sha256=` is required.
+
 ## 6. Exit Codes
 
 - `0` — success

@@ -43,6 +43,10 @@ pub fn main(p: &ProcessCap, fs_r: &FsReadCap, env: &EnvCap, args: List[String]) 
             let err: String = match r { Ok(_) => "", Err(e) => e };
             return Err("check failed " + path + " " + err);
         }
+        let out: String = match r { Ok(s) => s, Err(_) => "" };
+        if str_index_of(out, "ERR") >= 0 {
+            return Err("check failed " + path + " " + out);
+        }
         i = i + 1;
     }
     return Ok(0);

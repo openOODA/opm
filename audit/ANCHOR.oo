@@ -5,7 +5,8 @@
 // Setup: Lowercase .oot per RULES.oot §1.19.
 //
 // Beats:
-//   1. zero-trust.oot — the 20% findings.
-//   2. Do not expand this dir until the kill list is executed.
+//   1. zero-trust.oot — the 20% findings (snapshot; kill list executed).
+//   2. todo.oot — landed vs blocked. Blocked items wait on an oodac binary.
 
 import "zero-trust.oot";
+import "todo.oot";

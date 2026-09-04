@@ -52,8 +52,8 @@ pub fn main() {
     if str_index_of(b3, "payload=my_pkg.oo\n") < 0 { fail("payload underscore"); }
     println("hyphen and underscore names");
 
-    let js: String = "{\"ok\":true,\"cmd\":\"pkg init\",\"name\":\"hello\",\"path\":\"ooda.pkg\"}";
-    if str_index_of(js, "\"cmd\":\"pkg init\"") < 0 { fail("json cmd"); }
+    let js: String = "{\"ok\":true,\"cmd\":\"init\",\"name\":\"hello\",\"path\":\"ooda.pkg\"}";
+    if str_index_of(js, "\"cmd\":\"init\"") < 0 { fail("json cmd"); }
     if str_index_of(js, "\"name\":\"hello\"") < 0 { fail("json name"); }
     if str_index_of(js, "\"path\":\"ooda.pkg\"") < 0 { fail("json path"); }
     println("json shape");

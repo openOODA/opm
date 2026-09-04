@@ -24,6 +24,9 @@ pub fn pm_is_http(s: String) -> Bool {
     if str_index_of(s, "://") >= 0 {
         return true;
     }
+    if str_index_of(s, "catalog.openooda.org") >= 0 {
+        return true;
+    }
     return str_index_of(s, "registry.openooda.org") >= 0;
 }
 

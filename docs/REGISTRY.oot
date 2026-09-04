@@ -2,11 +2,21 @@
 
 File: opm/docs/REGISTRY.oot
 
-This document describes how the openOODA registry works and how opm talks to it. The registry is the public catalog of packages. opm uses it for `search` and `add` when a project does not have a local vendor.
+This document describes how the openOODA registry works and how opm talks to it.
+
+The catalog you search today ships in this repo as `seed/catalog`.
+`opm search hello` reads that file first. `opm add hello` installs
+from `seed/hello/`. The public HTTPS copy lives at
+`https://catalog.openooda.org` (same file format). HTTPS fetch
+needs `OODA_CURL`. You do not need the website to search the seed catalog.
+
+Entry is `opm <subcommand>`. `ooda` may wrap this; that wrap lives in the ooda repo.
 
 ## 1. The Default Registry
 
-The default registry is `https://registry.openooda.org`. opm refuses any other origin unless the user lists it with `ooda opm reg <url>`. The host check is strict: only `https`, no `@`, no spaces, no lookalikes, no path traversal in the URL.
+The default HTTPS store is `https://catalog.openooda.org`. opm refuses any other origin unless the user lists it with `opm reg <url>`. The host check is strict: only `https`, no `@`, no spaces, no lookalikes, no path traversal in the URL.
+
+HTTPS fetch needs `OODA_CURL`. Minisign needs `OODA_MINISIGN`. Missing token is Err. No PATH hunt.
 
 ## 2. CAS Integrity
 
@@ -34,11 +44,11 @@ http-client|1.5.4|FsRead,FsWrite,Net| |5d41402abc4b2a76b9719d911017c592a2b5a8e0c
 
 Each catalog line lists the caps the package needs. opm reads this and refuses the install if the project does not have the cap in its allow-list. The list is the full set: any cap missing from the allow-list is a hard fail.
 
-A registry cannot grant a cap. The project owner decides the allow-list, not the registry. This is the core of the openOODA supply chain model: a package cannot widen the set of resources it touches just by being installed.
+A registry cannot grant a cap. The project owner decides the allow-list, not the registry. This is the unique move: resolve that refuses extra caps.
 
 ## 5. Zero Ambient Supply Chain Security
 
-opm has no ambient trust. There is no global allow-list, no pre-installed keyring, and no fallback registry. Every install is verified against a list the user wrote in `ooda.pkg` (or the project default). Every payload is verified against the `sha256` field in the manifest. Every signature is verified against a secret the user controls.
+opm has no ambient trust. There is no global allow-list, no pre-installed keyring, and no sibling-repo fallback. Every install is verified against a list the user wrote in `ooda.pkg` (or `--vendor` / `--from`). Every payload is verified against the `sha256` field in the manifest. Every signature is verified against a secret the user controls.
 
 This means:
 
@@ -49,19 +59,19 @@ This means:
 
 ## 6. Search
 
-`ooda opm search <query>` walks every configured registry and prints packages whose name contains the query as a substring. The empty query lists every package. The output is one line per hit: `name version caps store [pay=...]`.
+`opm search <query>` walks every configured registry and prints packages whose name contains the query as a substring. The empty query lists every package. The output is one line per hit: `name version caps store [pay=...]`.
 
 The query is a substring. opm does not support regex, fuzzy match, or faceted search. The catalog is small; substring is enough.
 
 ## 7. Install
 
-`ooda opm add <name>` runs through these steps:
+`opm add <name>` runs through these steps:
 
-1. Walk the configured registries. Get the catalog.
+1. Use `--from`, `--vendor`, the project `vendor/` dir, or a listed store. Missing store is Err.
 2. Pick the highest version of `<name>` that satisfies the range in `ooda.pkg`.
 3. Walk the transitive deps. Apply the same picker to each.
 4. Resolve conflicts. The default resolver is single-pass. `--pubgrub` opts in to backtracking.
-5. For each picked node, fetch the payload and verify the sha against the manifest.
+5. For each picked node, verify the sha against the manifest.
 6. Verify the signature if the manifest has one.
 7. Write the payload to CAS, the file vendor, and the lock.
 
@@ -69,7 +79,7 @@ Any failure in steps 2-7 is a hard fail. No partial install.
 
 ## 8. Verification
 
-`ooda opm audit` (or `ooda opm sbom`) walks the current lock and reports any hit against:
+`opm audit` walks the current lock and reports any hit against:
 
 - The vendor `yank` file (a line `name@version` or bare `name`).
 - The vendor `advisory` file (a line that starts with `name@version`).
@@ -77,10 +87,12 @@ Any failure in steps 2-7 is a hard fail. No partial install.
 
 The audit is local. It does not call the registry.
 
+`opm sbom` is its own command. It prints a CycloneDX-lite object from the lock. It is not an alias of `audit`.
+
 ## 9. Publish
 
-`ooda opm publish` writes a package to a local registry tree. The default is `.ooda-cache/registry`. The output is `<root>/<name>/<version>/` with `ooda.pkg`, the payload, and a signed `index` file. The user can `rsync` the tree to a real server, or extend the dispatcher to PUT when the runtime gains an HTTP upload primitive.
+`opm publish` writes a package to a local registry tree. The default is `.ooda-cache/registry`. `--to <dir>` overrides. The output is `<root>/<name>/<version>/` with `ooda.pkg`, the payload, and a signed `index` file. The user can `rsync` the tree to a real server.
 
 ## 10. The Local-Registry Model
 
-opm ships a local-registry simulation because the runtime has no `fetch_put` primitive. The `publish` subcommand does not make an HTTP call. It writes to disk. This is by design: every step of the supply chain is reproducible from a directory tree, with no daemon, no secret store, and no daemon key.
+opm ships a local-registry write because there is no ambient HTTP PUT. The `publish` subcommand does not make an HTTP call. It writes to disk. This is by design: every step of the supply chain is reproducible from a directory tree.

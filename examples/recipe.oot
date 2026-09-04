@@ -2,15 +2,33 @@
 
 File: opm/examples/recipe.oot
 
-A recipe is a key=value manifest for offline key resolution. It maps package names to local tarball paths.
+A recipe is a directory with a `manifest` file (key=value) and a payload. `opm ingest --from <dir>` locks it. File-backed only. No HTTP.
 
 ```
-[recipe]
-hello-world = ./pkgs/hello-world-1.2.3.tar.gz
-json-parser = ./pkgs/json-parser-2.1.0.tar.gz
-http-client = ./pkgs/http-client-1.5.4.tar.gz
+name=hello-world
+version=1.2.3
+origin=dir
+caps=FsRead,FsWrite
+license=MIT
+payload=hello-world.oo
+commit=
+sha256=
 ```
 
 ## Usage
 
-`ooda opm add hello-world` resolves via the recipe first, then via the catalog. Fail-closed if neither has it.
+`opm ingest --from ./recipes/hello-world` reads that directory, verifies sha and caps, and writes CAS plus a v2 lock.
+
+`opm add --from ./recipes/hello-world` installs from the same kind of directory without a registry.
+
+Git origin (`origin=git`) needs:
+
+```
+origin=git
+url=https://github.com/org/foo.git
+commit=abcdef0123456789
+payload=src/main.oo
+sha256=
+```
+
+`commit=` must be 7+ hex digits. Not `main`, not `HEAD`. Clone uses `OODA_GIT`. Host must match `ingest.allow` or `allow=` in `ooda.pkg` (default `github.com/`). After this name is in the lock, `sha256=` is required and must match the payload.

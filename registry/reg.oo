@@ -5,12 +5,12 @@
 // Setup: Pure string checks. No HTTP. Git allow-list is a different function.
 //
 // Beats:
-//   1. Require https and host registry.openooda.org.
+//   1. Require https and host catalog.openooda.org.
 //   2. Refuse http, lookalikes, and extra origin paths.
 //   3. Relative fetch paths must not traverse.
 
 pub fn pm_reg_default() -> String {
-    return "https://registry.openooda.org";
+    return "https://catalog.openooda.org";
 }
 
 pub fn pm_same(a: String, b: String) -> Bool {
@@ -81,7 +81,7 @@ pub fn pm_reg_origin_ok(url: String) -> Bool {
     if !pm_reg_https_ok(url) {
         return false;
     }
-    return pm_reg_host(url) == "registry.openooda.org";
+    return pm_reg_host(url) == "catalog.openooda.org";
 }
 
 pub fn pm_reg_base(url: String) -> String {

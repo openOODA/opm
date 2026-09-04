@@ -2,12 +2,11 @@
 //
 // Logline: publish reads --to from rest starting at 0.
 //
-// Setup: Pure list checks. No file write.
+// Setup: Covered by pm_argv_self_test.
 //
 // Beats:
-//   1. --to /tmp/r is the dest.
-//   2. --json is seen.
-//   3. Empty rest uses the default cache path.
+//   1. --to is the dest.
+//   2. Empty rest uses the default cache path.
 
 import "cli/argv.oo";
 
@@ -16,22 +15,7 @@ fn fail(msg: String) {
     process_exit(1);
 }
 
-fn one(a: String) -> List[String] {
-    let mut xs: List[String] = list_new();
-    return list_push(xs, a);
-}
-
-fn two(a: String, b: String) -> List[String] {
-    let mut xs: List[String] = list_new();
-    xs = list_push(xs, a);
-    return list_push(xs, b);
-}
-
 pub fn main() {
-    let _h: String = pm_help_text();
-    if pm_publish_to(two("--to", "/tmp/r")) != "/tmp/r" { fail("to"); }
-    if pm_publish_json(one("--json")) == false { fail("json"); }
-    let empty: List[String] = list_new();
-    if pm_publish_to(empty) != ".ooda-cache/registry" { fail("default"); }
+    if !pm_argv_self_test() { fail("argv self test"); }
     println("argv_publish_proof: PASSED");
 }

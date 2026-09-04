@@ -104,5 +104,5 @@ pub fn run_ooda_pm_pack(fr: &FsReadCap, fw: &FsWriteCap, proc: &ProcessCap, env:
         println("{\"ok\":true,\"cmd\":\"pack\",\"dir\":\"" + pm_jesc(out) + "\",\"packages\":" + packed.to_string() + "}");
         return;
     }
-    println("ooda pack: " + out);
+    println("opm pack: " + out);
 }

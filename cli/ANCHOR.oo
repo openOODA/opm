@@ -9,13 +9,14 @@
 //   1. Handlers: add, audit, sbom, bot, ingest, init, launch,
 //      remove, update, outdated, why, pack, pkg, publish,
 //      reg/registry/regs, search, tree, vendor, clean.
-//   2. Helpers: argv, slurp, catalog, vendor_pick, git_clone, reg_fetch, tool.
+//   2. Helpers: argv, slurp, catalog, search_match, vendor_pick, git_clone, reg_fetch, tool.
 //   3. pkg/ has lock and parse helpers used by cmd_pkg.
 //   4. main.oo parses argv and dispatches. Unknown subcommand is ERR.
 
 import "argv.oo";
 import "slurp.oo";
 import "catalog.oo";
+import "search_match.oo";
 import "tool.oo";
 import "vendor_pick.oo";
 import "git_clone.oo";

@@ -16,6 +16,7 @@
 //   9. argv_init_proof, argv_bot_proof, argv_publish_proof — rest argv.
 //  10. help_surface_proof, sbom_dispatch_proof — honest dispatch.
 //  11. compiler_token_proof, no_shell_proof — spawn and shell.
+//  12. search_proof.oo — catalog name substring match.
 
 import "today_proof.oo";
 import "tomorrow_proof.oo";
@@ -32,3 +33,4 @@ import "help_surface_proof.oo";
 import "sbom_dispatch_proof.oo";
 import "compiler_token_proof.oo";
 import "no_shell_proof.oo";
+import "search_proof.oo";
