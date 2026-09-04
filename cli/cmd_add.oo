@@ -13,11 +13,11 @@ import "cmd_io.oo";
 import "cmd_pick.oo";
 import "sign/index.oo";
 import "core/pin.oo";
-import "opm/policy/ANCHOR.oo";
+import "policy/ANCHOR.oo";
 import "resolve/pubgrub.oo";
-import "opm/resolve/ANCHOR.oo";
-import "opm/sign/ANCHOR.oo";
-import "opm/store/ANCHOR.oo";
+import "resolve/ANCHOR.oo";
+import "sign/ANCHOR.oo";
+import "store/ANCHOR.oo";
 import "lock/v2.oo";
 
 fn pm_check_pkg(fr: &FsReadCap, dir: String, name: String, live: String) -> String {

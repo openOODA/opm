@@ -1,21 +1,44 @@
-// # Release Opm — Build, Test, Verify, Tarball
+// # Release Opm — Verify Then Test
 //
-// Logline: Compose build + test + verify; produce opm-<version>.tar.gz.
+// Logline: Run verify then test. Do not write a VERSION file. Do not
+//          create a git tag. Push to main is the release.
 //
-// Setup: Invokes the other 3 scripts in sequence. Fails closed if any step fails.
+// Setup: Run from the opm repo root. Requires the same caps as
+//        verify.oo and test.oo. OODA_COMPILER must point at oodac.
 //
 // Beats:
-//   1. Invoke scripts/build.oo.
-//   2. Invoke scripts/test.oo.
-//   3. Invoke scripts/verify.oo.
-//   4. Tarball the result into opm-<version>.tar.gz.
+//   1. Run scripts/verify.oo through oodac.
+//   2. Run scripts/test.oo through oodac.
+//   3. Stop. CI auto-release tags on push to main.
 
-import "std/process/sys.oo";
+fn find_oodac(fs: &FsReadCap, env: &EnvCap) -> String {
+    let r: Result[String, String] = env_get(env, "OODA_COMPILER");
+    let p: String = match r { Ok(s) => s, Err(_) => "" };
+    if p == "" {
+        println("ERR\trelease\tOODA_COMPILER required");
+        process_exit(1);
+    }
+    if !path_exists(fs, p) {
+        println("ERR\trelease\tOODA_COMPILER missing: " + p);
+        process_exit(1);
+    }
+    return p;
+}
 
 pub fn main(p: &ProcessCap, fs_r: &FsReadCap, env: &EnvCap, args: List[String]) -> Result[Int, String] {
-    println("Release: step 1/4 build");
-    println("Release: step 2/4 test");
-    println("Release: step 3/4 verify");
-    println("Release: step 4/4 tarball -> opm-0.7.0.tar.gz");
+    let oodac: String = find_oodac(fs_r, env);
+    println("Release: step 1/2 verify");
+    let v: Result[String, String] = sys_exec(p, oodac, "run", "scripts/verify.oo");
+    if v.is_err() {
+        let err: String = match v { Ok(_) => "", Err(e) => e };
+        return Err("verify failed " + err);
+    }
+    println("Release: step 2/2 test");
+    let t: Result[String, String] = sys_exec(p, oodac, "run", "scripts/test.oo");
+    if t.is_err() {
+        let err: String = match t { Ok(_) => "", Err(e) => e };
+        return Err("test failed " + err);
+    }
+    println("Release: local gates passed. Push main to tag.");
     return Ok(0);
 }

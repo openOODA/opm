@@ -9,9 +9,9 @@
 //   2. path:name joins the catalog. Extra caps and traversal refuse.
 //   3. Lock hash match/tamper. HMAC differs on tamper.
 
-import "core.oo";
-import "resolve.oo";
-import "sign.oo";
+import "core/core.oo";
+import "resolve/resolve.oo";
+import "sign/sign.oo";
 
 fn fail(msg: String) {
     println("FAIL " + msg);

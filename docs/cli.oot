@@ -1,6 +1,6 @@
 # Opm CLI Reference
 
-File: ooda/opm/docs/cli.oot
+File: opm/docs/cli.oot
 
 This document is the user-facing reference for the opm command set. opm is the openOODA package manager. It runs as a subcommand of the ooda toolchain. After install, the entry point is `ooda opm <subcommand>`.
 

@@ -10,10 +10,10 @@
 //   3. Several root names resolve to one lock without duplicate nodes.
 
 import "cmd_io.oo";
-import "std/os/fs.oo";
+import "std/fs/os/fs.oo";
 import "sign/index.oo";
 import "core/pin.oo";
-import "opm/resolve/ANCHOR.oo";
+import "resolve/ANCHOR.oo";
 import "lock/v2.oo";
 
 pub fn pm_list_dir(fr: &FsReadCap, proc: &ProcessCap, dir: String) -> String {

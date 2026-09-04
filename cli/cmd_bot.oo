@@ -14,9 +14,9 @@ import "cmd_io.oo";
 import "find_compiler.oo";
 import "host_run.oo";
 import "pkg/parse.oo";
-import "opm/core/ANCHOR.oo";
+import "core/ANCHOR.oo";
 import "core/pin.oo";
-import "opm/resolve/ANCHOR.oo";
+import "resolve/ANCHOR.oo";
 
 pub fn pm_bot_verify_pkg(fr: &FsReadCap, base_dir: String, pkg_name: String) -> String {
     let pkg_path: String = base_dir + "/" + pkg_name;

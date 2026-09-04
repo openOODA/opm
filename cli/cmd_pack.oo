@@ -13,7 +13,7 @@ import "cmd_cat.oo";
 import "cmd_io.oo";
 import "sign/index.oo";
 import "core/pin.oo";
-import "opm/store/ANCHOR.oo";
+import "store/ANCHOR.oo";
 
 fn pm_pack_one(fr: &FsReadCap, fw: &FsWriteCap, root: String, out: String, line: String) -> Bool {
     let nm: String = pm_tok_name(line);

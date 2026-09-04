@@ -10,9 +10,8 @@
 //   3. Hyphen and underscore names build the matching payload file name.
 //   4. --json output text contains the three required fields.
 
-import "cmd_init.oo";
-import "cmd_io.oo";
-import "name.oo";
+import "cli/cmd_init.oo";
+import "core/name.oo";
 
 fn fail(msg: String) {
     println("FAIL " + msg);

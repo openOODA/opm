@@ -9,9 +9,9 @@
 //   2. Sha mismatch is err sha256 mismatch.
 //   3. Extra caps are err caps. A marked untrusted body is err untrusted. Else ok.
 
-import "caps.oo";
-import "recipe.oo";
-import "sec/untrusted.oo";
+import "policy/caps.oo";
+import "core/recipe.oo";
+import "std/sec/untrusted.oo";
 
 
 

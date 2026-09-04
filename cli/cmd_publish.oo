@@ -11,9 +11,9 @@
 //   4. `--json` prints the path; otherwise text.
 
 import "cmd_io.oo";
-import "opm/resolve/ANCHOR.oo";
-import "opm/sign/ANCHOR.oo";
-import "opm/store/ANCHOR.oo";
+import "resolve/ANCHOR.oo";
+import "sign/ANCHOR.oo";
+import "store/ANCHOR.oo";
 
 fn pm_mkdir_p(fr: &FsReadCap, fw: &FsWriteCap, abs: String) -> Bool {
     if path_exists(fr, abs) { return true; }

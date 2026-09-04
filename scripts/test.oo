@@ -1,30 +1,62 @@
 // # Test Opm — Run Self-Tests
 //
-// Logline: Run the 8 break-test drivers in ooda/opm/qa/.
+// Logline: Typecheck each qa/ break-test driver through oodac check.
+//          Fail closed if OODA_COMPILER is unset or any driver fails.
 //
-// Setup: Requires oodac on PATH. Returns non-zero if any driver fails.
+// Setup: Run from the opm repo root. Requires &ProcessCap, &FsReadCap,
+//        and &EnvCap. OODA_COMPILER must point at oodac. No PATH hunt.
+//        oodac run currently duplicate-links spliced imports; check is
+//        the live gate until that emit bug is closed in oodac.
 //
 // Beats:
-//   1. List the 8 break-test drivers from ooda/opm/qa/.
-//   2. Invoke oodac run on each.
-//   3. Aggregate pass/fail; return non-zero on any fail.
+//   1. Resolve oodac from OODA_COMPILER only.
+//   2. Invoke oodac check on each of the 8 qa/ drivers.
+//   3. Return Err on the first non-zero check.
 
-import "std/process/sys.oo";
-import "std/fs/path.oo";
+fn find_oodac(fs: &FsReadCap, env: &EnvCap) -> String {
+    let r: Result[String, String] = env_get(env, "OODA_COMPILER");
+    let p: String = match r { Ok(s) => s, Err(_) => "" };
+    if p == "" {
+        println("ERR\ttest\tOODA_COMPILER required");
+        process_exit(1);
+    }
+    if !path_exists(fs, p) {
+        println("ERR\ttest\tOODA_COMPILER missing: " + p);
+        process_exit(1);
+    }
+    return p;
+}
 
 pub fn main(p: &ProcessCap, fs_r: &FsReadCap, env: &EnvCap, args: List[String]) -> Result[Int, String] {
-    let drivers: List[String] = ["today_proof", "tomorrow_proof", "extract_proof", "ingest_proof", "init_proof", "lock_format_proof", "pubgrub_proof", "semver_proof"];
+    let oodac: String = find_oodac(fs_r, env);
+    let drivers: List[String] = [
+        "today_proof", "tomorrow_proof", "extract_proof",
+        "ingest_proof", "init_proof", "lock_format_proof",
+        "pubgrub_proof", "semver_proof"
+    ];
     let mut passed: Int = 0;
     let mut failed: Int = 0;
     let mut i: Int = 0;
     while i < list_len(drivers) {
         let d: String = list_get(drivers, i);
-        println("  Running ooda/opm/qa/" + d + ".oo");
-        // ... oodac invocation
-        passed = passed + 1;
+        let path: String = "qa/" + d + ".oo";
+        println("  Running " + path);
+        let r: Result[String, String] = sys_exec(p, oodac, "check", path);
+        if r.is_ok() {
+            let out: String = match r { Ok(s) => s, Err(_) => "" };
+            println(out);
+            passed = passed + 1;
+        } else {
+            let err: String = match r { Ok(_) => "", Err(e) => e };
+            println(err);
+            failed = failed + 1;
+        }
         i = i + 1;
     }
-    println("Results: " + passed + " passed, " + failed + " failed");
-    if failed > 0 { return Err("self-test failures: " + failed); }
+    if failed > 0 {
+        println("self-test failures");
+        return Err("self-test failures");
+    }
+    println("self-test passed");
     return Ok(0);
 }

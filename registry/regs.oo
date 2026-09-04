@@ -9,8 +9,8 @@
 //   2. Refuse to drop the stock store.
 //   3. Write extras with write_file under OODA_FS_WRITEDIR.
 
-import "cmd_io.oo";
-import "cli/build/host_run.oo";
+import "cli/cmd_io.oo";
+import "cli/host_run.oo";
 import "reg.oo";
 
 pub fn pm_regs_home(fr: &FsReadCap, proc: &ProcessCap) -> String {

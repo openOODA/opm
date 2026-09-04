@@ -9,10 +9,10 @@
 //   2. Yank, license allow-list, replaces, overrides, and local git commit.
 //   3. Lock v2 header parse. Package lines need @.
 
-import "index.oo";
-import "pin.oo";
-import "policy.oo";
-import "v2.oo";
+import "sign/index.oo";
+import "core/pin.oo";
+import "policy/policy.oo";
+import "lock/v2.oo";
 
 fn fail(msg: String) {
     println("FAIL " + msg);

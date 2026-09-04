@@ -9,8 +9,8 @@
 //   2. Match a declared sha256 or treat empty as unset.
 //   3. Build a tiny wrapper that names the payload. It does not rewrite a blob.
 
-import "resolve.oo";
-import "v2.oo";
+import "resolve/resolve.oo";
+import "lock/v2.oo";
 
 pub fn pm_origin_ok(origin: String) -> Bool {
     if origin == "dir" { return true; }

@@ -10,9 +10,8 @@
 //   3. Caps refuse: "evil" requires Net and is refused when FsRead is the only allowed cap.
 //   4. Multi-root resolve via pm_pubgrub_resolve_names succeeds for two roots in the same catalog.
 
-import "core.oo";
-import "resolve.oo";
-import "pubgrub.oo";
+import "resolve/resolve.oo";
+import "resolve/pubgrub.oo";
 
 fn fail(msg: String) {
     println("FAIL " + msg);

@@ -13,14 +13,14 @@ import "cmd_cat.oo";
 import "cmd_io.oo";
 import "host_run.oo";
 import "host_build.oo";
-import "std/os/env.oo";
+import "std/fs/process/env.oo";
 import "policy/caps.oo";
-import "opm/core/ANCHOR.oo";
-import "opm/launch/ANCHOR.oo";
+import "core/ANCHOR.oo";
+import "launch/ANCHOR.oo";
 import "core/pin.oo";
-import "opm/policy/ANCHOR.oo";
-import "opm/resolve/ANCHOR.oo";
-import "opm/store/ANCHOR.oo";
+import "policy/ANCHOR.oo";
+import "resolve/ANCHOR.oo";
+import "store/ANCHOR.oo";
 
 fn launch_die(msg: String) {
     println("ERR\tpm\t" + msg);

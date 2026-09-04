@@ -1,24 +1,44 @@
-// # Verify Opm — Assert Version and Surface
+// # Verify Opm — Assert Surface, Ban VERSION
 //
-// Logline: Parse ooda/opm/VERSION, assert the api_surface field matches the mod.oo subdir count.
+// Logline: Fail closed if a VERSION file exists or a public subdir
+//          lacks ANCHOR.oo.
 //
-// Setup: Pure check. Fails closed if VERSION's api_surface count does not match the actual subdirs.
+// Setup: Run from the opm repo root. Requires &FsReadCap.
+//        Version comes from git tags (RFC-0006). api_surface is 10.
 //
 // Beats:
-//   1. Parse ooda/opm/VERSION for opm= and api_surface= fields.
-//   2. Count the actual subdirs in ooda/opm/.
-//   3. Compare; fail closed on mismatch.
+//   1. Refuse a repo-root VERSION file.
+//   2. Require ANCHOR.oo in each of the 10 public subdirs.
+//   3. Compare the live count to api_surface=10.
 
-import "std/fs/path.oo";
-
-pub fn main(p: &ProcessCap, fs_r: &FsReadCap, args: List[String]) -> Result[Int, String] {
-    let version: String = "opm=0.7.0";
-    let declared: Int = 9;
-    let actual: Int = 9;
-    println("Declared api_surface: " + declared);
-    println("Actual subdir count:  " + actual);
-    if declared != actual {
-        return Err("api_surface drift: declared " + declared + " but found " + actual);
+pub fn main(fs_r: &FsReadCap, args: List[String]) -> Result[Int, String] {
+    if path_exists(fs_r, "VERSION") {
+        return Err("VERSION file is banned; version is the git tag");
     }
+    let dirs: List[String] = [
+        "core", "resolve", "lock", "store", "registry",
+        "policy", "sign", "launch", "qa", "cli"
+    ];
+    let want: Int = 10;
+    let n: Int = list_len(dirs);
+    if n != want {
+        return Err("verify list length drift");
+    }
+    let mut i: Int = 0;
+    let mut found: Int = 0;
+    while i < n {
+        let d: String = list_get(dirs, i);
+        let p: String = d + "/ANCHOR.oo";
+        if path_exists(fs_r, p) {
+            found = found + 1;
+        } else {
+            return Err("missing " + p);
+        }
+        i = i + 1;
+    }
+    if found != want {
+        return Err("api_surface drift");
+    }
+    println("api_surface=10");
     return Ok(0);
 }

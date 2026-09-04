@@ -10,8 +10,8 @@
 //   3. Sort the pins and hash the sorted text.
 
 import "parse.oo";
-import "opm/lock/ANCHOR.oo";
-import "opm/core/ANCHOR.oo";
+import "lock/ANCHOR.oo";
+import "core/ANCHOR.oo";
 
 fn pkg_find(s: String, ch: String, from: Int) -> Int {
     let n: Int = chars_len(s);

@@ -9,8 +9,8 @@
 //   2. Compare the local commit file through pm_git_ok.
 //   3. Wrong or empty pin is err git.
 
-import "resolve.oo";
-import "v2.oo";
+import "resolve/resolve.oo";
+import "lock/v2.oo";
 
 pub fn pm_git_want(spec: String) -> String {
     let c: String = pm_kv(spec, "commit");

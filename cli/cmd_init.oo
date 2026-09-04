@@ -12,7 +12,7 @@
 
 import "cmd_io.oo";
 import "core/name.oo";
-import "opm/store/ANCHOR.oo";
+import "store/store.oo";
 
 pub fn pm_init_manifest(name: String) -> String {
     return "name=" + name + "\nversion=0.1.0\nmin_pin=v0.210.0\ndeps=\ncaps=FsRead,FsWrite\nlicense=MIT\npayload=" + name + ".oo\ncommit=\nsha256=\nsig=\n";

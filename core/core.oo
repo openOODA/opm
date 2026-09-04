@@ -9,8 +9,8 @@
 //   2. Pick the highest SemVer that satisfies = ^ ~ * >= <= > < and compound (a b means AND of all parts).
 //   3. Lock hash matches on the same payload and differs when tampered.
 
-import "caps.oo";
-import "lock.oo";
+import "policy/caps.oo";
+import "lock/lock.oo";
 import "name.oo";
 
 pub fn pm_sha256(s: String) -> String {

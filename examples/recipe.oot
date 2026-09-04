@@ -1,6 +1,6 @@
 # Sample Recipe
 
-File: ooda/opm/examples/recipe.oot
+File: opm/examples/recipe.oot
 
 A recipe is a key=value manifest for offline key resolution. It maps package names to local tarball paths.
 

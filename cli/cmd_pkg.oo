@@ -11,7 +11,7 @@
 
 import "cmd_cat.oo";
 import "cmd_io.oo";
-import "opm/store/ANCHOR.oo";
+import "store/ANCHOR.oo";
 
 pub fn run_ooda_pm_pkg(fr: &FsReadCap, proc: &ProcessCap, args: List[String]) {
     let root: String = pm_root_abs(fr, proc);

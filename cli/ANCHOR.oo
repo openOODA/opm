@@ -6,7 +6,7 @@
 //
 // Beats:
 //   1. 19 subcommand handlers: add, audit, bot, cat, git, ingest, init, io, launch, more, ops, pack, pick, pkg, publish, reg, regs, search, tree.
-//   2. pkg/ has 3 helpers: lock, parse, mod (used by cmd_pkg).
+//   2. pkg/ has 2 helpers: lock, parse (used by cmd_pkg).
 //   3. find_compiler/host_run/host_build spawn oodac. These are a copy of ooda/cli/build/ utilities, kept here so opm is self-contained. Refactor target: when oodac is its own repo, opm no longer needs these — cli/ spawns oodac instead.
 //   4. main.oo is the package entry point: parse argv, dispatch to the right cmd_* handler, return Result<Int, String>.
 

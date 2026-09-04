@@ -1,31 +1,49 @@
-// # Build Opm — Compile Library and Commands
+// # Build Opm — Check Public Surface
 //
-// Logline: Compile the opm lib and the cli/opm commands into release artifacts.
+// Logline: Run oodac check on each public ANCHOR.oo and on cli/main.oo.
 //
-// Setup: Requires oodac on PATH or OODAC_BIN env. Reads ooda/opm/VERSION for the version string.
+// Setup: Run from the opm repo root. Requires &ProcessCap, &FsReadCap,
+//        and &EnvCap. OODA_COMPILER must point at oodac. No PATH hunt.
+//        Does not read a VERSION file.
 //
 // Beats:
-//   1. Read ooda/opm/VERSION to get the opm version.
-//   2. Compile each subdir mod.oo via oodac (core, resolve, lock, store, registry, policy, sign, launch, qa).
-//   3. Compile each cli/opm/cmd_*.oo via oodac.
+//   1. Resolve oodac from OODA_COMPILER only.
+//   2. Check the 10 public ANCHOR.oo files.
+//   3. Check cli/main.oo. Fail closed on the first error.
 
-import "std/process/sys.oo";
-import "std/fs/path.oo";
-import "std/os/env.oo";
+fn find_oodac(fs: &FsReadCap, env: &EnvCap) -> String {
+    let r: Result[String, String] = env_get(env, "OODA_COMPILER");
+    let p: String = match r { Ok(s) => s, Err(_) => "" };
+    if p == "" {
+        println("ERR\tbuild\tOODA_COMPILER required");
+        process_exit(1);
+    }
+    if !path_exists(fs, p) {
+        println("ERR\tbuild\tOODA_COMPILER missing: " + p);
+        process_exit(1);
+    }
+    return p;
+}
 
 pub fn main(p: &ProcessCap, fs_r: &FsReadCap, env: &EnvCap, args: List[String]) -> Result[Int, String] {
-    let version: String = "0.7.0";
-    println("Building opm v" + version);
-    // 2. Compile subdirs
-    let subdirs: List[String] = ["core", "resolve", "lock", "store", "registry", "policy", "sign", "launch", "qa"];
+    let oodac: String = find_oodac(fs_r, env);
+    println("Checking opm public surface");
+    let paths: List[String] = [
+        "core/ANCHOR.oo", "resolve/ANCHOR.oo", "lock/ANCHOR.oo",
+        "store/ANCHOR.oo", "registry/ANCHOR.oo", "policy/ANCHOR.oo",
+        "sign/ANCHOR.oo", "launch/ANCHOR.oo", "qa/ANCHOR.oo",
+        "cli/ANCHOR.oo", "cli/main.oo"
+    ];
     let mut i: Int = 0;
-    while i < list_len(subdirs) {
-        let sub: String = list_get(subdirs, i);
-        println("  Compiling ooda/opm/" + sub + "/mod.oo");
-        // ... oodac invocation goes here
+    while i < list_len(paths) {
+        let path: String = list_get(paths, i);
+        println("  Checking " + path);
+        let r: Result[String, String] = sys_exec(p, oodac, "check", path);
+        if r.is_err() {
+            let err: String = match r { Ok(_) => "", Err(e) => e };
+            return Err("check failed " + path + " " + err);
+        }
         i = i + 1;
     }
-    // 3. Compile cli/opm commands
-    println("  Compiling cli/opm/cmd_*.oo");
     return Ok(0);
 }

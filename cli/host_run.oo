@@ -10,7 +10,7 @@
 //   3. Forward variable-arity compiler arguments through one bounded sh -c quoting path.
 
 import "find_compiler.oo";
-import "std/os/fs.oo";
+import "std/fs/os/fs.oo";
 
 pub fn sq(s: String) -> String {
     let n: Int = chars_len(s);

@@ -1,30 +1,32 @@
 # Opm Versioning Contract
 
-File: ooda/opm/docs/versioning.oot
+File: opm/docs/versioning.oot
 
 This document defines the version contract that opm uses for itself, for the parent ooda toolchain, and for every package it installs. The contract is fail-closed. If a check fails, opm refuses to run.
 
-## 1. The VERSION File
+## 1. Version Source
 
-`ooda/opm/VERSION` declares opm's own version and its requirements on the toolchain that hosts it. The format is `NAME=MAJOR.MINOR.PATCH[-PRERELEASE]`, one per line.
+opm has no VERSION file. The version is the git tag. Push to main
+creates the next PATCH tag (RFC-0006, RULES.oot §1.24).
+
+`scripts/verify.oo` asserts the live structural contract:
 
 ```
-opm=0.7.0
-ooda=2.10.0
-ooda_max=2.99.0
-oodac=2.10.0
-std=2.10.0
 api_surface=10
 ```
 
+The 10 public subdirs are core, resolve, lock, store, registry,
+policy, sign, launch, qa, and cli. Each must contain ANCHOR.oo.
+A VERSION file at the repo root is a defect.
+
 ## 2. Field Semantics
 
-- `opm` — opm's own version. Uses Semantic Versioning. Bump MAJOR on a breaking change to the CLI surface or the lock format. Bump MINOR for a backwards-compatible feature. Bump PATCH for a backwards-compatible fix.
-- `ooda` — the minimum required ooda toolchain version. opm refuses to run if the installed ooda is older.
-- `ooda_max` — the maximum compatible ooda version. Pinned to `2.x` because a 3.x toolchain implies a new contract.
-- `oodac` — the minimum compiler version. Same scheme as `ooda`.
-- `std` — the minimum standard library version. Same scheme.
-- `api_surface` — a structural check. The loader asserts that the opm `ANCHOR.oo` exposes exactly this many public subdirs. If a new subdir is added or removed, the number changes and the contract is bumped.
+- `opm` — the git tag. MAJOR on a breaking CLI or lock change.
+  MINOR on a compatible feature. PATCH on every push to main.
+- `api_surface` — `scripts/verify.oo` counts public subdirs. A
+  new or removed subdir changes the count and the contract.
+- Package manifests still pin toolchain floors (`min_pin`) using
+  the range syntax in section 4. Those pins are not a VERSION file.
 
 ## 3. Bump Rules
 
@@ -84,14 +86,10 @@ The lock is rewritten on every successful install. The hash is sorted lexicograp
 
 opm refuses to run when any of the following is true:
 
-- The installed ooda toolchain is below the declared `ooda` floor.
-- The installed ooda toolchain is at or above `ooda_max`.
-- The installed oodac is below `oodac`.
-- The installed std is below `std`.
-- The `api_surface` count does not match the actual `ANCHOR.oo` subdir count.
-- A required subdir is missing or contains zero `.oo` files.
+- `scripts/verify.oo` finds a VERSION file or api_surface != 10.
+- A required public subdir is missing ANCHOR.oo.
 - The lock is malformed (any package line that does not parse).
-- A `min_pin` declared on a manifest is below the running opm's `min_pin`.
+- A `min_pin` declared on a manifest is below the running opm.
 
 There are no silent fallbacks and no compatibility shims. A version contract that does not hold is an error.
 
@@ -104,4 +102,5 @@ A breaking change is any change that requires a consumer to update their code. E
 - Removing a `caps=` token from the default set.
 - Changing the shape of the error output (scripts that grep the output will break).
 
-Each breaking change bumps the MAJOR part of `opm`, the MAJOR part of `ooda_max`, and re-issues the contract. Consumers that pin `^0.7.0` will not pick up a `1.0.0` automatically. They must opt in.
+Each breaking change is a manual MAJOR git tag. Consumers that pin
+`^0.8.0` will not pick up a `1.0.0` automatically. They must opt in.

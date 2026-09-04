@@ -10,9 +10,9 @@
 //   3. Try the highest compatible version. If a transitive dep fails, backtrack and try the next-lower.
 //   4. Bound depth and step count so a bad catalog cannot loop.
 
-import "core.oo";
-import "caps.oo";
-import "lock.oo";
+import "core/core.oo";
+import "policy/caps.oo";
+import "lock/lock.oo";
 import "resolve.oo";
 
 fn pg_versions_for(catalog: String, name: String) -> String {

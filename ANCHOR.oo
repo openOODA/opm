@@ -2,7 +2,10 @@
 //
 // Logline: OODA Package Manager. Front door for the opm/ dir.
 //
-// Setup: 9 library subdirs (core, resolve, lock, store, registry, policy, sign, launch, qa) + cli/ (the 19 user-facing subcommand handlers) = 10 public subdirs. Plus scripts/, docs/, examples/ as non-public siblings. Each subdir has its own ANCHOR.oo.
+// Setup: 9 library subdirs (core, resolve, lock, store, registry,
+//        policy, sign, launch, qa) + cli/ = 10 public subdirs.
+//        scripts/, docs/, examples/ are non-public siblings.
+//        Each subdir has its own ANCHOR.oo. No VERSION file.
 //
 // Beats:
 //   1. The 9 library subdirs are: core, resolve, lock, store, registry, policy, sign, launch, qa.
@@ -11,7 +14,8 @@
 //   4. scripts/ has build, test, verify, release entry points.
 //   5. docs/ has versioning.oot, cli.oot, and ANCHOR.oo.
 //   6. examples/ has manifest, recipe, and lockfile samples.
-//   7. VERSION declares opm=0.8.0 with ooda compat range and api_surface=10.
+//   7. api_surface=10 (core resolve lock store registry policy sign
+//      launch qa cli). Version is the git tag. No VERSION file.
 
 import "core/ANCHOR.oo";
 import "resolve/ANCHOR.oo";

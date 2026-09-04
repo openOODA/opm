@@ -1,6 +1,6 @@
 # Installing opm
 
-File: ooda/opm/docs/INSTALL.oot
+File: opm/docs/INSTALL.oot
 
 This document describes how opm ships, how to install it, and how it relates to the rest of the openOODA toolchain. opm is not a stand-alone binary. It is a package that lives inside the ooda runtime.
 

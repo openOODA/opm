@@ -1,6 +1,6 @@
 # Sample Lockfile
 
-File: ooda/opm/examples/lock.oot
+File: opm/examples/lock.oot
 
 A lockfile pins the exact set of installed packages and their hashes. It is regenerated on every successful install.
 

@@ -1,6 +1,6 @@
 # The Package Manifest
 
-File: ooda/opm/docs/MANIFEST.oot
+File: opm/docs/MANIFEST.oot
 
 A package manifest is the small key=value text file that opm reads to install a package. The file is named `ooda.pkg` and lives at the root of the project. The `init` subcommand writes a starter; `add` reads it; `publish` ships it.
 

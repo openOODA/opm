@@ -1,6 +1,6 @@
 # Sample Package Manifest
 
-File: ooda/opm/examples/manifest.oot
+File: opm/examples/manifest.oot
 
 A minimal package manifest declares the package's name, version, capabilities, and dependencies.
 

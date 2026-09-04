@@ -12,8 +12,8 @@
 import "cmd_cat.oo";
 import "cmd_io.oo";
 import "cmd_add.oo";
-import "opm/resolve/ANCHOR.oo";
-import "opm/store/ANCHOR.oo";
+import "resolve/ANCHOR.oo";
+import "store/ANCHOR.oo";
 
 fn pm_lock_text(fr: &FsReadCap, proc: &ProcessCap) -> String {
     let root: String = pm_root_abs(fr, proc);

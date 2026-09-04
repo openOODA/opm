@@ -14,12 +14,12 @@ import "cmd_git.oo";
 import "cmd_io.oo";
 import "policy/caps.oo";
 import "store/extract.oo";
-import "opm/lock/ANCHOR.oo";
+import "lock/ANCHOR.oo";
 import "store/tar.oo";
 import "core/pin.oo";
-import "opm/policy/ANCHOR.oo";
+import "policy/ANCHOR.oo";
 import "core/recipe.oo";
-import "opm/store/ANCHOR.oo";
+import "store/ANCHOR.oo";
 import "lock/v2.oo";
 
 fn ing_die(msg: String) {

@@ -9,7 +9,7 @@
 //   2. Refuse .., absolute, and maintainer-script names.
 //   3. Missing ustar or no regular files is err magic.
 
-import "core.oo";
+import "core/core.oo";
 import "extract.oo";
 
 fn pm_octal(s: String) -> Int {

@@ -10,8 +10,8 @@
 //   3. Fall through to the two canonical in-tree/release locations.
 //   4. Require OODA_HOME or OODA_SRC_ROOT for source root; do not infer from strings.
 
-import "std/fs/path.oo";
-import "std/os/env.oo";
+import "std/fs/file/path.oo";
+import "std/fs/process/env.oo";
 
 fn take_compiler(fs: &FsReadCap, path: String) -> String {
     if !path_exists(fs, path) { return ""; }

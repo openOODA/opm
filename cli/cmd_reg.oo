@@ -14,7 +14,7 @@ import "host_run.oo";
 import "core/name.oo";
 import "registry/reg.oo";
 import "registry/regs.oo";
-import "opm/resolve/ANCHOR.oo";
+import "resolve/ANCHOR.oo";
 
 pub fn pm_reg_pub_path() -> String {
     return "cli/registry.pub";

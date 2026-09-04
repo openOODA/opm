@@ -1,6 +1,6 @@
 # The openOODA Registry
 
-File: ooda/opm/docs/REGISTRY.oot
+File: opm/docs/REGISTRY.oot
 
 This document describes how the openOODA registry works and how opm talks to it. The registry is the public catalog of packages. opm uses it for `search` and `add` when a project does not have a local vendor.
 

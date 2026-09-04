@@ -9,7 +9,7 @@
 //   2. Expose name, version, deps, and caps, plus a writer for those four keys.
 //   3. Map a caps field to a CapName and a parent grant mask.
 
-import "opm/core/ANCHOR.oo";
+import "core/ANCHOR.oo";
 
 fn pkg_trim(s: String) -> String {
     let n: Int = chars_len(s);

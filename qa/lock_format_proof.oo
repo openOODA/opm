@@ -8,7 +8,7 @@
 //   1. The new 5-field format renders correctly.
 //   2. The unit proofs (match, tamper, order) all pass with the new signature.
 
-import "lock.oo";
+import "lock/lock.oo";
 
 fn fail(msg: String) {
     println("FAIL " + msg);

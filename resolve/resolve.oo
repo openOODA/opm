@@ -9,9 +9,9 @@
 //   2. Diamond: one world node. Conflict if two versions of one name.
 //   3. path:name deps use a catalog row with that name.
 
-import "core.oo";
-import "caps.oo";
-import "lock.oo";
+import "core/core.oo";
+import "policy/caps.oo";
+import "lock/lock.oo";
 
 pub fn pm_line_field(line: String, idx: Int) -> String {
     let n: Int = chars_len(line);

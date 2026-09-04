@@ -9,7 +9,7 @@
 //   2. overrides=name@ver refuses a different resolved version.
 //   3. git:name#commit is ok only when fixtures/pm_name/commit or name/commit matches.
 
-import "resolve.oo";
+import "resolve/resolve.oo";
 
 fn v2_tok_name(tok: String) -> String {
     let at: Int = str_index_of(tok, "@");

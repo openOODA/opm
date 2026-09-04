@@ -12,8 +12,8 @@
 import "cmd_io.oo";
 import "host_run.oo";
 import "policy/allow.oo";
-import "opm/resolve/ANCHOR.oo";
-import "opm/store/ANCHOR.oo";
+import "resolve/ANCHOR.oo";
+import "store/ANCHOR.oo";
 import "lock/v2.oo";
 
 pub fn pm_load_allow(fr: &FsReadCap) -> String {
