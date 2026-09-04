@@ -10,8 +10,6 @@
 //   2. oodac run each driver twice. Fail on the first Err.
 //   3. Registry proofs in registry/ also run.
 
-import "std/fs/process/env.oo";
-
 fn find_oodac(fs: &FsReadCap, env: &EnvCap) -> String {
     let r: Result[String, String] = env_get(env, "OODA_COMPILER");
     let p: String = match r { Ok(s) => s, Err(_) => "" };

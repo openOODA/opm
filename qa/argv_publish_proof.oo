@@ -16,9 +16,21 @@ fn fail(msg: String) {
     process_exit(1);
 }
 
+fn one(a: String) -> List[String] {
+    let mut xs: List[String] = list_new();
+    return list_push(xs, a);
+}
+
+fn two(a: String, b: String) -> List[String] {
+    let mut xs: List[String] = list_new();
+    xs = list_push(xs, a);
+    return list_push(xs, b);
+}
+
 pub fn main() {
-    if pm_publish_to(["--to", "/tmp/r"]) != "/tmp/r" { fail("to"); }
-    if pm_publish_json(["--json"]) == false { fail("json"); }
-    if pm_publish_to([]) != ".ooda-cache/registry" { fail("default"); }
+    if pm_publish_to(two("--to", "/tmp/r")) != "/tmp/r" { fail("to"); }
+    if pm_publish_json(one("--json")) == false { fail("json"); }
+    let empty: List[String] = list_new();
+    if pm_publish_to(empty) != ".ooda-cache/registry" { fail("default"); }
     println("argv_publish_proof: PASSED");
 }

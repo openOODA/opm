@@ -13,7 +13,6 @@ import "catalog.oo";
 import "argv.oo";
 import "slurp.oo";
 import "host_run.oo";
-import "std/fs/process/env.oo";
 import "policy/caps.oo";
 import "core/ANCHOR.oo";
 import "launch/ANCHOR.oo";

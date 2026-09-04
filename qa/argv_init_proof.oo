@@ -16,11 +16,23 @@ fn fail(msg: String) {
     process_exit(1);
 }
 
+fn one(a: String) -> List[String] {
+    let mut xs: List[String] = list_new();
+    return list_push(xs, a);
+}
+
+fn two(a: String, b: String) -> List[String] {
+    let mut xs: List[String] = list_new();
+    xs = list_push(xs, a);
+    return list_push(xs, b);
+}
+
 pub fn main() {
-    if pm_init_name(["myapp"]) != "myapp" { fail("myapp"); }
-    if pm_init_name(["--json", "myapp"]) != "myapp" { fail("flag then name"); }
-    if pm_init_name(["myapp", "--json"]) != "myapp" { fail("name then flag"); }
-    if pm_init_name([]) != "pkg" { fail("empty default"); }
-    if pm_init_name(["--json"]) != "pkg" { fail("json only"); }
+    if pm_init_name(one("myapp")) != "myapp" { fail("myapp"); }
+    if pm_init_name(two("--json", "myapp")) != "myapp" { fail("flag then name"); }
+    if pm_init_name(two("myapp", "--json")) != "myapp" { fail("name then flag"); }
+    let empty: List[String] = list_new();
+    if pm_init_name(empty) != "pkg" { fail("empty default"); }
+    if pm_init_name(one("--json")) != "pkg" { fail("json only"); }
     println("argv_init_proof: PASSED");
 }
