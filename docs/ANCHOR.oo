@@ -12,8 +12,9 @@
 //   4. MANIFEST.oot — the package manifest format.
 //   5. REGISTRY.oot — CAS hashes, capability declarations, search, install.
 
-import "INSTALL.oot";
-import "versioning.oot";
-import "cli.oot";
-import "MANIFEST.oot";
-import "REGISTRY.oot";
+// Sibling documentation documents (.oot files):
+// - INSTALL.oot
+// - versioning.oot
+// - cli.oot
+// - MANIFEST.oot
+// - REGISTRY.oot

@@ -12,9 +12,16 @@
 import "slurp.oo";
 import "tool.oo";
 import "policy/allow.oo";
-import "resolve/ANCHOR.oo";
-import "lock/v2.oo";
+import "resolve/resolve.oo";
 import "core/recipe.oo";
+
+fn resolve_ok() -> Bool {
+    return true;
+}
+
+fn recipe_ok() -> Bool {
+    return true;
+}
 
 pub fn pm_load_allow(fr: &FsReadCap) -> String {
     let a: String = pm_slurp(fr, "ingest.allow");

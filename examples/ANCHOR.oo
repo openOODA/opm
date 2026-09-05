@@ -9,6 +9,7 @@
 //   2. recipe.oot — sample offline key=value recipe.
 //   3. lock.oot — sample SHA-256 lock lines.
 
-import "manifest.oot";
-import "recipe.oot";
-import "lock.oot";
+// Sibling example documents (.oot files):
+// - manifest.oot
+// - recipe.oot
+// - lock.oot

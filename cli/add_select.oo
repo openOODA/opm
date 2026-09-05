@@ -10,10 +10,9 @@
 
 import "catalog.oo";
 import "slurp.oo";
-import "sign/index.oo";
+import "sign/sign.oo";
 import "resolve/pubgrub.oo";
-import "resolve/ANCHOR.oo";
-import "lock/v2.oo";
+import "resolve/resolve.oo";
 
 pub fn pm_check_pkg(fr: &FsReadCap, dir: String, name: String, live: String) -> String {
     let man: String = pm_slurp(fr, dir + "/manifest");

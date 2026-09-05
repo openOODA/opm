@@ -50,16 +50,25 @@ fn run_one(p: &ProcessCap, oodac: String, path: String) -> Bool {
 
 pub fn main(p: &ProcessCap, fs_r: &FsReadCap, env: &EnvCap, args: List[String]) -> Result[Int, String] {
     let oodac: String = find_oodac(fs_r, env);
-    let drivers: List[String] = [
-        "qa/today_proof.oo", "qa/tomorrow_proof.oo", "qa/extract_proof.oo",
-        "qa/ingest_proof.oo", "qa/init_proof.oo", "qa/lock_format_proof.oo",
-        "qa/pubgrub_proof.oo", "qa/semver_proof.oo",
-        "qa/argv_init_proof.oo", "qa/argv_bot_proof.oo", "qa/argv_publish_proof.oo",
-        "qa/help_surface_proof.oo", "qa/sbom_dispatch_proof.oo",
-        "qa/compiler_token_proof.oo", "qa/no_shell_proof.oo",
-        "qa/search_proof.oo",
-        "registry/git_ingest_proof.oo", "registry/reg_proof.oo"
-    ];
+    let mut drivers: List[String] = list_new();
+    drivers = list_push(drivers, "qa/today_proof.oo");
+    drivers = list_push(drivers, "qa/tomorrow_proof.oo");
+    drivers = list_push(drivers, "qa/extract_proof.oo");
+    drivers = list_push(drivers, "qa/ingest_proof.oo");
+    drivers = list_push(drivers, "qa/init_proof.oo");
+    drivers = list_push(drivers, "qa/lock_format_proof.oo");
+    drivers = list_push(drivers, "qa/pubgrub_proof.oo");
+    drivers = list_push(drivers, "qa/semver_proof.oo");
+    drivers = list_push(drivers, "qa/argv_init_proof.oo");
+    drivers = list_push(drivers, "qa/argv_bot_proof.oo");
+    drivers = list_push(drivers, "qa/argv_publish_proof.oo");
+    drivers = list_push(drivers, "qa/help_surface_proof.oo");
+    drivers = list_push(drivers, "qa/sbom_dispatch_proof.oo");
+    drivers = list_push(drivers, "qa/compiler_token_proof.oo");
+    drivers = list_push(drivers, "qa/no_shell_proof.oo");
+    drivers = list_push(drivers, "qa/search_proof.oo");
+    drivers = list_push(drivers, "registry/git_ingest_proof.oo");
+    drivers = list_push(drivers, "registry/reg_proof.oo");
     let mut failed: Int = 0;
     let mut i: Int = 0;
     while i < list_len(drivers) {

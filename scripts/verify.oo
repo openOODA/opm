@@ -40,10 +40,12 @@ pub fn main(fs_r: &FsReadCap, args: List[String]) -> Result[Int, String] {
     if has_text(fs_r, "cli/find_compiler.oo", "ooda/oodac_bin") {
         return Err("find_compiler fallback ooda/oodac_bin");
     }
-    let shells: List[String] = [
-        "cli/host_run.oo", "cli/git_clone.oo", "cli/reg_fetch.oo",
-        "cli/cmd_bot.oo", "registry/regs.oo"
-    ];
+    let mut shells: List[String] = list_new();
+    shells = list_push(shells, "cli/host_run.oo");
+    shells = list_push(shells, "cli/git_clone.oo");
+    shells = list_push(shells, "cli/reg_fetch.oo");
+    shells = list_push(shells, "cli/cmd_bot.oo");
+    shells = list_push(shells, "registry/regs.oo");
     let mut si: Int = 0;
     while si < list_len(shells) {
         let sp: String = list_get(shells, si);
@@ -55,10 +57,17 @@ pub fn main(fs_r: &FsReadCap, args: List[String]) -> Result[Int, String] {
         }
         si = si + 1;
     }
-    let dirs: List[String] = [
-        "core", "resolve", "lock", "store", "registry",
-        "policy", "sign", "launch", "qa", "cli"
-    ];
+    let mut dirs: List[String] = list_new();
+    dirs = list_push(dirs, "core");
+    dirs = list_push(dirs, "resolve");
+    dirs = list_push(dirs, "lock");
+    dirs = list_push(dirs, "store");
+    dirs = list_push(dirs, "registry");
+    dirs = list_push(dirs, "policy");
+    dirs = list_push(dirs, "sign");
+    dirs = list_push(dirs, "launch");
+    dirs = list_push(dirs, "qa");
+    dirs = list_push(dirs, "cli");
     let want: Int = 10;
     let n: Int = list_len(dirs);
     if n != want {

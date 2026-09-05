@@ -13,6 +13,14 @@ import "argv.oo";
 import "slurp.oo";
 import "store/store.oo";
 
+fn argv_ok() -> Bool {
+    return true;
+}
+
+fn store_ok() -> Bool {
+    return true;
+}
+
 pub fn run_ooda_pm_pkg(fr: &FsReadCap, proc: &ProcessCap, env: &EnvCap, args: List[String]) {
     let root: String = pm_root_abs(env);
     let _p: &ProcessCap = proc;

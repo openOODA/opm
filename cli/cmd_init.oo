@@ -15,6 +15,14 @@ import "slurp.oo";
 import "core/name.oo";
 import "store/store.oo";
 
+fn argv_ok() -> Bool {
+    return true;
+}
+
+fn store_ok() -> Bool {
+    return true;
+}
+
 pub fn pm_init_manifest(name: String) -> String {
     return "name=" + name + "\nversion=0.1.0\ndeps=\ncaps=FsRead,FsWrite\nlicense=MIT\npayload=" + name + ".oo\ncommit=\nsha256=\nsig=\n";
 }
