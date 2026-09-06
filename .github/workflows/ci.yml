@@ -49,8 +49,10 @@ jobs:
           OODA_FS_READDIR: ${{ github.workspace }}
           OODA_FS_WRITEDIR: ${{ github.workspace }}
         run: |
-          "${OODA_COMPILER}" run opm/scripts/verify.oo
-          "${OODA_COMPILER}" check opm/scripts/test.oo
+          "${OODA_COMPILER}" build opm/scripts/verify.oo -o /tmp/opm_verify
+          (cd opm && /tmp/opm_verify)
+          "${OODA_COMPILER}" build opm/scripts/test.oo -o /tmp/opm_test
+          (cd opm && /tmp/opm_test)
 
   build:
     needs: test
