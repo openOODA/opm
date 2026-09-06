@@ -34,3 +34,4 @@ import "sbom_dispatch_proof.oo";
 import "compiler_token_proof.oo";
 import "no_shell_proof.oo";
 import "search_proof.oo";
+import "probe_cap_extra.oo";

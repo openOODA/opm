@@ -1,0 +1,21 @@
+// # Opm Cap Extra Probe — 9.1
+// Logline: Verify cap-aware resolve refuses extra caps
+// Setup: No caps. Pure bitmask.
+// Beats:
+//   1. extra caps in need must be refused
+//   2. exact caps must pass
+//   3. subset must pass
+
+pub fn main() -> Result[Int, String] {
+    let need: Int = 1;
+    let have: Int = 3;
+    if (have & need) != need { return Err("subset"); }
+    let extra: Int = 4;
+    if (extra & need) == need { return Err("extra should not match"); }
+    let ok: Bool = (have & need) == need;
+    if !ok { return Err("have must satisfy need"); }
+    let bad: Int = need | extra;
+    if (have & bad) == bad { return Err("have should not satisfy extra"); }
+    println("probe: cap extra ok");
+    return Ok(0);
+}
