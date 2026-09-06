@@ -1,6 +1,6 @@
 # TODO — opm status
 File: opm/audit/todo.oot
-Date: 2026-09-04.
+Date: 2026-09-06.
 
 The kill list from zero-trust.oot is executed. This file is status,
 not a description of today's bugs.
@@ -8,7 +8,7 @@ not a description of today's bugs.
 Stay in opm/. Do not add subcommands. Version is the git tag.
 No VERSION file. No extra .md. Files of product code <= 256 lines.
 
-## Landed
+## Landed (2026-09-04)
 
 - Help names equal `cli/main.oo` dispatch names.
 - `sbom` calls `run_ooda_pm_sbom`. Not an alias of audit.
@@ -23,11 +23,20 @@ No VERSION file. No extra .md. Files of product code <= 256 lines.
   `core/semver.oo`. Starter manifest has no `min_pin=v0.210.0`.
 - User-facing print is `opm <cmd>:`, not `ooda <cmd>:`.
 - Docs and examples match the live lock line and `opm <subcommand>`.
+
+## Landed (2026-09-06) — CI test before build
+
 - `scripts/verify.oo` refuses VERSION, cmd_more, host_build, core.oo,
   compiler fallbacks, and sh -c.
-- `scripts/test.oo` double-runs `oodac check`. `oodac run` waits on
-  a compiler that does not look for `./bin/oodac_bin.core`.
-- CI is auto-release only until `OODA_COMPILER` is on the runner.
+- CI has `test` job (verify + test via `check`) before `build`.
+- Typecheck `cli/main.oo` and `cli/catalog.oo` via OODA_COMPILER
+  (`import "std/..."` now OK via OODA_FS_READDIR).
+- `qa/extract_proof.oo` checks OK via untrusted gate.
+
+## Blocked — still needs oodac `run`
+
+- Flip `scripts/test.oo` from `check` to `run` (binary still
+  `ERR cmd residual: run`; `check` is live gate).
 
 Keep: resolve/, lock lines, policy/caps, qa proofs that assert.
 The unique move is cap-aware resolve.
@@ -38,14 +47,6 @@ The unique move is cap-aware resolve.
 Clone needs `url=` + `OODA_GIT` + allow-list. After the name is in
 the lock, `sha256=` is required.
 
-## Blocked on an oodac binary (Gemini)
-
-- Typecheck `cli/main.oo` and `cli/catalog.oo`
-  (`import "std/..."` from under `cli/`).
-- `qa/extract_proof.oo` (`launch/std/sec/untrusted.oo`).
-- Flip `scripts/test.oo` from `check` to `run`.
-- CI test job before auto-release.
-
 ## Not this repo
 
 - New subcommands.
@@ -53,8 +54,8 @@ the lock, `sha256=` is required.
 - Inventing a NetCap type.
 - Changing the `opm/std` symlink topology.
 
-## Done means (still)
+## Done means
 
 Help equals dispatch. No sh -c. No VERSION file.
 No bin/oodac fallback. sbom is sbom. Files <= 256 lines.
-When the oodac binary ships, the blocked list is the next gate.
+`verify` + `test` (run) green before `build`.
