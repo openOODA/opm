@@ -4,7 +4,7 @@
 //
 // Setup: 9 library subdirs (core, resolve, lock, store, registry,
 //        policy, sign, launch, qa) + cli/ = 10 public subdirs.
-//        scripts/, docs/, examples/, seed/ are non-public siblings.
+//        docs/, examples/, seed/ are non-public siblings.
 //        std/ is a local compile pointer to the std repo; OODA_STD is the contract.
 //        Each public subdir has its own ANCHOR.oo. No VERSION file.
 //
@@ -12,7 +12,8 @@
 //   1. The 9 library subdirs are: core, resolve, lock, store, registry, policy, sign, launch, qa.
 //   2. cli/ has the live subcommand handlers and main.oo. Helpers are not commands.
 //   3. qa/ has the break-test drivers that ship with the package.
-//   4. scripts/ has build, test, verify, release entry points.
+//   4. .github/workflows/ci.yml is the build, test, verify, release
+//      entry point (gh-owned; no scripts/ runners).
 //   5. docs/ has versioning.oot, cli.oot, and ANCHOR.oo.
 //   6. examples/ has manifest, recipe, and lockfile samples.
 //   7. seed/ is the stock openOODA catalog. opm search reads it first.
@@ -29,7 +30,6 @@ import "sign/ANCHOR.oo";
 import "launch/ANCHOR.oo";
 import "qa/ANCHOR.oo";
 import "cli/ANCHOR.oo";
-import "scripts/ANCHOR.oo";
 import "docs/ANCHOR.oo";
 import "examples/ANCHOR.oo";
 import "seed/ANCHOR.oo";

@@ -17,15 +17,15 @@ Each is a repo. They do not share a VERSION file.
 ## 2. Layout
 
 The dispatcher is `cli/main.oo`. Public surface is the 10 subdirs
-counted by `scripts/verify.oo`: core, resolve, lock, store, registry,
-policy, sign, launch, qa, cli.
+counted by CI (`.github/workflows/ci.yml`): core, resolve, lock,
+store, registry, policy, sign, launch, qa, cli.
 
 `opm/std` is a local compile pointer to the std repo. The contract
 is `OODA_STD`. Do not treat the symlink as a second std.
 
 ## 3. The Version Contract
 
-Version is the git tag. `scripts/verify.oo` asserts `api_surface=10`
+Version is the git tag. CI asserts `api_surface=10`
 and refuses a VERSION file. See `versioning.oot`.
 
 ## 4. Run
@@ -41,10 +41,9 @@ opm <subcommand>
 
 ## 5. Verify
 
-```
-oodac run scripts/verify.oo
-oodac run scripts/test.oo
-```
+CI (`.github/workflows/ci.yml`) runs the verify checks and the
+`oodac check` self-test loop on every push to main. There are no
+local `scripts/` runners.
 
 `opm` with no args prints help. Help names must match `cli/main.oo`.
 

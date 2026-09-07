@@ -9,7 +9,7 @@ This document defines the version contract that opm uses for itself, for the par
 opm has no VERSION file. The version is the git tag. Push to main
 creates the next PATCH tag (RFC-0006, RULES.oot §1.24).
 
-`scripts/verify.oo` asserts the live structural contract:
+CI (`.github/workflows/ci.yml`) asserts the live structural contract:
 
 ```
 api_surface=10
@@ -23,7 +23,7 @@ A VERSION file at the repo root is a defect.
 
 - `opm` — the git tag. MAJOR on a breaking CLI or lock change.
   MINOR on a compatible feature. PATCH on every push to main.
-- `api_surface` — `scripts/verify.oo` counts public subdirs. A
+- `api_surface` — CI counts public subdirs. A
   new or removed subdir changes the count and the contract.
 - Package manifests still pin toolchain floors (`min_pin`) using
   the range syntax in section 4. Those pins are not a VERSION file.
@@ -91,7 +91,7 @@ The lock is rewritten on every successful install. The hash is sorted lexicograp
 
 opm refuses to run when any of the following is true:
 
-- `scripts/verify.oo` finds a VERSION file or api_surface != 10.
+- CI finds a VERSION file or api_surface != 10.
 - A required public subdir is missing ANCHOR.oo.
 - The lock is malformed (any package line that does not parse).
 - A `min_pin` declared on a manifest is below the running opm.

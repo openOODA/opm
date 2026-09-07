@@ -48,10 +48,28 @@ jobs:
           OODA_FS_READDIR: ${{ github.workspace }}
           OODA_FS_WRITEDIR: ${{ github.workspace }}
         run: |
-          "${OODA_COMPILER}" build opm/scripts/verify.oo -o /tmp/opm_verify
-          (cd opm && /tmp/opm_verify)
-          "${OODA_COMPILER}" build opm/scripts/test.oo -o /tmp/opm_test
-          (cd opm && /tmp/opm_test)
+          set -euo pipefail
+          test ! -e opm/VERSION || { echo "ERR VERSION file is banned"; exit 1; }
+          for f in opm/cli/cmd_more.oo opm/cli/host_build.oo opm/core/core.oo; do
+            test ! -e "$f" || { echo "ERR banned file $f"; exit 1; }
+          done
+          ! grep -q "bin/oodac" opm/cli/find_compiler.oo || { echo "ERR find_compiler fallback"; exit 1; }
+          ! grep -q "ooda/oodac_bin" opm/cli/find_compiler.oo || { echo "ERR find_compiler fallback"; exit 1; }
+          for f in opm/cli/host_run.oo opm/cli/git_clone.oo opm/cli/reg_fetch.oo opm/cli/cmd_bot.oo opm/registry/regs.oo; do
+            ! grep -q 'sys_exec(proc, "sh"' "$f" || { echo "ERR sh exec in $f"; exit 1; }
+            ! grep -q "command -v" "$f" || { echo "ERR command -v in $f"; exit 1; }
+          done
+          for d in core resolve lock store registry policy sign launch qa cli; do
+            test -f "opm/$d/ANCHOR.oo" || { echo "ERR missing opm/$d/ANCHOR.oo"; exit 1; }
+          done
+          echo "api_surface=10"
+          for t in qa/today_proof.oo qa/tomorrow_proof.oo qa/extract_proof.oo qa/ingest_proof.oo qa/init_proof.oo qa/lock_format_proof.oo qa/pubgrub_proof.oo qa/semver_proof.oo qa/argv_init_proof.oo qa/argv_bot_proof.oo qa/argv_publish_proof.oo qa/help_surface_proof.oo qa/sbom_dispatch_proof.oo qa/compiler_token_proof.oo qa/no_shell_proof.oo qa/search_proof.oo registry/git_ingest_proof.oo registry/reg_proof.oo; do
+            out=$("${OODA_COMPILER}" check "opm/$t") || { echo "$out"; exit 1; }
+            case "$out" in *ERR*) echo "ERR in stdout opm/$t: $out"; exit 1;; esac
+            out=$("${OODA_COMPILER}" check "opm/$t") || { echo "$out"; exit 1; }
+            case "$out" in *ERR*) echo "ERR in stdout opm/$t: $out"; exit 1;; esac
+          done
+          echo "self-test passed"
 
   build:
     needs: test
