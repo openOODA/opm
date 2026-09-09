@@ -8,6 +8,8 @@
 //   1. Parse target folder and --sign from rest starting at 0.
 //   2. Walk the folder. Verify each named package. First failed verify is Err.
 //   3. Write catalog and index. --sign requires OODA_MINISIGN and OODA_MINISIGN_SK.
+//   4. Emit entries sorted by package name so catalog bytes (and re-signs
+//      over them) are reproducible regardless of readdir order.
 
 import "argv.oo";
 import "slurp.oo";
@@ -50,6 +52,60 @@ pub fn pm_bot_verify_pkg(fr: &FsReadCap, base_dir: String, pkg_name: String) -> 
     return "ok|" + pkg_name + "|" + ver + "|" + caps + "|" + deps + "|" + live_sha;
 }
 
+fn pm_bot_entry_name(e: String) -> String {
+    let n: Int = chars_len(e);
+    let mut i: Int = 0;
+    while i < n {
+        if char_at(e, i) == "|" {
+            return str_slice(e, 0, i);
+        }
+        i = i + 1;
+    }
+    return e;
+}
+
+fn pm_bot_name_lt(a: String, b: String) -> Bool {
+    let n: Int = chars_len(a);
+    let m: Int = chars_len(b);
+    let mut i: Int = 0;
+    while i < n && i < m {
+        let x: Int = byte_at(a, i);
+        let y: Int = byte_at(b, i);
+        if x != y {
+            return x < y;
+        }
+        i = i + 1;
+    }
+    return n < m;
+}
+
+fn pm_bot_sort_entries(src: List[String]) -> List[String] {
+    let mut out: List[String] = list_new();
+    let mut i: Int = 0;
+    while i < list_len(src) {
+        let e: String = list_get(src, i);
+        let nm: String = pm_bot_entry_name(e);
+        let mut done: Bool = false;
+        let mut nxt: List[String] = list_new();
+        let mut j: Int = 0;
+        while j < list_len(out) {
+            let o: String = list_get(out, j);
+            if !done && pm_bot_name_lt(nm, pm_bot_entry_name(o)) {
+                nxt = list_push(nxt, e);
+                done = true;
+            }
+            nxt = list_push(nxt, o);
+            j = j + 1;
+        }
+        if !done {
+            nxt = list_push(nxt, e);
+        }
+        out = nxt;
+        i = i + 1;
+    }
+    return out;
+}
+
 pub fn run_ooda_pm_bot(fr: &FsReadCap, fw: &FsWriteCap, proc: &ProcessCap, env: &EnvCap, args: List[String]) {
     let target_dir: String = pm_bot_target(args);
     let do_sign: Bool = pm_bot_sign(args);
@@ -59,7 +115,7 @@ pub fn run_ooda_pm_bot(fr: &FsReadCap, fw: &FsWriteCap, proc: &ProcessCap, env: 
     }
     let names: String = pm_list_dir(fr, target_dir);
     let nms: Int = chars_len(names);
-    let mut catalog_acc: String = "";
+    let mut entries: List[String] = list_new();
     let mut verified_count: Int = 0;
     let mut start: Int = 0;
     let mut pi: Int = 0;
@@ -72,7 +128,7 @@ pub fn run_ooda_pm_bot(fr: &FsReadCap, fw: &FsWriteCap, proc: &ProcessCap, env: 
                         let res: String = pm_bot_verify_pkg(fr, target_dir, p_name);
                         if chars_len(res) >= 3 && str_slice(res, 0, 3) == "ok|" {
                             let entry: String = str_slice(res, 3, chars_len(res));
-                            catalog_acc = catalog_acc + entry + "\n";
+                            entries = list_push(entries, entry);
                             verified_count = verified_count + 1;
                         } else {
                             println("ERR\tpm\tpackage " + p_name + " failed check: " + res);
@@ -84,6 +140,13 @@ pub fn run_ooda_pm_bot(fr: &FsReadCap, fw: &FsWriteCap, proc: &ProcessCap, env: 
             start = pi + 1;
         }
         pi = pi + 1;
+    }
+    let sorted: List[String] = pm_bot_sort_entries(entries);
+    let mut catalog_acc: String = "";
+    let mut k: Int = 0;
+    while k < list_len(sorted) {
+        catalog_acc = catalog_acc + list_get(sorted, k) + "\n";
+        k = k + 1;
     }
     let cat_path: String = target_dir + "/catalog";
     let idx_path: String = target_dir + "/index";
