@@ -94,7 +94,7 @@ fn pm_url_host(url: String) -> String {
         }
         i = i + 1;
     }
-    let mut hostport: String = auth;
+    let mut hostport: String = str_slice(auth, 0, n);
     if last >= 0 {
         hostport = str_slice(auth, last + 1, n);
     }
@@ -186,9 +186,7 @@ pub fn pm_url_allowed(allow: String, url: String) -> Bool {
         if sep {
             if i > start {
                 let pfx: String = str_slice(text, start, i);
-                if pfx == "" {
-                    let _p: String = pfx;
-                } else {
+                if pfx != "" {
                     if pm_url_pfx(url, pfx) {
                         return true;
                     }

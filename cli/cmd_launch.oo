@@ -42,9 +42,7 @@ fn launch_pay_name(fr: &FsReadCap, cas: String) -> String {
             if i > start {
                 let nm: String = str_slice(names, start, i);
                 if chars_len(nm) >= 7 {
-                    if str_slice(nm, 0, 7) == "ingest_" {
-                        let _w: String = nm;
-                    } else {
+                    if str_slice(nm, 0, 7) != "ingest_" {
                         return nm;
                     }
                 } else {
@@ -100,12 +98,8 @@ pub fn run_ooda_pm_launch(fr: &FsReadCap, fw: &FsWriteCap, proc: &ProcessCap, en
     let ydir: String = pm_pick_vendor(args);
     let yanked: Bool = pm_yanked(pm_slurp(fr, ydir + "/yank"), name, pm_tok_ver(line));
     let gate: String = pm_launch_gate(sha, live, grant, need, yanked);
-    if str_slice(gate, 0, 3) == "ok " {
-        let _o: String = gate;
-    } else {
-        if gate == "ok" {
-            let _g: String = gate;
-        } else {
+    if str_slice(gate, 0, 3) != "ok " {
+        if gate != "ok" {
             launch_die(str_slice(gate, 4, chars_len(gate)));
         }
     }

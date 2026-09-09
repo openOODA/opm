@@ -62,7 +62,7 @@ fn pm_tree_walk(cat: String, name: String, depth: Int, seen: String, js: Bool) -
         if i == n || char_at(deps, i) == "," {
             if i > start {
                 let tok: String = str_slice(deps, start, i);
-                let mut nm: String = tok;
+                let mut nm: String = str_slice(tok, 0, chars_len(tok));
                 if chars_len(tok) >= 5 {
                     if str_slice(tok, 0, 5) == "path:" {
                         nm = str_slice(tok, 5, chars_len(tok));

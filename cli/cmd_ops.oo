@@ -36,7 +36,7 @@ fn pm_deps_has(deps: String, name: String) -> Bool {
         if i == n || char_at(deps, i) == "," {
             if i > start {
                 let tok: String = str_slice(deps, start, i);
-                let mut nm: String = tok;
+                let mut nm: String = str_slice(tok, 0, chars_len(tok));
                 if chars_len(tok) >= 5 {
                     if str_slice(tok, 0, 5) == "path:" {
                         nm = str_slice(tok, 5, chars_len(tok));
@@ -97,15 +97,15 @@ pub fn run_ooda_pm_remove(fr: &FsReadCap, fw: &FsWriteCap, proc: &ProcessCap, en
 
 pub fn run_ooda_pm_update(fr: &FsReadCap, fw: &FsWriteCap, proc: &ProcessCap, env: &EnvCap, args: List[String]) {
     let mut name: String = pm_arg_name(args);
-    let mut fwd: List[String] = args;
     if name == "" {
         name = pm_first_lock_name(pm_lock_text(fr, env));
         if name == "" {
             pm_die("update", "empty lock");
         }
-        fwd = list_push(args, name);
+        run_ooda_pm_add(fr, fw, proc, env, list_push(args, name));
+    } else {
+        run_ooda_pm_add(fr, fw, proc, env, args);
     }
-    run_ooda_pm_add(fr, fw, proc, env, fwd);
     if pm_flag(args, "--json") || pm_flag(args, "-json") {
         println("{\"ok\":true,\"cmd\":\"update\",\"name\":\"" + pm_jesc(name) + "\"}");
         return;

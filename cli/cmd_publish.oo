@@ -42,7 +42,7 @@ pub fn run_ooda_pm_publish(fr: &FsReadCap, fw: &FsWriteCap, proc: &ProcessCap, e
         println("ERR\tpm publish\tOODA_FS_WRITEDIR required");
         process_exit(1);
     }
-    let mut abs_root: String = root;
+    let mut abs_root: String = str_slice(root, 0, chars_len(root));
     if to_dir == "" || str_slice(to_dir, 0, 1) != "/" {
         abs_root = root + "/" + to_dir;
     } else {

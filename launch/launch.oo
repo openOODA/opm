@@ -29,7 +29,7 @@ pub fn pm_launch_gate(want_sha: String, live_sha: String, grant: Int, need: Int,
 }
 
 pub fn pm_launch_sink_ok(body: String, blob: String) -> String {
-    if untrusted_sink_denied("launch", untrusted_blob_in(body, blob)) {
+    if untrusted_sink_denied("process_exec", untrusted_blob_in(body, blob)) {
         return "err untrusted";
     }
     return "ok";

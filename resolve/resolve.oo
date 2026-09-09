@@ -119,7 +119,7 @@ fn pm_push_deps(q: String, deps: String) -> String {
         if i == n || char_at(deps, i) == "," {
             if i > start {
                 let one: String = str_slice(deps, start, i);
-                let mut nm: String = one;
+                let mut nm: String = str_slice(one, 0, chars_len(one));
                 if str_slice(one, 0, 5) == "path:" {
                     nm = str_slice(one, 5, chars_len(one));
                 } else {
@@ -149,7 +149,7 @@ pub fn pm_resolve(catalog: String, name: String, parent_caps: Int) -> String {
             return "ok " + lock;
         }
         let nl: Int = str_index_of(q, "\n");
-        let mut cur: String = q;
+        let mut cur: String = str_slice(q, 0, chars_len(q));
         if nl >= 0 {
             cur = str_slice(q, 0, nl);
             q = str_slice(q, nl + 1, chars_len(q));

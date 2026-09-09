@@ -163,7 +163,7 @@ fn pg_resolve_one(catalog: String, name: String, spec: String, parent_caps: Int,
         return "ok " + lock;
     }
     let nl: Int = str_index_of(q, "\n");
-    let mut head: String = q;
+    let mut head: String = str_slice(q, 0, chars_len(q));
     if nl >= 0 {
         head = str_slice(q, 0, nl);
         q = str_slice(q, nl + 1, chars_len(q));

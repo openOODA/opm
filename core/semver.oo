@@ -99,7 +99,7 @@ fn pm_semver_part_sat(actual: String, part: String) -> Bool {
         return true;
     }
     let mut op: String = "=";
-    let mut req: String = spec;
+    let mut req: String = str_slice(spec, 0, chars_len(spec));
     if str_slice(spec, 0, 2) == ">=" {
         op = ">=";
         req = str_slice(spec, 2, chars_len(spec));

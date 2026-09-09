@@ -81,9 +81,7 @@ pub fn pm_ar_walk(body: String) -> String {
         if i + sz > n {
             return "err magic";
         }
-        if nm == "" {
-            let _e: String = nm;
-        } else {
+        if nm != "" {
             if !pm_member_ok(nm) {
                 return "err path";
             }
@@ -116,9 +114,7 @@ pub fn pm_ar_find(body: String, prefix: String) -> String {
         if i + sz > n {
             return "";
         }
-        if nm == "" {
-            let _e: String = nm;
-        } else {
+        if nm != "" {
             if !pm_member_ok(nm) {
                 return "err path";
             }

@@ -180,7 +180,7 @@ pub fn pm_resolve_tree(catalog: String, name: String, parent_caps: Int) -> Strin
             return "ok " + out;
         }
         let nl: Int = str_index_of(q, "\n");
-        let mut cur: String = q;
+        let mut cur: String = str_slice(q, 0, chars_len(q));
         if nl >= 0 {
             cur = str_slice(q, 0, nl);
             q = str_slice(q, nl + 1, chars_len(q));

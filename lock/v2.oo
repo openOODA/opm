@@ -109,7 +109,7 @@ pub fn pm_dep_names(deps: String) -> String {
         if i == n || char_at(deps, i) == "," {
             if i > start {
                 let one: String = str_slice(deps, start, i);
-                let mut nm: String = one;
+                let mut nm: String = str_slice(one, 0, chars_len(one));
                 if chars_len(one) >= 5 {
                     if str_slice(one, 0, 5) == "path:" {
                         nm = str_slice(one, 5, chars_len(one));
