@@ -1,0 +1,31 @@
+// # Caps
+//
+// Logline: Print the 20 NORTHSTAR language capability tokens.
+//
+// Setup: No extra caps. Safe to launch. Lattice SSoT is oodar cap_table.json.
+//
+// Beats:
+//   1. Print each of the 20 implemented language tokens.
+
+pub fn main() {
+    println("FsReadCap");
+    println("FsWriteCap");
+    println("FsCap");
+    println("NetCap");
+    println("TcpCap");
+    println("UdpCap");
+    println("BindCap");
+    println("SysCap");
+    println("ProcessCap");
+    println("EnvCap");
+    println("TimeCap");
+    println("RandCap");
+    println("AllocCap");
+    println("ArenaCap");
+    println("ThreadCap");
+    println("GpuCap");
+    println("FfiCap");
+    println("SignCap");
+    println("MetricsCap");
+    println("CompilerReadCap");
+}

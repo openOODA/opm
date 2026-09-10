@@ -1,0 +1,39 @@
+// # Sqlite boundary demo
+//
+// Logline: Decode one SQLite b-tree page header sample. Boundary adapter demo.
+//
+// Setup: Pure. No caps. Not a database. Not file-format compatible.
+//        Mirrors std/app/data/database/sqlite_page_header.oo on one sample.
+//
+// Beats:
+//   1. Build an 8-byte header sample for a table leaf page.
+//   2. Decode page type, cell count, and content offset.
+//   3. Print the decoded fields. Refuse unknown page types.
+
+pub fn main() {
+    let mut buf: List[Int] = list_new();
+    buf = list_push(buf, 13);
+    buf = list_push(buf, 0);
+    buf = list_push(buf, 0);
+    buf = list_push(buf, 0);
+    buf = list_push(buf, 5);
+    buf = list_push(buf, 12);
+    buf = list_push(buf, 200);
+    buf = list_push(buf, 0);
+    let pt: Int = list_get(buf, 0);
+    if pt != 2 && pt != 5 && pt != 10 && pt != 13 {
+        println("refused page type");
+        process_exit(1);
+    }
+    let cells: Int = list_get(buf, 3) * 256 + list_get(buf, 4);
+    let mut off: Int = list_get(buf, 5) * 256 + list_get(buf, 6);
+    if off == 0 {
+        off = 65536;
+    }
+    println("ptype");
+    println(pt);
+    println("cells");
+    println(cells);
+    println("content");
+    println(off);
+}

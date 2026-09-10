@@ -1,0 +1,15 @@
+// # Caps package
+//
+// Logline: Stock catalog package that prints the 20 language capability tokens.
+//
+// Setup: Folder shape is manifest plus payload. Do not import caps.oo
+//        from this file.
+//
+// Beats:
+//   1. manifest — name, version, caps, sha256 of caps.oo.
+//   2. caps.oo — payload. Academy headers required.
+//   3. Rebuild the parent catalog with: opm bot .
+
+pub fn cat_caps_pkg() -> String {
+    return "caps";
+}

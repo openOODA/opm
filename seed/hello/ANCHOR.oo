@@ -1,0 +1,15 @@
+// # Hello package
+//
+// Logline: Stock catalog package that prints hello. Safe to launch.
+//
+// Setup: Folder shape is manifest plus payload. Do not import hello.oo
+//        from this file. hello.oo has main() and is the payload, not an index.
+//
+// Beats:
+//   1. manifest — name, version, caps, sha256 of hello.oo.
+//   2. hello.oo — payload. Academy headers required.
+//   3. Rebuild the parent catalog with: opm bot .
+
+pub fn cat_hello_pkg() -> String {
+    return "hello";
+}

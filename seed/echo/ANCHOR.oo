@@ -1,0 +1,15 @@
+// # Echo package
+//
+// Logline: Stock catalog package that prints echo. Safe to launch.
+//
+// Setup: Folder shape is manifest plus payload. Do not import echo.oo
+//        from this file. echo.oo has main() and is the payload, not an index.
+//
+// Beats:
+//   1. manifest — name, version, caps, sha256 of echo.oo.
+//   2. echo.oo — payload. Academy headers required.
+//   3. Rebuild the parent catalog with: opm bot .
+
+pub fn cat_echo_pkg() -> String {
+    return "echo";
+}

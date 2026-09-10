@@ -1,0 +1,9 @@
+name=caps
+version=0.1.0
+caps=FsRead
+deps=
+license=MIT
+payload=caps.oo
+commit=
+sha256=a063a691590961f65a7b257a19e0433559e339e9dab11b5e783565029abb794c
+sig=
