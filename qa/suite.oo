@@ -1,11 +1,11 @@
 // # Test OPM Package Manager — Run Proofs Twice
 //
-// Logline: Run each opm proof probe twice in fresh processes under the sovereign compiler. Fail closed on miss.
+// Logline: Run each opm proof probe twice in fresh processes under the primary compiler. Fail closed on miss.
 //
 // Setup: Double-run identity law for OPM proofs. Compiler resolves with zero user config.
 //
 // Beats:
-//   1. Resolve sovereign compiler binary (OODA_COMPILER, OODA_TOOLCHAIN, HOME).
+//   1. Resolve primary compiler binary (OODA_COMPILER, OODA_TOOLCHAIN, HOME).
 //   2. Compile and execute each proof twice in fresh processes.
 //   3. Clean up temporary proof binaries immediately.
 //   4. Exit 0 only when all proofs pass both runs.
