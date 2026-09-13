@@ -52,7 +52,7 @@ the lock, `sha256=` is required.
 - New subcommands.
 - Token / MCP / LSP.
 - Inventing a NetCap type.
-- Changing the `opm/std` symlink topology.
+- Changing the `opm/std` compile pointer (removed; sibling walk).
 
 ## Done means
 

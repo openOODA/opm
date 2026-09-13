@@ -20,8 +20,10 @@ The dispatcher is `cli/main.oo`. Public surface is the 10 subdirs
 counted by CI (`.github/workflows/ci.yml`): core, resolve, lock,
 store, registry, policy, sign, launch, qa, cli.
 
-`opm/std` is a local compile pointer to the std repo. The contract
-is `OODA_STD`. Do not treat the symlink as a second std.
+`import "std/..."` walks parent directories to the sibling `std`
+repo. Do not put a `std/` directory (or symlink) inside opm. The
+runtime contract is `OODA_STD` / `OODA_STD_ROOT` for installed
+toolchains.
 
 ## 3. The Version Contract
 

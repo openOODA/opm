@@ -5,7 +5,8 @@
 // Setup: 9 library subdirs (core, resolve, lock, store, registry,
 //        policy, sign, launch, qa) + cli/ = 10 public subdirs.
 //        docs/, examples/, seed/ are non-public siblings.
-//        std/ is a local compile pointer to the std repo; OODA_STD is the contract.
+//        import "std/..." resolves via parent-walk to the sibling std repo
+//        (OODA_FS_READDIR). No std/ directory inside opm.
 //        Each public subdir has its own anchor.oo. No VERSION file.
 //
 // Beats:

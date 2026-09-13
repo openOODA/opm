@@ -26,3 +26,6 @@ Thumbs.db
 
 # Local audit history (not shipped)
 .agents/
+
+# std is a sibling repo; oodac import "std/..." walks parents. Do not symlink.
+std
