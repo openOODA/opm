@@ -15,7 +15,7 @@ import "search_match.oo";
 import "reg_fetch.oo";
 import "registry/reg.oo";
 import "registry/regs.oo";
-import "resolve/ANCHOR.oo";
+import "resolve/anchor.oo";
 
 fn pm_search_query(args: List[String]) -> String {
     let mut i: Int = 0;

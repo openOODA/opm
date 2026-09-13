@@ -15,12 +15,12 @@ import "argv.oo";
 import "slurp.oo";
 import "policy/caps.oo";
 import "store/extract.oo";
-import "lock/ANCHOR.oo";
+import "lock/anchor.oo";
 import "store/tar.oo";
 import "core/pin.oo";
-import "policy/ANCHOR.oo";
+import "policy/anchor.oo";
 import "core/recipe.oo";
-import "store/ANCHOR.oo";
+import "store/anchor.oo";
 import "lock/v2.oo";
 
 fn ing_die(msg: String) {

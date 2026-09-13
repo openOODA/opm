@@ -1,0 +1,161 @@
+// # Product `opm gen` — Scaffold Module, Service, or Test
+//
+// Logline: Scaffold a new .oo file under src/ or tests/ with Academy header; refuses traversal or existing files.
+//
+// Setup: FsReadCap checks existing files. FsWriteCap writes the scaffold. No HTTP.
+//
+// Beats:
+//   1. Parse <Kind> (module|service|test) and <Name> from rest.
+//   2. Refuse bad names (../, /, ..) and existing files.
+//   3. Build the .oo source with Academy header.
+//   4. Write under src/ or tests/ via fs_write_file.
+
+import "argv.oo";
+import "slurp.oo";
+import "core/name.oo";
+
+fn gen_name_ok(name: String) -> Bool {
+    if chars_len(name) == 0 { return false; }
+    if str_contains(name, "/") { return false; }
+    if str_contains(name, "..") { return false; }
+    return true;
+}
+
+fn gen_module_body(name: String) -> String {
+    return "// # Module " + name + "\n"
+        + "//\n"
+        + "// Logline: Public surface for " + name + ".\n"
+        + "//\n"
+        + "// Setup: Pure module; no caps, no side effects. Importable from any .oo source.\n"
+        + "//\n"
+        + "// Beats:\n"
+        + "//   1. Stub returns 0; replace with real logic.\n"
+        + "\n"
+        + "pub fn " + name + "_stub() -> Int {\n"
+        + "    return 0;\n"
+        + "}\n";
+}
+
+fn gen_service_body(name: String) -> String {
+    return "// # Service " + name + "\n"
+        + "//\n"
+        + "// Logline: Service entry point for " + name + ".\n"
+        + "//\n"
+        + "// Setup: Build with `cli build src/" + name + ".oo`. Run with `cli run src/" + name + ".oo`.\n"
+        + "//\n"
+        + "// Beats:\n"
+        + "//   1. Print ready line; exit 0 on clean shutdown.\n"
+        + "\n"
+        + "pub fn main() -> Int {\n"
+        + "    println(\"" + name + ": ready\");\n"
+        + "    return 0;\n"
+        + "}\n";
+}
+
+fn gen_test_body(name: String) -> String {
+    return "// # Test " + name + "\n"
+        + "//\n"
+        + "// Logline: Test runner for " + name + ".\n"
+        + "//\n"
+        + "// Setup: Build with `cli build tests/" + name + "_test.oo`. Run with `cli run tests/" + name + "_test.oo`.\n"
+        + "//\n"
+        + "// Beats:\n"
+        + "//   1. Run one assertion; exit 0 on pass, 1 on fail.\n"
+        + "\n"
+        + "pub fn test_" + name + "_basic() -> Bool {\n"
+        + "    let v: Int = 1 + 1;\n"
+        + "    return v == 2;\n"
+        + "}\n"
+        + "\n"
+        + "pub fn main() {\n"
+        + "    if !test_" + name + "_basic() {\n"
+        + "        println(\"FAIL: " + name + " test\");\n"
+        + "        process_exit(1);\n"
+        + "    }\n"
+        + "    println(\"OK: ALL_TESTS_PASSED\");\n"
+        + "}\n";
+}
+
+fn gen_write(fw: &FsWriteCap, path: String, body: String) -> Bool {
+    let r: Result[Void, String] = fs_write_file(fw, path, body);
+    if r.is_err() {
+        return false;
+    }
+    return true;
+}
+
+pub fn run_ooda_pm_gen(fr: &FsReadCap, fw: &FsWriteCap, env: &EnvCap, args: List[String]) {
+    let n: Int = list_len(args);
+    if n < 2 {
+        println("usage: opm gen <module|service|test> <Name>");
+        process_exit(2);
+        return;
+    }
+    let kind: String = list_get(args, 0);
+    let name: String = list_get(args, 1);
+    if !gen_name_ok(name) {
+        println("opm gen: refused name: " + name);
+        process_exit(2);
+        return;
+    }
+    let root: String = pm_root_abs(env);
+    if root == "" {
+        println("opm gen: OODA_FS_WRITEDIR required");
+        process_exit(1);
+        return;
+    }
+    if kind == "module" {
+        let path: String = root + "/src/" + name + ".oo";
+        if pm_slurp(fr, path) != "" {
+            println("opm gen: file exists: " + path);
+            process_exit(1);
+            return;
+        }
+        if !gen_write(fw, path, gen_module_body(name)) {
+            println("opm gen: write failed");
+            process_exit(1);
+            return;
+        }
+        println("opm gen: wrote " + path);
+        return;
+    }
+    if kind == "service" {
+        let src_path: String = root + "/src/" + name + ".oo";
+        let test_path: String = root + "/tests/" + name + "_test.oo";
+        if pm_slurp(fr, src_path) != "" {
+            println("opm gen: file exists: " + src_path);
+            process_exit(1);
+            return;
+        }
+        if !gen_write(fw, src_path, gen_service_body(name)) {
+            println("opm gen: write failed: " + src_path);
+            process_exit(1);
+            return;
+        }
+        if !gen_write(fw, test_path, gen_test_body(name)) {
+            println("opm gen: write failed: " + test_path);
+            process_exit(1);
+            return;
+        }
+        println("opm gen: wrote " + src_path);
+        println("opm gen: wrote " + test_path);
+        return;
+    }
+    if kind == "test" {
+        let path: String = root + "/tests/" + name + "_test.oo";
+        if pm_slurp(fr, path) != "" {
+            println("opm gen: file exists: " + path);
+            process_exit(1);
+            return;
+        }
+        if !gen_write(fw, path, gen_test_body(name)) {
+            println("opm gen: write failed");
+            process_exit(1);
+            return;
+        }
+        println("opm gen: wrote " + path);
+        return;
+    }
+    println("opm gen: unknown kind: " + kind + " (want module|service|test)");
+    process_exit(2);
+}

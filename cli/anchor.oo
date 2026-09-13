@@ -38,5 +38,5 @@ import "cmd_search.oo";
 import "cmd_tree.oo";
 import "find_compiler.oo";
 import "host_run.oo";
-import "pkg/ANCHOR.oo";
+import "pkg/anchor.oo";
 import "main.oo";

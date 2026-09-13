@@ -14,7 +14,7 @@ import "slurp.oo";
 import "reg_fetch.oo";
 import "registry/reg.oo";
 import "registry/regs.oo";
-import "resolve/ANCHOR.oo";
+import "resolve/anchor.oo";
 
 fn pm_cat_has_name(cat: String, name: String) -> Bool {
     let n: Int = chars_len(cat);

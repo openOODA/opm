@@ -8,11 +8,11 @@
 //
 // Setup:  Authored 2026-09-10 16:08 by session
 //         mvs_b464548950d7469bb107a25d68f8bbc8 (Mavis / orchestrator).
-//         Follows the audit-history/ANCHOR.oo + opm/audit/ANCHOR.oo
+//         Follows the audit-history/anchor.oo + opm/audit/anchor.oo
 //         precedent: 4-element Academy header on .oot.
 //         Pure structural .oot, file:line evidence on every claim.
 //         In-scope: opm/ only (103 files, 87 .oo, 18 qa/, 17
-//         ANCHOR.oo, 1 ci workflow, AGENT.md, 2 prior committed
+//         anchor.oo, 1 ci workflow, AGENT.md, 2 prior committed
 //         audits). Out-of-scope: oodac/ oodar/ std/ install/ opm-
 //         sibling (catalog/ audited in parallel) lsp/ mcp/
 //         blackbox/ openOODA/ website/ ooda/.
@@ -34,11 +34,11 @@
 
 // | Pass | Verdict | Note |
 // |------|---------|------|
-// | 0 Pre-flight   | OK     | 103 files, 87 .oo, 18 qa/, 17 ANCHOR.oo, 1 ci workflow, 2 prior audits. Dirty=0. |
+// | 0 Pre-flight   | OK     | 103 files, 87 .oo, 18 qa/, 17 anchor.oo, 1 ci workflow, 2 prior audits. Dirty=0. |
 // | 1 Locks        | PASS   | 4 locks re-derived, double-run, identical. 0 fails. |
-// | 2 File law     | PASS   | 0 over-256, 0 missing headers, 0 forbidden exts, 17/17 ANCHOR.oo ALLCAPS. |
-// | 3 Structure    | PASS   | 17/17 ANCHOR.oo 4-element headers; 9/9 zero-trust kill-list items confirmed fixed. |
-// | 3c Cross-repo  | MAJOR  | L1, L2, L3: opm/seed/ has 2 of 4 stock packages; missing 2; subdirs missing ANCHOR.oo. |
+// | 2 File law     | PASS   | 0 over-256, 0 missing headers, 0 forbidden exts, 17/17 anchor.oo ALLCAPS. |
+// | 3 Structure    | PASS   | 17/17 anchor.oo 4-element headers; 9/9 zero-trust kill-list items confirmed fixed. |
+// | 3c Cross-repo  | MAJOR  | L1, L2, L3: opm/seed/ has 2 of 4 stock packages; missing 2; subdirs missing anchor.oo. |
 // | 4 Drift        | MAJOR  | Cross-repo drift (same as 3c); self-claim drift (none). |
 // | 5 Validator    | MAJOR  | 3 cross-repo failures confirmed (re-derived from catalog/). |
 
@@ -54,9 +54,9 @@
 // | .oo files | 87 | `find -name '*.oo'` |
 // | .oot files | 3 (AGENT.md + 2 prior audits) | `find -name '*.oot'` |
 // | qa/ files | 18 | `find qa -type f` |
-// | ANCHOR.oo (root + subs) | 17 | `find -name 'ANCHOR.oo'` |
+// | anchor.oo (root + subs) | 17 | `find -name 'anchor.oo'` |
 // | CI workflow | 1 file (`ci.yml`, 216 lines) | `ls .github/workflows/` |
-// | VERSION file | absent (intentional; ANCHOR.oo:7 says "Version is the git tag") | `ls VERSION` |
+// | VERSION file | absent (intentional; anchor.oo:7 says "Version is the git tag") | `ls VERSION` |
 // | AGENT.md | present, 4 sections | `head AGENT.md` |
 // | Prior audits | 2 (audit/zero-trust.oot 2026-09-04 + audit/todo.oot 2026-09-06) | `ls audit/` |
 
@@ -71,23 +71,23 @@
 // | governance_enforce Rule A (256-line) | 0/103 fail | 0/103 fail | PASS (103 product files, 0 over 256) |
 // | governance_enforce Rule B (header)   | 0 fail    | 0 fail    | PASS (87/87 .oo files have `// # ` first line) |
 // | governance_enforce Rule C (exts)     | 0 fail    | 0 fail    | PASS (no .py/.js/.ts/.rb/.pl/.sh) |
-// | governance_enforce Rule D (ANCHOR.oo)| 0 fail    | 0 fail    | PASS (17/17 ALLCAPS; 0 lowercase) |
+// | governance_enforce Rule D (anchor.oo)| 0 fail    | 0 fail    | PASS (17/17 ALLCAPS; 0 lowercase) |
 // | governance_verify (RFC + practice)   | N/A       | N/A       | N/A — opm/ has no RFCs or practices of its own. |
 // | governance_check_boards              | N/A       | N/A       | N/A — boards live in openOODA/openOODA/. |
-// | proof_of_today opm ref               | PASS      | PASS      | PASS — `git describe` = `v0.8.17`; INDEX.oot:37 matches. |
+// | proof_of_today opm ref               | PASS      | PASS      | PASS — `git describe` = `v0.8.17`; index.oot:37 matches. |
 
-// ## 4. Pass-2 — File law (RULES.oot §1.8, §1.11, §1.14, §1.19)
+// ## 4. Pass-2 — File law (rules.oot §1.8, §1.11, §1.14, §1.19)
 
 // | Check                          | Result | Detail |
 // |--------------------------------|--------|--------|
 // | 256-line cap (Rule A)          | PASS   | 0 of 103 product files exceed 256. Largest is `resolve/pubgrub.oo` at 232/256 (24 lines headroom; not a finding). |
 // | 4-element header on .oo (Rule B)| PASS  | 87 of 87 .oo files start with `// # `. |
 // | Forbidden extensions (Rule C)  | PASS   | 0 `.py`, 0 `.js`, 0 `.ts`, 0 `.rb`, 0 `.pl`, 0 `.sh` in product tree. |
-// | ANCHOR.oo ALLCAPS (Rule D)     | PASS   | 17/17 ANCHOR.oo are ALLCAPS. 0 lowercase. |
+// | anchor.oo ALLCAPS (Rule D)     | PASS   | 17/17 anchor.oo are ALLCAPS. 0 lowercase. |
 
 // ## 5. Pass-3 — Structure + zero-trust kill-list re-verification
 
-// ### 5a. 17 ANCHOR.oo inventory (1 root + 16 sub)
+// ### 5a. 17 anchor.oo inventory (1 root + 16 sub)
 
 // root, audit/, cli/, cli/pkg/, core/, docs/, examples/, .github/,
 // launch/, lock/, policy/, qa/, registry/, resolve/, seed/, sign/,
@@ -121,9 +121,9 @@
 
 // ### 6a. The linkage mechanism
 
-// - `opm/ANCHOR.oo:19`: "seed/ is the stock openOODA catalog. opm
+// - `opm/anchor.oo:19`: "seed/ is the stock openOODA catalog. opm
 //   search reads it first."
-// - `catalog/docs/HOST.oot:16-17`: "`opm search` reads `/catalog`. `opm
+// - `catalog/docs/host.oot:16-17`: "`opm search` reads `/catalog`. `opm
 //   add` over HTTPS also pulls the minisig."
 // - opm/seed/ is the LOCAL mirror; catalog/ is the PUBLIC source at
 //   `catalog.openooda.org`. opm/seed/ has 2 subdirs; catalog/ has
@@ -135,22 +135,22 @@
 // |---|-------|------|----------|--------|
 // | L1 | Stock package count | opm/seed/ has 2 (echo, hello) | catalog/ has 4 (caps, echo, hello, sqlite) | **DRIFT**: opm/seed/ missing 2 of 4 |
 // | L2 | `seed/catalog` (file) entries | 2 entries (hello, echo) | 4 entries (caps, echo, hello, sqlite) | **DRIFT**: opm/seed/catalog missing 2 |
-// | L3 | Per-package ANCHOR.oo consistency | opm/seed/echo/ has no ANCHOR.oo | catalog/echo/ has ANCHOR.oo | **DRIFT**: opm/seed/{echo,hello}/ missing ANCHOR.oo |
+// | L3 | Per-package anchor.oo consistency | opm/seed/echo/ has no anchor.oo | catalog/echo/ has anchor.oo | **DRIFT**: opm/seed/{echo,hello}/ missing anchor.oo |
 // | L4 | SHA consistency in the catalog files | (opm/seed/catalog has SHAs for hello, echo) | (catalog/catalog has SHAs for all 4) | PARTIAL — common SHAs match, but opm/seed is missing 2 |
 // | L5 | `opm/seed/catalog` vs `catalog/catalog` content | 2 entries; SHAs match catalog's | 4 entries | DRIFT in count, identical for common entries |
 // | L6 | index.html (catalog) lists all 4 stock packages | N/A | `catalog/index.html` lists hello, echo, caps, sqlite | OK |
-// | L7 | opm ANCHOR.oo:19 (linkage mechanism) | "seed/ is the stock openOODA catalog. opm search reads it first." | N/A | OK (mechanism) |
-// | L8 | catalog/docs/HOST.oot:16-17 (fallback) | N/A | "opm add over HTTPS also pulls the minisig" | OK (fallback) |
+// | L7 | opm anchor.oo:19 (linkage mechanism) | "seed/ is the stock openOODA catalog. opm search reads it first." | N/A | OK (mechanism) |
+// | L8 | catalog/docs/host.oot:16-17 (fallback) | N/A | "opm add over HTTPS also pulls the minisig" | OK (fallback) |
 
 // ## 7. Pass-4 — Drift (self-claims vs ground truth)
 
 // | Source | Claim | Evidence line | Ground truth | Drift |
 // |--------|-------|---------------|--------------|-------|
-// | `opm/ANCHOR.oo:7` (meta-ref) | "Version is the git tag" | line 7 | `v0.8.17` | OK (meta-ref) |
-// | `openOODA/docs/INDEX.oot:37` | `opm v0.8.17` | line 37 | `v0.8.17` | match ✓ |
+// | `opm/anchor.oo:7` (meta-ref) | "Version is the git tag" | line 7 | `v0.8.17` | OK (meta-ref) |
+// | `openOODA/docs/index.oot:37` | `opm v0.8.17` | line 37 | `v0.8.17` | match ✓ |
 // | `org audit 2026-09-10` row 72 | `opm v0.8.17` | row 72 | `v0.8.17` | match ✓ |
 // | `opm/seed/catalog` | 2 stock entries | file | catalog has 4 | **DRIFT** (L2) |
-// | `opm/seed/echo/`, `opm/seed/hello/` | no ANCHOR.oo | subdirs | catalog versions have ANCHOR.oo | **DRIFT** (L3) |
+// | `opm/seed/echo/`, `opm/seed/hello/` | no anchor.oo | subdirs | catalog versions have anchor.oo | **DRIFT** (L3) |
 
 // ## 8. Pass-5 — Validator (zero-trust + cross-repo)
 
@@ -159,7 +159,7 @@
 //    - L1: opm/seed/ has 2 (echo, hello), catalog/ has 4. FAIL.
 //    - L2: opm/seed/catalog has 2 entries, catalog/catalog has 4.
 //      FAIL.
-//    - L3: opm/seed/{echo,hello}/ missing ANCHOR.oo. FAIL.
+//    - L3: opm/seed/{echo,hello}/ missing anchor.oo. FAIL.
 //    - L4: SHAs match for common entries. PARTIAL.
 //    - L5: identical for common entries. PARTIAL.
 //    - L6: catalog/index.html lists all 4. PASS.
@@ -175,12 +175,12 @@
 //       only `echo/` and `hello/`; the public catalog has 4 (caps,
 //       echo, hello, sqlite). `opm/seed/catalog` (the search index)
 //       lists only 2 entries. `opm add caps` or `opm add sqlite`
-//       falls back to HTTPS (per `catalog/docs/HOST.oot:16-17`).
+//       falls back to HTTPS (per `catalog/docs/host.oot:16-17`).
 //       Cross-repo drift with `catalog/`. Owner: orchestrator.
 //       RULES §1.4 (Honesty), §1.14.
-//   M2. **opm/seed/{echo,hello}/ missing ANCHOR.oo.** The
+//   M2. **opm/seed/{echo,hello}/ missing anchor.oo.** The
 //       corresponding `catalog/{echo,hello}/` subdirs have
-//       `ANCHOR.oo`; the opm/seed/ versions do not. Per-package
+//       `anchor.oo`; the opm/seed/ versions do not. Per-package
 //       structure drift. Cross-repo. RULES §1.11.
 
 // **MINOR (1):**
@@ -199,8 +199,8 @@
 //       that match catalog/catalog. Drift is in count, not content.
 //   n3. **The 4-package stock origin.** opm/seed/ is LOCAL mirror;
 //       catalog/ is PUBLIC source at `catalog.openooda.org`. The
-//       mechanism (opm/ANCHOR.oo:19) and fallback
-//       (catalog/docs/HOST.oot:16-17) are intact. Drift (M1, M2) is in
+//       mechanism (opm/anchor.oo:19) and fallback
+//       (catalog/docs/host.oot:16-17) are intact. Drift (M1, M2) is in
 //       the local mirror's content.
 
 // ## 10. Cross-references
@@ -216,13 +216,13 @@
 
 // ## 11. Recommended same-commit repairs (orchestrator lane)
 
-// 1. Add `opm/seed/caps/{ANCHOR.oo, caps.oo, manifest}` and
-//    `opm/seed/sqlite/{ANCHOR.oo, sqlite.oo, manifest}` (copies
+// 1. Add `opm/seed/caps/{anchor.oo, caps.oo, manifest}` and
+//    `opm/seed/sqlite/{anchor.oo, sqlite.oo, manifest}` (copies
 //    from catalog/).
 // 2. Add 2 entries to `opm/seed/catalog`:
 //    `caps|0.1.0|FsRead||<sha>` and
 //    `sqlite|0.1.0|||<sha>` (from catalog/catalog).
-// 3. Add `ANCHOR.oo` to `opm/seed/echo/` and `opm/seed/hello/`
+// 3. Add `anchor.oo` to `opm/seed/echo/` and `opm/seed/hello/`
 //    (copies from catalog/echo/ and catalog/hello/).
 
 // All 3 in the orchestrator's lane. A single same-commit patch
@@ -234,7 +234,7 @@
 //    (PASS; largest is `resolve/pubgrub.oo` at 232/256).
 // 2. **4-element header on .oo:** 87/87 (PASS).
 // 3. **Forbidden extensions:** 0 violations (PASS).
-// 4. **ANCHOR.oo ALLCAPS:** 17/17 (PASS).
+// 4. **anchor.oo ALLCAPS:** 17/17 (PASS).
 // 5. **Lock re-derivations:** 4 locks × 2 runs, identical (PASS).
 // 6. **9/9 zero-trust kill-list items CLOSED** (PASS).
 // 7. **L1-L8 cross-repo linkage** (re-derived from catalog/):

@@ -83,7 +83,7 @@ primitive or refuse network.
 
 cmd_add.oo is 256 lines. Next edit must split it.
 
-.github/workflows has no ANCHOR.oo.
+.github/workflows has no anchor.oo.
 
 opm/std is a symlink to ../std. Convenient; also a topology leak.
 

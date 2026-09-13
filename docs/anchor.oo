@@ -9,12 +9,12 @@
 //   1. INSTALL.oot — how to run opm. Git tag. No VERSION file.
 //   2. versioning.oot — git-tag version, api_surface=10, no VERSION file.
 //   3. cli.oot — user-facing CLI reference for `opm <subcommand>`.
-//   4. MANIFEST.oot — the package manifest format.
-//   5. REGISTRY.oot — CAS hashes, capability declarations, search, install.
+//   4. manifest.oot — the package manifest format.
+//   5. registry.oot — CAS hashes, capability declarations, search, install.
 
 // Sibling documentation documents (.oot files):
 // - INSTALL.oot
 // - versioning.oot
 // - cli.oot
-// - MANIFEST.oot
-// - REGISTRY.oot
+// - manifest.oot
+// - registry.oot

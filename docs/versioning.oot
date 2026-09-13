@@ -7,7 +7,7 @@ This document defines the version contract that opm uses for itself, for the par
 ## 1. Version Source
 
 opm has no VERSION file. The version is the git tag. Push to main
-creates the next PATCH tag (RFC-0006, RULES.oot §1.24).
+creates the next PATCH tag (RFC-0006, rules.oot §1.24).
 
 CI (`.github/workflows/ci.yml`) asserts the live structural contract:
 
@@ -16,7 +16,7 @@ api_surface=10
 ```
 
 The 10 public subdirs are core, resolve, lock, store, registry,
-policy, sign, launch, qa, and cli. Each must contain ANCHOR.oo.
+policy, sign, launch, qa, and cli. Each must contain anchor.oo.
 A VERSION file at the repo root is a defect.
 
 ## 2. Field Semantics
@@ -92,7 +92,7 @@ The lock is rewritten on every successful install. The hash is sorted lexicograp
 opm refuses to run when any of the following is true:
 
 - CI finds a VERSION file or api_surface != 10.
-- A required public subdir is missing ANCHOR.oo.
+- A required public subdir is missing anchor.oo.
 - The lock is malformed (any package line that does not parse).
 - A `min_pin` declared on a manifest is below the running opm.
 

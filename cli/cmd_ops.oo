@@ -13,8 +13,8 @@ import "catalog.oo";
 import "argv.oo";
 import "slurp.oo";
 import "cmd_add.oo";
-import "resolve/ANCHOR.oo";
-import "store/ANCHOR.oo";
+import "resolve/anchor.oo";
+import "store/anchor.oo";
 
 fn pm_lock_text(fr: &FsReadCap, env: &EnvCap) -> String {
     let root: String = pm_root_abs(env);

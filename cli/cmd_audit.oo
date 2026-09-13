@@ -13,8 +13,8 @@ import "catalog.oo";
 import "argv.oo";
 import "slurp.oo";
 import "core/pin.oo";
-import "policy/ANCHOR.oo";
-import "store/ANCHOR.oo";
+import "policy/anchor.oo";
+import "store/anchor.oo";
 
 fn pm_lock_now(fr: &FsReadCap, env: &EnvCap) -> String {
     let root: String = pm_root_abs(env);

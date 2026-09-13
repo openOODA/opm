@@ -13,6 +13,7 @@ import "argv.oo";
 import "cmd_add.oo";
 import "cmd_audit.oo";
 import "cmd_bot.oo";
+import "cmd_gen.oo";
 import "cmd_ingest.oo";
 import "cmd_init.oo";
 import "cmd_launch.oo";
@@ -42,6 +43,7 @@ pub fn main(fr: &FsReadCap, fw: &FsWriteCap, proc: &ProcessCap, env: &EnvCap, ar
     if sub == "bot" { cmd_pm_bot_run(fr, fw, proc, env, rest); return Ok(0); }
     if sub == "ingest" { run_ooda_pm_ingest(fr, fw, proc, env, rest); return Ok(0); }
     if sub == "init" { run_ooda_pm_init(fr, fw, proc, env, rest); return Ok(0); }
+    if sub == "gen" { run_ooda_pm_gen(fr, fw, env, rest); return Ok(0); }
     if sub == "launch" { run_ooda_pm_launch(fr, fw, proc, env, rest); return Ok(0); }
     if sub == "remove" { run_ooda_pm_remove(fr, fw, proc, env, rest); return Ok(0); }
     if sub == "update" { run_ooda_pm_update(fr, fw, proc, env, rest); return Ok(0); }

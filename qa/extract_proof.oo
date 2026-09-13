@@ -28,8 +28,14 @@ fn pad(s: String, n: Int) -> String {
 }
 
 fn ar_one(name: String, body: String, size_s: String) -> String {
-    let hdr: String = pad(name, 16) + pad("0", 12) + pad("0", 6) +
-        pad("0", 6) + pad("644", 8) + pad(size_s, 10) + "`\n";
+    let mut hdr: String = "";
+    hdr = hdr + pad(name, 16);
+    hdr = hdr + pad("0", 12);
+    hdr = hdr + pad("0", 6);
+    hdr = hdr + pad("0", 6);
+    hdr = hdr + pad("644", 8);
+    hdr = hdr + pad(size_s, 10);
+    hdr = hdr + "`\n";
     let mut out: String = "!<arch>\n" + hdr + body;
     let n: Int = chars_len(body);
     if (n - (n / 2) * 2) == 1 {

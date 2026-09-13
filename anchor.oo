@@ -6,7 +6,7 @@
 //        policy, sign, launch, qa) + cli/ = 10 public subdirs.
 //        docs/, examples/, seed/ are non-public siblings.
 //        std/ is a local compile pointer to the std repo; OODA_STD is the contract.
-//        Each public subdir has its own ANCHOR.oo. No VERSION file.
+//        Each public subdir has its own anchor.oo. No VERSION file.
 //
 // Beats:
 //   1. The 9 library subdirs are: core, resolve, lock, store, registry, policy, sign, launch, qa.
@@ -14,22 +14,22 @@
 //   3. qa/ has the break-test drivers that ship with the package.
 //   4. .github/workflows/ci.yml is the build, test, verify, release
 //      entry point (gh-owned; no scripts/ runners).
-//   5. docs/ has versioning.oot, cli.oot, and ANCHOR.oo.
+//   5. docs/ has versioning.oot, cli.oot, and anchor.oo.
 //   6. examples/ has manifest, recipe, and lockfile samples.
 //   7. seed/ is the stock openOODA catalog. opm search reads it first.
 //   8. api_surface=10. Version is the git tag. No VERSION file.
 //   9. Unique move: resolve that refuses extra caps. Do not grow commands.
 
-import "core/ANCHOR.oo";
-import "resolve/ANCHOR.oo";
-import "lock/ANCHOR.oo";
-import "store/ANCHOR.oo";
-import "registry/ANCHOR.oo";
-import "policy/ANCHOR.oo";
-import "sign/ANCHOR.oo";
-import "launch/ANCHOR.oo";
-import "qa/ANCHOR.oo";
-import "cli/ANCHOR.oo";
-import "docs/ANCHOR.oo";
-import "examples/ANCHOR.oo";
-import "seed/ANCHOR.oo";
+import "core/anchor.oo";
+import "resolve/anchor.oo";
+import "lock/anchor.oo";
+import "store/anchor.oo";
+import "registry/anchor.oo";
+import "policy/anchor.oo";
+import "sign/anchor.oo";
+import "launch/anchor.oo";
+import "qa/anchor.oo";
+import "cli/anchor.oo";
+import "docs/anchor.oo";
+import "examples/anchor.oo";
+import "seed/anchor.oo";

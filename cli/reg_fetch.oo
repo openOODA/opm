@@ -14,7 +14,7 @@ import "tool.oo";
 import "core/name.oo";
 import "registry/reg.oo";
 import "registry/regs.oo";
-import "resolve/ANCHOR.oo";
+import "resolve/anchor.oo";
 import "store/store.oo";
 
 pub fn pm_reg_pub_path() -> String {

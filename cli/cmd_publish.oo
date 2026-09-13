@@ -12,9 +12,9 @@
 
 import "argv.oo";
 import "slurp.oo";
-import "resolve/ANCHOR.oo";
-import "sign/ANCHOR.oo";
-import "store/ANCHOR.oo";
+import "resolve/anchor.oo";
+import "sign/anchor.oo";
+import "store/anchor.oo";
 
 pub fn run_ooda_pm_publish(fr: &FsReadCap, fw: &FsWriteCap, proc: &ProcessCap, env: &EnvCap, args: List[String]) {
     let to_dir: String = pm_publish_to(args);

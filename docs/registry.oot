@@ -1,6 +1,6 @@
 # The openOODA Registry
 
-File: opm/docs/REGISTRY.oot
+File: opm/docs/registry.oot
 
 This document describes how the openOODA registry works and how opm talks to it.
 

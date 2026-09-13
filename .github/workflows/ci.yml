@@ -60,7 +60,7 @@ jobs:
             ! grep -q "command -v" "$f" || { echo "ERR command -v in $f"; exit 1; }
           done
           for d in core resolve lock store registry policy sign launch qa cli; do
-            test -f "opm/$d/ANCHOR.oo" || { echo "ERR missing opm/$d/ANCHOR.oo"; exit 1; }
+            test -f "opm/$d/anchor.oo" || test -f "opm/$d/anchor.oo" || { echo "ERR missing opm/$d/anchor.oo"; exit 1; }
           done
           echo "api_surface=10"
           for t in qa/today_proof.oo qa/tomorrow_proof.oo qa/extract_proof.oo qa/ingest_proof.oo qa/init_proof.oo qa/lock_format_proof.oo qa/pubgrub_proof.oo qa/semver_proof.oo qa/argv_init_proof.oo qa/argv_bot_proof.oo qa/argv_publish_proof.oo qa/help_surface_proof.oo qa/sbom_dispatch_proof.oo qa/compiler_token_proof.oo qa/no_shell_proof.oo qa/search_proof.oo registry/git_ingest_proof.oo registry/reg_proof.oo; do
@@ -150,9 +150,9 @@ jobs:
           set -euo pipefail
           mkdir -p "$HOME/.openooda/bin"
           curl -fsSL -o "$HOME/.openooda/bin/blackbox" \
-            "https://github.com/openOODA/blackbox/releases/download/v0.0.10/blackbox-linux-x86_64"
+            "https://github.com/openOODA/bb/releases/download/v0.0.10/blackbox-linux-x86_64"
           curl -fsSL -o "$HOME/.openooda/bin/blackbox.sha256" \
-            "https://github.com/openOODA/blackbox/releases/download/v0.0.10/blackbox-linux-x86_64.sha256"
+            "https://github.com/openOODA/bb/releases/download/v0.0.10/blackbox-linux-x86_64.sha256"
           expected=$(cut -d' ' -f1 "$HOME/.openooda/bin/blackbox.sha256")
           actual=$(sha256sum "$HOME/.openooda/bin/blackbox" | cut -d' ' -f1)
           test "$expected" = "$actual" || { echo "[blackbox-gate FAIL] sha256 mismatch"; exit 1; }
@@ -166,6 +166,7 @@ jobs:
           OODA_COMPILER: ${{ github.workspace }}/oodac/bin/oodac
         run: |
           set -euo pipefail
+          trap 'rm -f /tmp/*.diff[12] /tmp/flight.trace[12]' EXIT
           shopt -s nullglob
           count=0
           for f in qa/probe_*.oo qa/*_proof.oo; do

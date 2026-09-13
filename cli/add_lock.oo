@@ -14,8 +14,8 @@ import "argv.oo";
 import "catalog.oo";
 import "slurp.oo";
 import "core/pin.oo";
-import "policy/ANCHOR.oo";
-import "store/ANCHOR.oo";
+import "policy/anchor.oo";
+import "store/anchor.oo";
 import "lock/v2.oo";
 
 pub fn pm_add_write(fr: &FsReadCap, fw: &FsWriteCap, env: &EnvCap, args: List[String], vendor: String, name: String, body: String) {
