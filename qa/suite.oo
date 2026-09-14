@@ -71,6 +71,8 @@ pub fn main(p: &ProcessCap, fs_r: &FsReadCap, env: &EnvCap, args: List[String]) 
     ps = list_push(ps, "qa/compiler_token_proof.oo");
     ps = list_push(ps, "qa/no_shell_proof.oo");
     ps = list_push(ps, "qa/search_proof.oo");
+    ps = list_push(ps, "registry/git_ingest_proof.oo");
+    ps = list_push(ps, "registry/reg_proof.oo");
     ps = list_push(ps, "qa/probe_cap_extra.oo");
 
     let mut i: Int = 0;

@@ -25,6 +25,7 @@ Live commands (help lists only these):
 | `bot` | Verify a registry folder and write catalog | `cli/cmd_bot.oo` |
 | `ingest` | Lock a file-backed recipe | `cli/cmd_ingest.oo` |
 | `init` | Write a starter `ooda.pkg` | `cli/cmd_init.oo` |
+| `gen` | Scaffold a module, service, or test under src/ or tests/ | `cli/cmd_gen.oo` |
 | `launch` | Re-verify and optionally run a pinned payload | `cli/cmd_launch.oo` |
 | `remove` | Drop a package from the lock | `cli/cmd_ops.oo` |
 | `update` | Re-resolve and refresh the lock | `cli/cmd_ops.oo` |

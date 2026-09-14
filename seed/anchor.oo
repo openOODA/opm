@@ -9,4 +9,6 @@
 // Beats:
 //   1. hello — print hello.
 //   2. echo — print echo.
-//   3. catalog — name|version|caps|deps|sha lines.
+//   3. caps — bitmask capability demo.
+//   4. sqlite — store boundary demo.
+//   5. catalog — name|version|caps|deps|sha lines.
