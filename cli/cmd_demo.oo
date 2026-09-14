@@ -1,20 +1,23 @@
-// # opm demo — Synthesize a 5-step progress run
+// # opm demo — Walk the seed catalog with progress UX
 //
-// Logline: Demonstrate pm_progress end-to-end with synthetic work.
-//          The user can run `opm demo` in a plain terminal to see
-//          the line-mode animation. No caps, no I/O.
+// Logline: Read seed/catalog, then for each package read its
+//          manifest and payload. Each step is real I/O against the
+//          opm seed tree. The user sees the progress UX in action
+//          during an actual opm operation, not synthetic work.
 //
-// Setup:  Pure stdio. No process spawn. No FsWrite. The terminal
-//         handles redraw. Delay is a busy-wait (no TimeCap) so the
-//         animation is visible without changing main.oo's signature.
+// Setup:  Read-only against opm/seed/. Uses FsReadCap. No process
+//         spawn, no FsWrite. Delay is a small busy-wait so lines
+//         appear in sequence (not synthetic — the I/O itself is real).
 //
 // Beats:
-//   1. Parse flags: --steps N (default 5), --delay ITERATIONS (default 8000000).
-//   2. Build an N-step synthetic plan with mixed outcomes.
-//   3. Run each step through pm_progress with realistic timing.
-//   4. Final summary line via pm_progress_finish.
+//   1. Parse flags: --steps N (default 4), --delay ITERATIONS (default 2000000).
+//   2. Read seed/catalog and parse each line as name|version|caps|deps|sha.
+//   3. For each of the first N packages, emit step_begin/step_ok pairs:
+//      read manifest, then read payload, with real bytes read.
+//   4. Print final summary via pm_progress_finish.
 
 import "progress.oo";
+import "slurp.oo";
 
 fn pm_demo_busy_wait(its: Int) {
     let mut acc: Int = 0;
@@ -24,16 +27,6 @@ fn pm_demo_busy_wait(its: Int) {
         i = i + 1;
     }
     return;
-}
-
-fn pm_demo_flag(args: List[String], name: String) -> Bool {
-    let n: Int = list_len(args);
-    let mut i: Int = 0;
-    while i < n {
-        if list_get(args, i) == name { return true; }
-        i = i + 1;
-    }
-    return false;
 }
 
 fn pm_demo_opt(args: List[String], name: String) -> String {
@@ -64,7 +57,7 @@ fn pm_demo_parse_int(s: String, fallback: Int) -> Int {
         let mut found: Bool = false;
         let mut d: Int = 0;
         while d < 10 {
-            if char_at(chars, d) == c { found = true; i = n; }
+            if char_at(chars, d) == c { found = true; }
             d = d + 1;
         }
         if !found { return fallback; }
@@ -79,36 +72,102 @@ fn pm_demo_parse_int(s: String, fallback: Int) -> Int {
     return acc;
 }
 
-pub fn run_ooda_pm_demo(env: &EnvCap, args: List[String]) {
-    let mut steps: Int = 5;
-    let mut delay: Int = 8000000;
+fn pm_demo_first_field(line: String) -> String {
+    let n: Int = chars_len(line);
+    let mut i: Int = 0;
+    while i < n {
+        if char_at(line, i) == "|" { return str_slice(line, 0, i); }
+        i = i + 1;
+    }
+    return line;
+}
+
+fn pm_demo_count_pkgs(cat: String) -> Int {
+    let n: Int = chars_len(cat);
+    let mut start: Int = 0;
+    let mut i: Int = 0;
+    let mut count: Int = 0;
+    while i <= n {
+        if i == n || char_at(cat, i) == "\n" {
+            if i > start {
+                let line: String = str_slice(cat, start, i);
+                if pm_demo_first_field(line) != "" {
+                    count = count + 1;
+                }
+            }
+            start = i + 1;
+        }
+        i = i + 1;
+    }
+    return count;
+}
+
+fn pm_demo_pkg_at(cat: String, idx: Int) -> String {
+    let n: Int = chars_len(cat);
+    let mut start: Int = 0;
+    let mut i: Int = 0;
+    let mut cur: Int = 0;
+    while i <= n {
+        if i == n || char_at(cat, i) == "\n" {
+            if i > start {
+                let line: String = str_slice(cat, start, i);
+                if pm_demo_first_field(line) != "" {
+                    if cur == idx { return line; }
+                    cur = cur + 1;
+                }
+            }
+            start = i + 1;
+        }
+        i = i + 1;
+    }
+    return "";
+}
+
+pub fn run_ooda_pm_demo(fr: &FsReadCap, env: &EnvCap, args: List[String]) {
+    let mut max_steps: Int = 4;
+    let mut delay: Int = 2000000;
     let s_opt: String = pm_demo_opt(args, "--steps");
-    if s_opt != "" { steps = pm_demo_parse_int(s_opt, 5); }
-    if steps < 1 { steps = 1; }
-    if steps > 9 { steps = 9; }
+    if s_opt != "" { max_steps = pm_demo_parse_int(s_opt, 4); }
+    if max_steps < 1 { max_steps = 1; }
+    if max_steps > 9 { max_steps = 9; }
     let d_opt: String = pm_demo_opt(args, "--delay");
-    if d_opt != "" { delay = pm_demo_parse_int(d_opt, 8000000); }
+    if d_opt != "" { delay = pm_demo_parse_int(d_opt, 2000000); }
     if delay < 0 { delay = 0; }
     if delay > 200000000 { delay = 200000000; }
 
-    let mut ph: ProgressHandle = pm_progress_new(env, steps, "opm demo");
-    let mut failed: Int = 0;
-    let mut i: Int = 1;
-    while i <= steps {
-        let name: String = "step-" + i.to_string();
-        pm_progress_step_begin(&mut ph, name);
-        pm_demo_busy_wait(delay);
+    let cat: String = pm_slurp(fr, "seed/catalog");
+    let total: Int = pm_demo_count_pkgs(cat);
+    if total == 0 {
+        println("opm demo: no seed/catalog found. Run from the opm repo root.");
+        process_exit(1);
+    }
 
-        if i == 4 && steps >= 4 {
-            pm_progress_step_err(&mut ph, name, "forced failure for demo");
-            failed = failed + 1;
+    let steps_to_run: Int = max_steps;
+    let mut ph: ProgressHandle = pm_progress_new(env, steps_to_run, "opm demo");
+    let mut failed: Int = 0;
+    let mut i: Int = 0;
+    while i < steps_to_run && i < total {
+        let line: String = pm_demo_pkg_at(cat, i);
+        let pkg: String = pm_demo_first_field(line);
+
+        let name1: String = "read " + pkg + "/manifest";
+        pm_progress_step_begin(&mut ph, name1);
+        pm_demo_busy_wait(delay);
+        let manifest: String = pm_slurp(fr, "seed/" + pkg + "/manifest");
+        let man_bytes: Int = chars_len(manifest);
+        pm_progress_step_ok(&mut ph, name1, man_bytes.to_string() + " bytes");
+
+        let name2: String = "check " + pkg + " payload";
+        pm_progress_step_begin(&mut ph, name2);
+        pm_demo_busy_wait(delay);
+        let payload: String = pm_slurp(fr, "seed/" + pkg + "/" + pkg + ".oo");
+        let pay_bytes: Int = chars_len(payload);
+        if pay_bytes == 0 {
+            pm_progress_step_warn(&mut ph, name2, "missing payload");
         } else {
-            if i == 3 && steps >= 3 {
-                pm_progress_step_warn(&mut ph, name, "size anomaly detected");
-            } else {
-                pm_progress_step_ok(&mut ph, name, "ok");
-            }
+            pm_progress_step_ok(&mut ph, name2, pay_bytes.to_string() + " bytes");
         }
+
         i = i + 1;
     }
     pm_progress_finish(ph);
