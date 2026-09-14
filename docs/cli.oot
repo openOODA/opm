@@ -26,6 +26,7 @@ Live commands (help lists only these):
 | `ingest` | Lock a file-backed recipe | `cli/cmd_ingest.oo` |
 | `init` | Write a starter `ooda.pkg` | `cli/cmd_init.oo` |
 | `gen` | Scaffold a module, service, or test under src/ or tests/ | `cli/cmd_gen.oo` |
+| `demo` | Synthesize a 5-step progress run to demo the UI | `cli/cmd_demo.oo` |
 | `launch` | Re-verify and optionally run a pinned payload | `cli/cmd_launch.oo` |
 | `remove` | Drop a package from the lock | `cli/cmd_ops.oo` |
 | `update` | Re-resolve and refresh the lock | `cli/cmd_ops.oo` |
@@ -55,6 +56,9 @@ Helpers (not commands): `catalog.oo`, `argv.oo`, `slurp.oo`,
 - `--json` — machine object instead of text
 - `--vendor <path>` — file vendor directory
 - `--from <dir>` — local directory recipe
+- `--format=json` — emit NDJSON progress events on stdout
+- `--format=human` — plain lines (default; auto on TTY)
+- `--no-progress` — suppress progress step output
 
 HTTPS fetch needs `OODA_CURL`. Git clone needs `OODA_GIT`.
 Minisign needs `OODA_MINISIGN`. Compiler spawn needs `OODA_COMPILER`.

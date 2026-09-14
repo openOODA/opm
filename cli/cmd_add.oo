@@ -12,6 +12,7 @@
 import "add_select.oo";
 import "add_lock.oo";
 import "argv.oo";
+import "progress.oo";
 import "slurp.oo";
 import "vendor_pick.oo";
 import "core/name.oo";
@@ -63,17 +64,27 @@ pub fn run_ooda_pm_add(fr: &FsReadCap, fw: &FsWriteCap, proc: &ProcessCap, env: 
             process_exit(2);
         }
     }
+    let mut ph: ProgressHandle = pm_progress_new(env, 2, "opm add");
+    pm_progress_step_begin(&mut ph, "resolve");
     let res: String = pm_add_body(fr, vendor, name, from, pm_flag(args, "--pubgrub"));
     if chars_len(res) < 3 {
         println("ERR\tpm\t" + res);
         println("opm add: " + res);
+        pm_progress_step_err(&mut ph, "resolve", res);
+        pm_progress_finish(ph);
         process_exit(2);
     }
     if str_slice(res, 0, 3) != "ok " {
         println("ERR\tpm\t" + res);
         println("opm add: " + res);
+        pm_progress_step_err(&mut ph, "resolve", res);
+        pm_progress_finish(ph);
         process_exit(2);
     }
     let body: String = str_slice(res, 3, chars_len(res));
+    pm_progress_step_ok(&mut ph, "resolve", body);
+    pm_progress_step_begin(&mut ph, "write lock");
     pm_add_write(fr, fw, env, args, vendor, name, body);
+    pm_progress_step_ok(&mut ph, "write lock", "lock v2");
+    pm_progress_finish(ph);
 }

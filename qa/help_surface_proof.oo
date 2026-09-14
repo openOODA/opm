@@ -28,6 +28,7 @@ pub fn main() {
     if !has(h, "ingest") { fail("ingest"); }
     if !has(h, "init") { fail("init"); }
     if !has(h, "gen") { fail("gen"); }
+    if !has(h, "demo") { fail("demo"); }
     if !has(h, "launch") { fail("launch"); }
     if !has(h, "remove") { fail("remove"); }
     if !has(h, "update") { fail("update"); }

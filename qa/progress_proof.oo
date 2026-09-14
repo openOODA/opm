@@ -1,0 +1,94 @@
+// # opm Progress Probe — RULES §1.10
+//
+// Logline: Verify pm_progress_render_line outputs are stable and
+//          match the spec across status, color, and edge cases.
+//
+// Setup:  Pure string assertions. No TTY, no sleeps, no caps.
+//         Re-invokes each assertion inside main() per §1.10.
+//
+// Beats:
+//   1. status=ok, warn, err, run with color on/off.
+//   2. Empty detail drops "..." for non-run statuses.
+//   3. Step counter [N/M] is correct.
+//   4. JSON mode is not exercised here (deterministic + no caps).
+//   5. Marker and int_to_str helpers are stable.
+
+import "progress.oo";
+
+fn progress_fail(msg: String) {
+    println("FAIL " + msg);
+    process_exit(1);
+}
+
+fn progress_check(name: String, got: String, want: String) {
+    if got != want {
+        progress_fail(name + ": got '" + got + "' want '" + want + "'");
+    }
+}
+
+fn progress_assert_all() {
+    let green: String = "\x1b[32m";
+    let yellow: String = "\x1b[33m";
+    let red: String = "\x1b[31m";
+    let cyan: String = "\x1b[36m";
+    let reset: String = "\x1b[0m";
+    let dim: String = "\x1b[2m";
+    let bold: String = "\x1b[1m";
+
+    let ok_marker: String = chr(10003);
+    let warn_marker: String = chr(9888);
+    let err_marker: String = chr(10007);
+    let run_marker: String = chr(8226);
+
+    let s1: String = pm_progress_render_line(1, 5, "resolve deps", "ok", "3 packages", true);
+    let want1: String = green + ok_marker + reset + " " + dim + "[1/5]" + reset + " " + bold + "resolve deps" + reset + "  3 packages";
+    progress_check("ok-color", s1, want1);
+
+    let s2: String = pm_progress_render_line(2, 5, "fetch", "warn", "size drift", true);
+    let want2: String = yellow + warn_marker + reset + " " + dim + "[2/5]" + reset + " " + bold + "fetch" + reset + "  size drift";
+    progress_check("warn-color", s2, want2);
+
+    let s3: String = pm_progress_render_line(3, 5, "extract", "err", "sha mismatch", true);
+    let want3: String = red + err_marker + reset + " " + dim + "[3/5]" + reset + " " + bold + "extract" + reset + "  sha mismatch";
+    progress_check("err-color", s3, want3);
+
+    let s4: String = pm_progress_render_line(4, 5, "verify", "run", "", true);
+    let want4: String = cyan + run_marker + reset + " " + dim + "[4/5]" + reset + " " + bold + "verify" + reset + " ...";
+    progress_check("run-color-empty", s4, want4);
+
+    let s5: String = pm_progress_render_line(1, 5, "resolve", "ok", "3 packages", false);
+    let want5: String = ok_marker + " [1/5] resolve  3 packages";
+    progress_check("ok-no-color", s5, want5);
+
+    let s6: String = pm_progress_render_line(2, 5, "fetch", "run", "", false);
+    let want6: String = run_marker + " [2/5] fetch ...";
+    progress_check("run-no-color-empty", s6, want6);
+
+    let s7: String = pm_progress_render_line(5, 5, "write", "ok", "", false);
+    let want7: String = ok_marker + " [5/5] write";
+    progress_check("ok-no-detail", s7, want7);
+
+    let s8: String = pm_progress_render_line(99, 100, "deep", "warn", "x", true);
+    let want8: String = yellow + warn_marker + reset + " " + dim + "[99/100]" + reset + " " + bold + "deep" + reset + "  x";
+    progress_check("counter-bigger", s8, want8);
+
+    progress_check("color-ansi-ok", pm_progress_ansi_code(true, "32"), green);
+    progress_check("color-ansi-off", pm_progress_ansi_code(false, "32"), "");
+
+    progress_check("marker-ok", pm_progress_marker("ok"), ok_marker);
+    progress_check("marker-warn", pm_progress_marker("warn"), warn_marker);
+    progress_check("marker-err", pm_progress_marker("err"), err_marker);
+    progress_check("marker-run", pm_progress_marker("run"), run_marker);
+
+    progress_check("int-0", pm_progress_int_to_str(0), "0");
+    progress_check("int-9", pm_progress_int_to_str(9), "9");
+    progress_check("int-42", pm_progress_int_to_str(42), "42");
+    progress_check("int-100", pm_progress_int_to_str(100), "100");
+    progress_check("int-65535", pm_progress_int_to_str(65535), "65535");
+}
+
+pub fn main() {
+    progress_assert_all();
+    progress_assert_all();
+    println("progress_proof: PASSED");
+}

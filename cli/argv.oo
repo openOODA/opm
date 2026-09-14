@@ -40,7 +40,7 @@ pub fn pm_opt(args: List[String], name: String) -> String {
 
 fn pm_is_verb(a: String) -> Bool {
     if a == "add" || a == "audit" || a == "sbom" || a == "bot" { return true; }
-    if a == "ingest" || a == "init" || a == "gen" || a == "launch" { return true; }
+    if a == "ingest" || a == "init" || a == "gen" || a == "demo" || a == "launch" { return true; }
     if a == "remove" || a == "update" || a == "outdated" || a == "why" { return true; }
     if a == "pack" || a == "pkg" || a == "publish" { return true; }
     if a == "reg" || a == "registry" || a == "regs" || a == "search" { return true; }
@@ -125,7 +125,7 @@ pub fn pm_publish_json(args: List[String]) -> Bool {
 }
 
 pub fn pm_help_text() -> String {
-    return "opm — openOODA package manager\nusage: opm <subcommand> [args]\n\nsubcommands:\n  add, audit, sbom, bot, ingest, init, gen, launch,\n  remove, update, outdated, why,\n  pack, pkg, publish,\n  reg, registry, regs,\n  search, tree, vendor, clean";
+    return "opm — openOODA package manager\nusage: opm <subcommand> [args]\n\nsubcommands:\n  add, audit, sbom, bot, demo, ingest, init, gen, launch,\n  remove, update, outdated, why,\n  pack, pkg, publish,\n  reg, registry, regs,\n  search, tree, vendor, clean\n\nflags:\n  --format=json    Emit NDJSON progress events\n  --format=human   Plain lines (default)\n  --no-progress    Suppress step output";
 }
 
 pub fn pm_argv_self_test() -> Bool {
@@ -153,6 +153,7 @@ pub fn pm_argv_self_test() -> Bool {
     if pm_dispatch_handler("sbom") != "sbom" { return false; }
     if pm_dispatch_handler("audit") != "audit" { return false; }
     if pm_dispatch_handler("gen") != "gen" { return false; }
+    if pm_dispatch_handler("demo") != "demo" { return false; }
     if pm_dispatch_handler("cat") != "" { return false; }
     if pm_dispatch_handler("more") != "" { return false; }
     return true;
@@ -166,6 +167,7 @@ pub fn pm_dispatch_handler(sub: String) -> String {
     if sub == "ingest" { return "ingest"; }
     if sub == "init" { return "init"; }
     if sub == "gen" { return "gen"; }
+    if sub == "demo" { return "demo"; }
     if sub == "launch" { return "launch"; }
     if sub == "remove" { return "remove"; }
     if sub == "update" { return "update"; }

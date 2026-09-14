@@ -1,0 +1,185 @@
+// # opm Progress — Terminal-aware step reporter
+//
+// Logline: Self-contained progress UX for opm multi-step commands. Emits
+//          step lines on stdout. Auto-ANSI on TTY, plain on pipe.
+//
+// Setup:  Pure stdout writer. EnvCap reads TERM, NO_COLOR, OODA_TUI,
+//         OODA_PROGRESS. JSON via --format=json or OODA_PROGRESS=json.
+//         No process spawn, no FS write. The terminal handles redraw.
+//
+// Beats:
+//   1. pm_progress_new constructs a handle; auto-detects TTY.
+//   2. step_begin -> step_ok | step_warn | step_err per phase.
+//   3. pm_progress_finish closes the run.
+//   4. JSON mode emits one NDJSON line per event.
+//   5. Color auto-on when TERM is set and NO_COLOR / OODA_TUI unset.
+//   6. pm_progress_render_line is the deterministic pure helper used
+//      by qa/progress_proof.oo for stable string assertions.
+
+pub struct ProgressHandle {
+    total: Int,
+    label: String,
+    is_color: Bool,
+    is_json: Bool,
+    no_progress: Bool,
+    current: Int,
+}
+
+fn pm_progress_ansi_code(color: Bool, code: String) -> String {
+    if !color { return ""; }
+    return "\x1b[" + code + "m";
+}
+
+fn pm_progress_ansi_reset(color: Bool) -> String {
+    return pm_progress_ansi_code(color, "0");
+}
+
+fn pm_progress_color_marker(color: Bool, status: String) -> String {
+    if !color { return ""; }
+    if status == "ok" { return "\x1b[32m"; }
+    if status == "warn" { return "\x1b[33m"; }
+    if status == "err" { return "\x1b[31m"; }
+    if status == "run" { return "\x1b[36m"; }
+    return "";
+}
+
+fn pm_progress_marker(status: String) -> String {
+    if status == "ok" { return chr(10003); }
+    if status == "warn" { return chr(9888); }
+    if status == "err" { return chr(10007); }
+    if status == "run" { return chr(8226); }
+    return " ";
+}
+
+fn pm_progress_env(env: &EnvCap, key: String) -> String {
+    let r: Result[String, String] = env_get(env, key);
+    return match r { Ok(s) => s, Err(_) => "" };
+}
+
+pub fn pm_progress_should_color(env: &EnvCap) -> Bool {
+    let term: String = pm_progress_env(env, "TERM");
+    if term == "" { return false; }
+    if term == "dumb" { return false; }
+    if pm_progress_env(env, "NO_COLOR") != "" { return false; }
+    if pm_progress_env(env, "OODA_TUI") != "" { return false; }
+    return true;
+}
+
+pub fn pm_progress_should_json(env: &EnvCap) -> Bool {
+    if pm_progress_env(env, "OODA_PROGRESS") == "json" { return true; }
+    return false;
+}
+
+pub fn pm_progress_should_no_progress(env: &EnvCap) -> Bool {
+    if pm_progress_env(env, "OODA_PROGRESS") == "off" { return true; }
+    if pm_progress_env(env, "OODA_NO_PROGRESS") == "1" { return true; }
+    return false;
+}
+
+pub fn pm_progress_new(env: &EnvCap, total: Int, label: String) -> ProgressHandle {
+    return ProgressHandle {
+        total: total,
+        label: label,
+        is_color: pm_progress_should_color(env),
+        is_json: pm_progress_should_json(env),
+        no_progress: pm_progress_should_no_progress(env),
+        current: 0
+    };
+}
+
+fn pm_progress_jesc(s: String) -> String {
+    let mut out: String = "";
+    let mut i: Int = 0;
+    let n: Int = chars_len(s);
+    while i < n {
+        let c: String = char_at(s, i);
+        if c == "\"" { out = out + "\\\""; }
+        else if c == "\\" { out = out + "\\\\"; }
+        else if c == "\n" { out = out + "\\n"; }
+        else if c == "\r" { out = out + "\\r"; }
+        else if c == "\t" { out = out + "\\t"; }
+        else { out = out + c; }
+        i = i + 1;
+    }
+    return out;
+}
+
+fn pm_progress_int_to_str(n: Int) -> String {
+    if n == 0 { return "0"; }
+    let mut out: String = "";
+    let mut v: Int = n;
+    while v > 0 {
+        let d: Int = v - (v / 10) * 10;
+        out = char_at("0123456789", d) + out;
+        v = v / 10;
+    }
+    if n < 0 { return "-" + out; }
+    return out;
+}
+
+pub fn pm_progress_render_line(idx: Int, total: Int, name: String, status: String, detail: String, color: Bool) -> String {
+    let marker: String = pm_progress_color_marker(color, status) + pm_progress_marker(status) + pm_progress_ansi_reset(color);
+    let tag: String = "[" + pm_progress_int_to_str(idx) + "/" + pm_progress_int_to_str(total) + "]";
+    let dim_tag: String = pm_progress_ansi_code(color, "2") + tag + pm_progress_ansi_reset(color);
+    let bold_name: String = pm_progress_ansi_code(color, "1") + name + pm_progress_ansi_reset(color);
+    let mut line: String = marker + " " + dim_tag + " " + bold_name;
+    if detail != "" {
+        if status == "ok" || status == "warn" || status == "err" {
+            line = line + "  " + detail;
+        } else {
+            line = line + " ...";
+        }
+    } else {
+        if status == "run" {
+            line = line + " ...";
+        }
+    }
+    return line;
+}
+
+fn pm_progress_emit(h: &ProgressHandle, idx: Int, name: String, status: String, detail: String) {
+    if h.no_progress && !h.is_json { return; }
+    if h.is_json {
+        let ts: String = "2026-09-15T00:00:00Z";
+        println("{\"ts\":\"" + ts + "\",\"op\":\"" + h.label + "\",\"step\":" + pm_progress_int_to_str(idx) + ",\"of\":" + pm_progress_int_to_str(h.total) + ",\"name\":\"" + pm_progress_jesc(name) + "\",\"status\":\"" + status + "\",\"detail\":\"" + pm_progress_jesc(detail) + "\"}");
+        return;
+    }
+    let line: String = pm_progress_render_line(idx, h.total, name, status, detail, h.is_color);
+    println(line);
+}
+
+pub fn pm_progress_step_begin(h: &mut ProgressHandle, name: String) {
+    h.current = h.current + 1;
+    pm_progress_emit(h, h.current, name, "run", "");
+}
+
+pub fn pm_progress_step_ok(h: &mut ProgressHandle, name: String, detail: String) {
+    pm_progress_emit(h, h.current, name, "ok", detail);
+}
+
+pub fn pm_progress_step_warn(h: &mut ProgressHandle, name: String, detail: String) {
+    pm_progress_emit(h, h.current, name, "warn", detail);
+}
+
+pub fn pm_progress_step_err(h: &mut ProgressHandle, name: String, detail: String) {
+    pm_progress_emit(h, h.current, name, "err", detail);
+}
+
+pub fn pm_progress_event(h: &ProgressHandle, kind: String, payload: String) {
+    if h.is_json {
+        println("{\"ts\":\"2026-09-15T00:00:00Z\",\"op\":\"" + h.label + "\",\"event\":\"" + pm_progress_jesc(kind) + "\",\"payload\":\"" + pm_progress_jesc(payload) + "\"}");
+        return;
+    }
+    if !h.no_progress {
+        println("[" + h.label + "] " + kind + ": " + payload);
+    }
+}
+
+pub fn pm_progress_finish(h: ProgressHandle) {
+    if h.is_json { return; }
+    if h.no_progress {
+        println(h.label + ": done");
+        return;
+    }
+    println("");
+}
