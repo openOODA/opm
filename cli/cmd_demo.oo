@@ -2,8 +2,7 @@
 //
 // Logline: Demonstrate pm_progress end-to-end with synthetic work.
 //          The user can run `opm demo` in a plain terminal to see
-//          the line-mode animation: spinner on running steps, then
-//          status markers on completion. No caps, no I/O.
+//          the line-mode animation. No caps, no I/O.
 //
 // Setup:  Pure stdio. No process spawn. No FsWrite. The terminal
 //         handles redraw. Delay is a busy-wait (no TimeCap) so the
@@ -11,7 +10,7 @@
 //
 // Beats:
 //   1. Parse flags: --steps N (default 5), --delay ITERATIONS (default 8000000).
-//   2. Build a 5-step synthetic plan with mixed outcomes.
+//   2. Build an N-step synthetic plan with mixed outcomes.
 //   3. Run each step through pm_progress with realistic timing.
 //   4. Final summary line via pm_progress_finish.
 
@@ -25,19 +24,6 @@ fn pm_demo_busy_wait(its: Int) {
         i = i + 1;
     }
     return;
-}
-
-fn pm_demo_int_to_str(n: Int) -> String {
-    if n == 0 { return "0"; }
-    let mut out: String = "";
-    let mut v: Int = n;
-    while v > 0 {
-        let d: Int = v - (v / 10) * 10;
-        out = char_at("0123456789", d) + out;
-        v = v / 10;
-    }
-    if n < 0 { return "-" + out; }
-    return out;
 }
 
 fn pm_demo_flag(args: List[String], name: String) -> Bool {
@@ -67,21 +53,41 @@ fn pm_demo_opt(args: List[String], name: String) -> String {
     return "";
 }
 
+fn pm_demo_parse_int(s: String, fallback: Int) -> Int {
+    let n: Int = chars_len(s);
+    if n == 0 { return fallback; }
+    let chars: String = "0123456789";
+    let mut acc: Int = 0;
+    let mut i: Int = 0;
+    while i < n {
+        let c: String = char_at(s, i);
+        let mut found: Bool = false;
+        let mut d: Int = 0;
+        while d < 10 {
+            if char_at(chars, d) == c { found = true; i = n; }
+            d = d + 1;
+        }
+        if !found { return fallback; }
+        let mut j: Int = 0;
+        while j < 10 {
+            if char_at(chars, j) == c { d = j; j = 10; }
+            j = j + 1;
+        }
+        acc = acc * 10 + d;
+        i = i + 1;
+    }
+    return acc;
+}
+
 pub fn run_ooda_pm_demo(env: &EnvCap, args: List[String]) {
     let mut steps: Int = 5;
     let mut delay: Int = 8000000;
     let s_opt: String = pm_demo_opt(args, "--steps");
-    if s_opt != "" {
-        let sr: Result[Int, String] = parse_int(s_opt);
-        if sr.is_ok() { steps = match sr { Ok(n) => n, Err(_) => 5 }; }
-    }
+    if s_opt != "" { steps = pm_demo_parse_int(s_opt, 5); }
     if steps < 1 { steps = 1; }
     if steps > 9 { steps = 9; }
     let d_opt: String = pm_demo_opt(args, "--delay");
-    if d_opt != "" {
-        let dr: Result[Int, String] = parse_int(d_opt);
-        if dr.is_ok() { delay = match dr { Ok(n) => n, Err(_) => 8000000 }; }
-    }
+    if d_opt != "" { delay = pm_demo_parse_int(d_opt, 8000000); }
     if delay < 0 { delay = 0; }
     if delay > 200000000 { delay = 200000000; }
 
@@ -89,7 +95,7 @@ pub fn run_ooda_pm_demo(env: &EnvCap, args: List[String]) {
     let mut failed: Int = 0;
     let mut i: Int = 1;
     while i <= steps {
-        let name: String = "step-" + pm_demo_int_to_str(i);
+        let name: String = "step-" + i.to_string();
         pm_progress_step_begin(&mut ph, name);
         pm_demo_busy_wait(delay);
 

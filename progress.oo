@@ -16,14 +16,14 @@
 //   6. pm_progress_render_line is the deterministic pure helper used
 //      by qa/progress_proof.oo for stable string assertions.
 
-pub struct ProgressHandle {
+type ProgressHandle = struct {
     total: Int,
     label: String,
     is_color: Bool,
     is_json: Bool,
     no_progress: Bool,
     current: Int,
-}
+};
 
 fn pm_progress_ansi_code(color: Bool, code: String) -> String {
     if !color { return ""; }
@@ -44,10 +44,10 @@ fn pm_progress_color_marker(color: Bool, status: String) -> String {
 }
 
 fn pm_progress_marker(status: String) -> String {
-    if status == "ok" { return chr(10003); }
-    if status == "warn" { return chr(9888); }
-    if status == "err" { return chr(10007); }
-    if status == "run" { return chr(8226); }
+    if status == "ok" { return "\u{2713}"; }
+    if status == "warn" { return "\u{26a0}"; }
+    if status == "err" { return "\u{2717}"; }
+    if status == "run" { return "\u{2022}"; }
     return " ";
 }
 
@@ -105,21 +105,12 @@ fn pm_progress_jesc(s: String) -> String {
 }
 
 fn pm_progress_int_to_str(n: Int) -> String {
-    if n == 0 { return "0"; }
-    let mut out: String = "";
-    let mut v: Int = n;
-    while v > 0 {
-        let d: Int = v - (v / 10) * 10;
-        out = char_at("0123456789", d) + out;
-        v = v / 10;
-    }
-    if n < 0 { return "-" + out; }
-    return out;
+    return n.to_string();
 }
 
 pub fn pm_progress_render_line(idx: Int, total: Int, name: String, status: String, detail: String, color: Bool) -> String {
     let marker: String = pm_progress_color_marker(color, status) + pm_progress_marker(status) + pm_progress_ansi_reset(color);
-    let tag: String = "[" + pm_progress_int_to_str(idx) + "/" + pm_progress_int_to_str(total) + "]";
+    let tag: String = "[" + idx.to_string() + "/" + total.to_string() + "]";
     let dim_tag: String = pm_progress_ansi_code(color, "2") + tag + pm_progress_ansi_reset(color);
     let bold_name: String = pm_progress_ansi_code(color, "1") + name + pm_progress_ansi_reset(color);
     let mut line: String = marker + " " + dim_tag + " " + bold_name;
@@ -141,7 +132,7 @@ fn pm_progress_emit(h: &ProgressHandle, idx: Int, name: String, status: String, 
     if h.no_progress && !h.is_json { return; }
     if h.is_json {
         let ts: String = "2026-09-15T00:00:00Z";
-        println("{\"ts\":\"" + ts + "\",\"op\":\"" + h.label + "\",\"step\":" + pm_progress_int_to_str(idx) + ",\"of\":" + pm_progress_int_to_str(h.total) + ",\"name\":\"" + pm_progress_jesc(name) + "\",\"status\":\"" + status + "\",\"detail\":\"" + pm_progress_jesc(detail) + "\"}");
+        println("{\"ts\":\"" + ts + "\",\"op\":\"" + h.label + "\",\"step\":" + idx.to_string() + ",\"of\":" + h.total.to_string() + ",\"name\":\"" + pm_progress_jesc(name) + "\",\"status\":\"" + status + "\",\"detail\":\"" + pm_progress_jesc(detail) + "\"}");
         return;
     }
     let line: String = pm_progress_render_line(idx, h.total, name, status, detail, h.is_color);

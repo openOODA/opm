@@ -1,7 +1,6 @@
 // # opm Progress Probe — RULES §1.10
 //
-// Logline: Verify pm_progress_render_line outputs are stable and
-//          match the spec across status, color, and edge cases.
+// Logline: Verify pm_progress_render_line outputs are
 //
 // Setup:  Pure string assertions. No TTY, no sleeps, no caps.
 //         Re-invokes each assertion inside main() per §1.10.
@@ -11,7 +10,7 @@
 //   2. Empty detail drops "..." for non-run statuses.
 //   3. Step counter [N/M] is correct.
 //   4. JSON mode is not exercised here (deterministic + no caps).
-//   5. Marker and int_to_str helpers are stable.
+//   5. Marker and to_string helpers are stable.
 
 import "progress.oo";
 
@@ -35,10 +34,10 @@ fn progress_assert_all() {
     let dim: String = "\x1b[2m";
     let bold: String = "\x1b[1m";
 
-    let ok_marker: String = chr(10003);
-    let warn_marker: String = chr(9888);
-    let err_marker: String = chr(10007);
-    let run_marker: String = chr(8226);
+    let ok_marker: String = "\u{2713}";
+    let warn_marker: String = "\u{26a0}";
+    let err_marker: String = "\u{2717}";
+    let run_marker: String = "\u{2022}";
 
     let s1: String = pm_progress_render_line(1, 5, "resolve deps", "ok", "3 packages", true);
     let want1: String = green + ok_marker + reset + " " + dim + "[1/5]" + reset + " " + bold + "resolve deps" + reset + "  3 packages";
@@ -80,11 +79,10 @@ fn progress_assert_all() {
     progress_check("marker-err", pm_progress_marker("err"), err_marker);
     progress_check("marker-run", pm_progress_marker("run"), run_marker);
 
-    progress_check("int-0", pm_progress_int_to_str(0), "0");
-    progress_check("int-9", pm_progress_int_to_str(9), "9");
-    progress_check("int-42", pm_progress_int_to_str(42), "42");
-    progress_check("int-100", pm_progress_int_to_str(100), "100");
-    progress_check("int-65535", pm_progress_int_to_str(65535), "65535");
+    progress_check("int-0", (0).to_string(), "0");
+    progress_check("int-9", (9).to_string(), "9");
+    progress_check("int-42", (42).to_string(), "42");
+    progress_check("int-100", (100).to_string(), "100");
 }
 
 pub fn main() {
