@@ -1,6 +1,6 @@
 // # opm Progress Probe — RULES §1.10
 //
-// Logline: Verify pm_progress_render_line outputs are
+// Logline: Verify pm_progress_render_line outputs are deterministic for ok/warn/err/run.
 //
 // Setup:  Pure string assertions. No TTY, no sleeps, no caps.
 //         Re-invokes each assertion inside main() per §1.10.

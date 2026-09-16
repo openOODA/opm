@@ -1,6 +1,6 @@
 # Installing opm
 
-File: opm/docs/INSTALL.oot
+File: opm/docs/install.oot
 
 opm is the openOODA package manager. It is its own repo. Version is
 the git tag (RFC-0006). There is no VERSION file.

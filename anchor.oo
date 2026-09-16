@@ -16,7 +16,7 @@
 //   3. qa/ has the break-test drivers that ship with the package.
 //   4. .github/workflows/ci.yml is the build, test, verify, release
 //      entry point (gh-owned; no scripts/ runners).
-//   5. docs/ has versioning.oot, cli.oot, and anchor.oo.
+//   5. docs/ has install.oot, versioning.oot, cli.oot, manifest.oot, registry.oot.
 //   6. examples/ has manifest, recipe, and lockfile samples.
 //   7. seed/ is the stock openOODA catalog. opm search reads it first.
 //   8. api_surface=10. Version is the git tag. No VERSION file.

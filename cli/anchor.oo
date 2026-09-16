@@ -9,10 +9,11 @@
 //   1. Handlers: add, audit, sbom, bot, demo, ingest, init, gen, launch,
 //      remove, update, outdated, why, pack, pkg, publish,
 //      reg/registry/regs, search, tree, vendor, clean.
-//   2. Helpers: argv, slurp, catalog, search_match, vendor_pick, git_clone, reg_fetch, tool.
+//   2. Helpers: argv, slurp, catalog, search_match, vendor_pick, git_clone,
+//      reg_fetch, tool, find_compiler, host_run, add_select, add_lock.
 //   3. pkg/ has lock and parse helpers used by cmd_pkg.
 //   4. progress.oo at the repo root is the terminal-aware step reporter
-//      consumed by add/launch/pack/etc. for line-mode animation.
+//      consumed by add and demo for line-mode animation.
 //   5. main.oo parses argv and dispatches. Unknown subcommand is ERR.
 
 import "argv.oo";
@@ -29,6 +30,7 @@ import "cmd_add.oo";
 import "cmd_audit.oo";
 import "cmd_bot.oo";
 import "cmd_demo.oo";
+import "cmd_gen.oo";
 import "cmd_ingest.oo";
 import "cmd_init.oo";
 import "cmd_launch.oo";

@@ -42,7 +42,9 @@ Live commands (help lists only these):
 | `clean` | Drop CAS dirs not in the lock | `cli/cmd_tree.oo` |
 
 Helpers (not commands): `catalog.oo`, `argv.oo`, `slurp.oo`,
-`vendor_pick.oo`, `git_clone.oo`, `reg_fetch.oo`.
+`search_match.oo`, `vendor_pick.oo`, `git_clone.oo`, `reg_fetch.oo`,
+`tool.oo`, `find_compiler.oo`, `host_run.oo`, `add_select.oo`,
+`add_lock.oo`.
 
 ## 3. Aliases
 

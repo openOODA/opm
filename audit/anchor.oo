@@ -7,7 +7,9 @@
 // Beats:
 //   1. zero-trust.oot — the 20% findings (snapshot; kill list executed).
 //   2. todo.oot — landed vs blocked. Blocked items wait on an oodac binary.
+//   3. 2026-09-10-focused-opm.oot — lock re-derivation and seed/catalog cross-repo.
 
 // Sibling audit documents (.oot files):
 // - zero-trust.oot
 // - todo.oot
+// - 2026-09-10-focused-opm.oot

@@ -37,7 +37,5 @@ pub fn main(fs: &FsReadCap) {
     scan(fs, "cli/reg_fetch.oo");
     scan(fs, "cli/cmd_bot.oo");
     scan(fs, "registry/regs.oo");
-    scan(fs, "cli/cmd_git.oo");
-    scan(fs, "cli/cmd_reg.oo");
     println("no_shell_proof: PASSED");
 }
