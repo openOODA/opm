@@ -17,6 +17,8 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      OO_LIST_AMBIENT_QUOTA: "8589934592"
     steps:
       - name: checkout opm
         uses: actions/checkout@v4
@@ -74,6 +76,8 @@ jobs:
   build:
     needs: test
     runs-on: ubuntu-latest
+    env:
+      OO_LIST_AMBIENT_QUOTA: "8589934592"
     steps:
       - name: checkout opm
         uses: actions/checkout@v4
@@ -121,6 +125,8 @@ jobs:
     needs: [test]
     if: always()
     runs-on: ubuntu-latest
+    env:
+      OO_LIST_AMBIENT_QUOTA: "8589934592"
     steps:
       - name: checkout opm
         uses: actions/checkout@v4
