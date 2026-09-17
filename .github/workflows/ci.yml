@@ -51,7 +51,7 @@ jobs:
           OODA_FS_WRITEDIR: ${{ github.workspace }}
         run: |
           set -euo pipefail
-          test ! -e opm/VERSION || { echo "ERR VERSION file is banned"; exit 1; }
+          test -f opm/VERSION || { echo "ERR missing opm/VERSION"; exit 1; }
           for f in opm/cli/cmd_more.oo opm/cli/host_build.oo opm/core/core.oo; do
             test ! -e "$f" || { echo "ERR banned file $f"; exit 1; }
           done
