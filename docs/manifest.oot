@@ -47,7 +47,6 @@ The `caps` field is the only place where a package declares what it can touch. o
 - `FsRead` — read the file system.
 - `FsWrite` — write the file system.
 - `Net` — open a network socket.
-- `Http` — make an HTTP request.
 - `Process` — spawn a child process.
 - `Env` — read an environment variable.
 
@@ -81,7 +80,7 @@ If either is set and the live value does not match, the install is refused with 
 name=cli-helper
 version=0.4.1
 deps=json-parser@^2.0.0,http-client@~1.5.0
-caps=FsRead,FsWrite,Http
+caps=FsRead,FsWrite,Net
 license=MIT
 payload=cli-helper.oo
 commit=
