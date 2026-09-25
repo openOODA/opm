@@ -1,0 +1,49 @@
+// # `pm_semver_*` edge proof
+//
+// Logline: Pin short/prerelease/prefixed/empty version behavior and numeric (not lexicographic) compare.
+//
+// Setup: Pure in-memory. No FsCap needed. No network.
+//
+// Beats:
+//   1. Short versions compare with missing parts as 0.
+//   2. Compare is numeric: 1.10.0 beats 1.9.0.
+//   3. Lenient parse documented: v-prefix and prerelease suffix fold to digits.
+//   4. Empty actual never satisfies a versioned spec.
+
+import "core/semver.oo";
+
+fn fail(msg: String) {
+    println("FAIL " + msg);
+    process_exit(1);
+}
+
+pub fn main() {
+    if pm_semver_cmp("1.2", "1.2.0") != 0 { fail("short equals padded"); }
+    if pm_semver_cmp("1", "1.0.0") != 0 { fail("bare major equals padded"); }
+    if pm_semver_cmp("2", "1.9.9") != 1 { fail("bare major greater"); }
+    println("short versions ok");
+
+    if pm_semver_cmp("1.10.0", "1.9.0") != 1 { fail("1.10.0 must beat 1.9.0 numerically"); }
+    if pm_semver_cmp("1.9.0", "1.10.0") != 0 - 1 { fail("1.9.0 must lose to 1.10.0"); }
+    if pm_semver_cmp("10.0.0", "9.99.99") != 1 { fail("10.x beats 9.x"); }
+    println("numeric compare ok");
+
+    if pm_semver_cmp("v1.2.3", "1.2.3") != 0 { fail("v-prefix folds"); }
+    if pm_semver_cmp("1.2.3-alpha", "1.2.3") != 0 { fail("prerelease suffix folds"); }
+    if pm_semver_cmp("1.2.3+build.1", "1.2.3") != 0 { fail("build metadata folds"); }
+    println("lenient parse ok");
+
+    if pm_semver_ok("1.2") { fail("short fails ok gate"); }
+    if !pm_semver_ok("1.2.3") { fail("full passes ok gate"); }
+    if pm_semver_ok("") { fail("empty fails ok gate"); }
+    if pm_semver_ok("abcde") { fail("dotless fails ok gate"); }
+    println("ok gate ok");
+
+    if !pm_semver_sat("1.2", ">=1.2.0") { fail("short actual satisfies padded spec"); }
+    if pm_semver_sat("", ">=1.0.0") { fail("empty actual must not satisfy"); }
+    if !pm_semver_sat("", "") { fail("empty spec is wildcard"); }
+    if !pm_semver_sat("999999.0.0", ">999998.0.0") { fail("large components compare"); }
+    println("sat edge ok");
+
+    println("pm_semver_edge_proof: PASSED");
+}

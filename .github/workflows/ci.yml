@@ -65,7 +65,7 @@ jobs:
             test -f "opm/$d/anchor.oo" || { echo "ERR missing opm/$d/anchor.oo"; exit 1; }
           done
           echo "api_surface=10"
-          for t in qa/today_proof.oo qa/tomorrow_proof.oo qa/extract_proof.oo qa/ingest_proof.oo qa/init_proof.oo qa/lock_format_proof.oo qa/pubgrub_proof.oo qa/semver_proof.oo qa/argv_init_proof.oo qa/argv_bot_proof.oo qa/argv_publish_proof.oo qa/help_surface_proof.oo qa/sbom_dispatch_proof.oo qa/compiler_token_proof.oo qa/no_shell_proof.oo qa/search_proof.oo registry/git_ingest_proof.oo registry/reg_proof.oo qa/progress_proof.oo; do
+          for t in qa/today_proof.oo qa/tomorrow_proof.oo qa/extract_proof.oo qa/ingest_proof.oo qa/init_proof.oo qa/lock_format_proof.oo qa/pubgrub_proof.oo qa/semver_proof.oo qa/semver_edge_proof.oo qa/argv_init_proof.oo qa/argv_bot_proof.oo qa/argv_publish_proof.oo qa/help_surface_proof.oo qa/sbom_dispatch_proof.oo qa/compiler_token_proof.oo qa/no_shell_proof.oo qa/search_proof.oo registry/git_ingest_proof.oo registry/reg_proof.oo qa/progress_proof.oo; do
             out=$("${OODA_COMPILER}" check "opm/$t") || { echo "$out"; exit 1; }
             case "$out" in *ERR*) echo "ERR in stdout opm/$t: $out"; exit 1;; esac
             out=$("${OODA_COMPILER}" check "opm/$t") || { echo "$out"; exit 1; }
@@ -217,7 +217,7 @@ jobs:
 
   auto-release:
     needs: [build, blackbox-gate]
-    uses: openOODA/openOODA/.github/workflows/auto-release.yml@v2.10.23
+    uses: openOODA/openOODA/.github/workflows/auto-release.yml@v2.10.44
     with:
       artifact_pattern: 'release-assets-*'
       target_tag: ${{ inputs.target_tag || '' }}

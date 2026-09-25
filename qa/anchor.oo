@@ -13,6 +13,7 @@
 //   6. lock_format_proof.oo — lock line fields.
 //   7. pubgrub_proof.oo — resolver terminates.
 //   8. semver_proof.oo — SemVer parser.
+//   15. semver_edge_proof.oo — short/prerelease/build-meta/empty versions; numeric compare.
 //   9. argv_init_proof, argv_bot_proof, argv_publish_proof — rest argv.
 //  10. help_surface_proof, sbom_dispatch_proof — honest dispatch.
 //  11. compiler_token_proof, no_shell_proof — spawn and shell.
@@ -28,6 +29,7 @@ import "init_proof.oo";
 import "lock_format_proof.oo";
 import "pubgrub_proof.oo";
 import "semver_proof.oo";
+import "semver_edge_proof.oo";
 import "argv_init_proof.oo";
 import "argv_bot_proof.oo";
 import "argv_publish_proof.oo";

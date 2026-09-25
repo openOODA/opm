@@ -63,6 +63,7 @@ pub fn main(p: &ProcessCap, fs_r: &FsReadCap, env: &EnvCap, args: List[String]) 
     ps = list_push(ps, "qa/lock_format_proof.oo");
     ps = list_push(ps, "qa/pubgrub_proof.oo");
     ps = list_push(ps, "qa/semver_proof.oo");
+    ps = list_push(ps, "qa/semver_edge_proof.oo");
     ps = list_push(ps, "qa/argv_init_proof.oo");
     ps = list_push(ps, "qa/argv_bot_proof.oo");
     ps = list_push(ps, "qa/argv_publish_proof.oo");

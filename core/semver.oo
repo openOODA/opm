@@ -71,7 +71,16 @@ pub fn pm_ver_at(ver: String, idx: Int) -> Int {
     if idx == 1 {
         return pm_int(str_slice(ver, b + 1, c));
     }
-    return pm_int(str_slice(ver, c + 1, n));
+    let mut e: Int = n;
+    let mut j: Int = c + 1;
+    while j < n {
+        if char_at(ver, j) == "." {
+            e = j;
+            j = n;
+        }
+        j = j + 1;
+    }
+    return pm_int(str_slice(ver, c + 1, e));
 }
 
 pub fn pm_semver_ok(s: String) -> Bool {
