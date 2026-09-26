@@ -125,7 +125,7 @@ pub fn pm_publish_json(args: List[String]) -> Bool {
 }
 
 pub fn pm_help_text() -> String {
-    return "opm — openOODA package manager\nusage: opm <subcommand> [args]\n\nsubcommands:\n  add, audit, sbom, bot, demo, ingest, init, gen, launch,\n  remove, update, outdated, why,\n  pack, pkg, publish,\n  reg, registry, regs,\n  search, tree, vendor, clean\n\nflags:\n  --format=json    Emit NDJSON progress events\n  --format=human   Plain lines (default)\n  --no-progress    Suppress step output";
+    return "opm — openOODA package manager\nusage: opm <subcommand> [args]\n\nsubcommands:\n  add, audit, sbom, bot, demo, ingest, init, gen, launch,\n  remove, update, outdated, why,\n  pack, pkg, publish,\n  reg, registry, regs,\n  search, tree, vendor, clean,\n  version, help\n\nflags:\n  --format=json    Emit NDJSON progress events\n  --format=human   Plain lines (default)\n  --no-progress    Suppress step output";
 }
 
 pub fn pm_argv_self_test() -> Bool {
@@ -181,5 +181,7 @@ pub fn pm_dispatch_handler(sub: String) -> String {
     if sub == "tree" { return "tree"; }
     if sub == "vendor" { return "vendor"; }
     if sub == "clean" { return "clean"; }
+    if sub == "version" { return "version"; }
+    if sub == "help" { return "help"; }
     return "";
 }

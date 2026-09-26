@@ -62,6 +62,15 @@ pub fn main(fr: &FsReadCap, fw: &FsWriteCap, proc: &ProcessCap, env: &EnvCap, ar
     if sub == "vendor" { run_ooda_pm_vendor(fr, fw, proc, env, rest); return Ok(0); }
     if sub == "clean" { run_ooda_pm_clean(fr, fw, proc, env, rest); return Ok(0); }
 
+    if sub == "version" || sub == "--version" || sub == "-v" {
+        println("opm v2.11.9");
+        return Ok(0);
+    }
+    if sub == "help" || sub == "--help" || sub == "-h" {
+        print_help();
+        return Ok(0);
+    }
+
     print_help();
     return Err("opm: unknown subcommand: " + sub);
 }
