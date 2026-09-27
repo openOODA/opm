@@ -6,8 +6,9 @@ This document defines the version contract that opm uses for itself, for the par
 
 ## 1. Version Source
 
-opm has no VERSION file. The version is the git tag. Push to main
-creates the next PATCH tag (RFC-0006, rules.oot §1.24).
+opm keeps a root VERSION file (existence-gated; §1.21). The release
+sequence is the git tag. Push to master creates the next PATCH tag
+(RFC-0006, rules.oot §1.24).
 
 CI (`.github/workflows/ci.yml`) asserts the live structural contract:
 
@@ -22,7 +23,7 @@ A VERSION file at the repo root is a defect.
 ## 2. Field Semantics
 
 - `opm` — the git tag. MAJOR on a breaking CLI or lock change.
-  MINOR on a compatible feature. PATCH on every push to main.
+  MINOR on a compatible feature. PATCH on every push to master.
 - `api_surface` — CI counts public subdirs. A
   new or removed subdir changes the count and the contract.
 - Package manifests still pin toolchain floors (`min_pin`) using

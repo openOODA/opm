@@ -44,14 +44,14 @@ opm <subcommand>
 ## 5. Verify
 
 CI (`.github/workflows/ci.yml`) runs the verify checks and the
-`oodac check` self-test loop on every push to main. There are no
+`oodac check` self-test loop on every push to master. There are no
 local `scripts/` runners.
 
 `opm` with no args prints help. Help names must match `cli/main.oo`.
 
 ## 6. Update
 
-Pull this repo. Push to main tags the next PATCH (RFC-0006).
+Pull this repo. Push to master tags the next PATCH (RFC-0006).
 
 ## 7. Tokens
 
