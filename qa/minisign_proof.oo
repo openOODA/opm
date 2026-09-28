@@ -1,0 +1,53 @@
+// # Minisign positive-path proofs
+//
+// Logline: Ephemeral keypair signs a shipped file; pm_reg_minisign_ok accepts it and rejects cross-file use.
+//
+// Setup: Needs OODA_MINISIGN (minisign binary) for the positive legs; without it the proof takes the
+// fail-closed legs instead. Signs VERSION (shipped, stable). Keys live under .ooda-cache (made via fw).
+//
+// Beats:
+//   1. With OODA_MINISIGN: sign VERSION, verify ok, cross-file verify errs.
+//   2. Without OODA_MINISIGN: verify fails closed with err minisign.
+
+import "cli/reg_fetch.oo";
+import "cli/tool.oo";
+
+fn fail(msg: String) {
+    println("FAIL " + msg);
+    process_exit(1);
+}
+
+pub fn main(fs: &FsReadCap, sys: &ProcessCap, env: &EnvCap, fw: &FsWriteCap) {
+    let ms_r: Result[String, String] = pm_tool_path(fs, env, "OODA_MINISIGN");
+    if ms_r.is_err() {
+        let v: String = pm_reg_minisign_ok(fs, sys, env, "cli/registry.pub", "VERSION", "no-such.sig");
+        if v != "err minisign" && v != "err index" {
+            fail("unset-minisign-must-fail-closed");
+        }
+        println("minisign positive skipped (no OODA_MINISIGN), fail-closed ok");
+    } else {
+        if !pm_mkdir_p(fs, fw, ".ooda-cache") {
+            fail("mkdir-cache");
+        }
+        let ms: String = match ms_r { Ok(s) => s, Err(_) => "" };
+        let _cl: Result[String, String] = sys_exec(sys, "rm", "-f", ".ooda-cache/epub", ".ooda-cache/esec", ".ooda-cache/esig");
+        let g: Result[String, String] = sys_exec(sys, ms, "-G", "-W", "-p", ".ooda-cache/epub", "-s", ".ooda-cache/esec");
+        if g.is_err() {
+            fail("ephemeral-keygen");
+        }
+        let s: Result[String, String] = sys_exec(sys, ms, "-S", "-W", "-s", ".ooda-cache/esec", "-m", "VERSION", "-x", ".ooda-cache/esig");
+        if s.is_err() {
+            fail("ephemeral-sign");
+        }
+        let v: String = pm_reg_minisign_ok(fs, sys, env, ".ooda-cache/epub", "VERSION", ".ooda-cache/esig");
+        if v != "ok" {
+            fail("ephemeral-verify-ok");
+        }
+        println("minisign positive ok");
+        let x: String = pm_reg_minisign_ok(fs, sys, env, ".ooda-cache/epub", "README.md", ".ooda-cache/esig");
+        if x == "ok" {
+            fail("cross-file-verify-must-err");
+        }
+        println("minisign cross-file rejects");
+    }
+}

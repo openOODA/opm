@@ -76,6 +76,7 @@ pub fn main(p: &ProcessCap, fs_r: &FsReadCap, env: &EnvCap, args: List[String]) 
     ps = list_push(ps, "registry/reg_proof.oo");
     ps = list_push(ps, "qa/progress_proof.oo");
     ps = list_push(ps, "qa/probe_cap_extra.oo");
+    ps = list_push(ps, "qa/minisign_proof.oo");
 
     let mut i: Int = 0;
     while i < list_len(ps) {
