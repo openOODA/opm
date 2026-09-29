@@ -9,6 +9,7 @@
 //   2. Git origin needs a hex commit pin. After the name is locked, sha256 is required.
 //   3. --json prints a machine object. Wrapper does not claim transmutation.
 
+import "core/name.oo";
 import "catalog.oo";
 import "git_clone.oo";
 import "argv.oo";

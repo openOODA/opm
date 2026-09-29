@@ -9,6 +9,7 @@
 //   2. path:name rows load from fixtures/pm_name or name/.
 //   3. Several root names resolve to one lock without duplicate nodes.
 
+import "core/name.oo";
 import "argv.oo";
 import "slurp.oo";
 import "std/fs/os/fs.oo";

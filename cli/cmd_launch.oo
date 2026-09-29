@@ -9,6 +9,7 @@
 //   2. pm_launch_gate must be ok or ERR and no exec.
 //   3. After ok, --exec runs the pinned .oo unless untrusted. Without --exec, print the path only.
 
+import "core/name.oo";
 import "catalog.oo";
 import "argv.oo";
 import "slurp.oo";

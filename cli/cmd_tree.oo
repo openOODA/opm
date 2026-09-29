@@ -9,6 +9,7 @@
 //   2. vendor lists name and version from the file vendor.
 //   3. clean removes CAS dirs whose sha is not in the lock.
 
+import "core/name.oo";
 import "catalog.oo";
 import "argv.oo";
 import "slurp.oo";

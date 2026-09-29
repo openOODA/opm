@@ -9,6 +9,7 @@
 //   2. Accept a line only when name, SemVer, 64 hex, and CapName are all present.
 //   3. Sort the pins and hash the sorted text.
 
+import "core/name.oo";
 import "parse.oo";
 import "lock/anchor.oo";
 import "core/anchor.oo";

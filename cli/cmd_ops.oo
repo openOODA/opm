@@ -9,6 +9,7 @@
 //   2. update re-resolves from the vendor.
 //   3. outdated and why compare lock lines to the catalog.
 
+import "core/name.oo";
 import "catalog.oo";
 import "argv.oo";
 import "slurp.oo";

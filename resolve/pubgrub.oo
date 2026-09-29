@@ -14,6 +14,7 @@ import "core/semver.oo";
 import "policy/caps.oo";
 import "lock/lock.oo";
 import "resolve.oo";
+import "core/name.oo";
 
 fn pg_versions_for(catalog: String, name: String) -> String {
     let n: Int = chars_len(catalog);

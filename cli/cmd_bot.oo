@@ -17,6 +17,7 @@ import "tool.oo";
 import "catalog.oo";
 import "core/anchor.oo";
 import "resolve/anchor.oo";
+import "core/name.oo";
 
 pub fn pm_bot_verify_pkg(fr: &FsReadCap, base_dir: String, pkg_name: String) -> String {
     let pkg_path: String = base_dir + "/" + pkg_name;

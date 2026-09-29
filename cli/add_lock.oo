@@ -9,6 +9,7 @@
 //   2. Keep prior lock lines whose name is not in the new set.
 //   3. Write v2 header plus merged lines.
 
+import "core/name.oo";
 import "add_select.oo";
 import "argv.oo";
 import "catalog.oo";
