@@ -5,13 +5,33 @@
 // Setup: Reads listed source files under FsReadCap.
 //
 // Beats:
-//   1. No sys_exec(proc, "sh".
+//   1. No sys_exec(<any-cap>, "sh") — first arg name is not allowlisted.
 //   2. No "sh", "-c".
 //   3. No command -v.
+// NOTE: curated file list; CI adds a repo-wide grep backstop so new
+// files cannot escape (see .github/workflows/ci.yml).
 
 fn fail(msg: String) {
     println("FAIL " + msg);
     process_exit(1);
+}
+
+// True when any sys_exec( call spawns "sh" (any capability var name).
+fn has_spawn_sh(t: String) -> Bool {
+    let n: Int = chars_len(t);
+    let mut off: Int = 0;
+    while off < n {
+        let rest: String = str_slice(t, off, n);
+        let k: Int = str_index_of(rest, "sys_exec(");
+        if k < 0 { return false; }
+        let m: Int = chars_len(rest);
+        let mut end: Int = k + 48;
+        if end > m { end = m; }
+        let seg: String = str_slice(rest, k, end);
+        if str_index_of(seg, "\"sh\"") >= 0 { return true; }
+        off = off + k + 9;
+    }
+    return false;
 }
 
 fn scan(fs: &FsReadCap, path: String) {
@@ -20,7 +40,7 @@ fn scan(fs: &FsReadCap, path: String) {
     }
     let rr: Result[String, String] = read_file(fs, path);
     let t: String = match rr { Ok(s) => s, Err(_) => "" };
-    if str_index_of(t, "sys_exec(proc, \"sh\"") >= 0 {
+    if has_spawn_sh(t) {
         fail("sh exec in " + path);
     }
     if str_index_of(t, "\"sh\", \"-c\"") >= 0 {

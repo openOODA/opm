@@ -61,10 +61,31 @@ jobs:
           done
           ! grep -q "bin/oodac" opm/cli/find_compiler.oo || { echo "ERR find_compiler fallback"; exit 1; }
           ! grep -q "ooda/oodac_bin" opm/cli/find_compiler.oo || { echo "ERR find_compiler fallback"; exit 1; }
-          for f in opm/cli/host_run.oo opm/cli/git_clone.oo opm/cli/reg_fetch.oo opm/cli/cmd_bot.oo opm/registry/regs.oo; do
-            ! grep -q 'sys_exec(proc, "sh"' "$f" || { echo "ERR sh exec in $f"; exit 1; }
-            ! grep -q "command -v" "$f" || { echo "ERR command -v in $f"; exit 1; }
-          done
+          python3 - opm/cli/host_run.oo opm/cli/git_clone.oo opm/cli/reg_fetch.oo opm/cli/cmd_bot.oo opm/registry/regs.oo <<'EOF'
+          import sys
+          # Independent oracle for qa/no_shell_proof.oo: any sys_exec( whose
+          # 48-char right window contains "sh" is a shell escape (cap-var-name
+          # agnostic). Also bans "sh","-c" pairs and `command -v` probes.
+          bad = False
+          for path in sys.argv[1:]:
+              src = open(path, encoding="utf-8").read()
+              i = 0
+              while True:
+                  i = src.find("sys_exec(", i)
+                  if i < 0:
+                      break
+                  if '"sh"' in src[i:i + 56]:
+                      print(f"ERR sh exec in {path}")
+                      bad = True
+                  i += 9
+              if '"sh", "-c"' in src:
+                  print(f"ERR sh -c pair in {path}")
+                  bad = True
+              if "command -v" in src:
+                  print(f"ERR command -v in {path}")
+                  bad = True
+          sys.exit(1 if bad else 0)
+          EOF
           for d in core resolve lock store registry policy sign launch qa cli; do
             test -f "opm/$d/anchor.oo" || { echo "ERR missing opm/$d/anchor.oo"; exit 1; }
           done
