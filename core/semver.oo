@@ -9,9 +9,7 @@
 //   2. CAS id is the payload hash.
 //   3. Lock hash aliases the lock digest helpers.
 
-import "policy/caps.oo";
 import "lock/lock.oo";
-import "name.oo";
 
 pub fn pm_sha256(s: String) -> String {
     return crypto_sha256_internal(s);
