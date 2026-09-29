@@ -6,12 +6,14 @@
 //
 // Beats:
 //   1. Resolve primary compiler binary (OODA_COMPILER, OODA_TOOLCHAIN, HOME).
-//   2. Compile and execute each proof twice in fresh processes.
-//   3. Clean up temporary proof binaries immediately.
-//   4. Exit 0 only when all proofs pass both runs.
+//   2. Enumerate qa/*_proof.oo, qa/probe_*.oo, registry/*_proof.oo (floor 22).
+//   3. Compile and execute each proof twice in fresh processes.
+//   4. Report every failure; clean up binaries; exit 0 only if none failed.
 
 import "std/fs/process/env.oo";
 import "std/fs/file/path.oo";
+import "std/fs/file/glob.oo";
+import "std/core/text/natural_sort.oo";
 
 fn run_probe_once(p: &ProcessCap, oodac: String, path: String) -> Result[Int, String] {
     let tmp_bin: String = path + ".tmp.bin";
@@ -54,37 +56,51 @@ pub fn main(p: &ProcessCap, fs_r: &FsReadCap, env: &EnvCap, args: List[String]) 
         return Err("no compiler (OODA_COMPILER, OODA_TOOLCHAIN, or HOME layout)");
     }
 
+    let g1: List[String] = glob_scan_dir(fs_r, "qa", "*_proof.oo");
+    let g2: List[String] = glob_scan_dir(fs_r, "qa", "probe_*.oo");
+    let g3: List[String] = glob_scan_dir(fs_r, "registry", "*_proof.oo");
     let mut ps: List[String] = list_new();
-    ps = list_push(ps, "qa/today_proof.oo");
-    ps = list_push(ps, "qa/tomorrow_proof.oo");
-    ps = list_push(ps, "qa/extract_proof.oo");
-    ps = list_push(ps, "qa/ingest_proof.oo");
-    ps = list_push(ps, "qa/init_proof.oo");
-    ps = list_push(ps, "qa/lock_format_proof.oo");
-    ps = list_push(ps, "qa/pubgrub_proof.oo");
-    ps = list_push(ps, "qa/semver_proof.oo");
-    ps = list_push(ps, "qa/semver_edge_proof.oo");
-    ps = list_push(ps, "qa/argv_init_proof.oo");
-    ps = list_push(ps, "qa/argv_bot_proof.oo");
-    ps = list_push(ps, "qa/argv_publish_proof.oo");
-    ps = list_push(ps, "qa/help_surface_proof.oo");
-    ps = list_push(ps, "qa/sbom_dispatch_proof.oo");
-    ps = list_push(ps, "qa/compiler_token_proof.oo");
-    ps = list_push(ps, "qa/no_shell_proof.oo");
-    ps = list_push(ps, "qa/search_proof.oo");
-    ps = list_push(ps, "registry/git_ingest_proof.oo");
-    ps = list_push(ps, "registry/reg_proof.oo");
-    ps = list_push(ps, "qa/progress_proof.oo");
-    ps = list_push(ps, "qa/probe_cap_extra.oo");
-    ps = list_push(ps, "qa/minisign_proof.oo");
+    let mut gi: Int = 0;
+    while gi < list_len(g1) {
+        ps = list_push(ps, list_get(g1, gi));
+        gi = gi + 1;
+    }
+    gi = 0;
+    while gi < list_len(g2) {
+        ps = list_push(ps, list_get(g2, gi));
+        gi = gi + 1;
+    }
+    gi = 0;
+    while gi < list_len(g3) {
+        ps = list_push(ps, list_get(g3, gi));
+        gi = gi + 1;
+    }
+    ps = natural_sort_list(ps);
+    if list_len(ps) < 22 {
+        return Err("proof floor violated: found " + list_len(ps).to_string() + ", need >= 22");
+    }
+    println("opm suite: enumerated " + list_len(ps).to_string() + " proofs");
 
+    let mut failed: Int = 0;
+    let mut first_err: String = "";
     let mut i: Int = 0;
     while i < list_len(ps) {
         let path: String = list_get(ps, i);
         println("  Running " + path);
         let r: Result[Int, String] = run_probe_twice(p, oodac, path);
-        if r.is_err() { return r; }
+        if r.is_err() {
+            let m: String = match r { Ok(_) => "", Err(e) => e };
+            println("opm suite FAIL: " + m);
+            if failed == 0 { first_err = m; }
+            failed = failed + 1;
+        } else {
+            println("  Passed " + path);
+        }
         i = i + 1;
+    }
+    if failed != 0 {
+        println("opm test suite: " + failed.to_string() + " proof(s) failed");
+        return Err(first_err);
     }
     println("opm test suite: ALL PROOFS PASSED (double-run identical)");
     return Ok(0);
