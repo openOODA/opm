@@ -13,6 +13,8 @@
 import "argv.oo";
 import "slurp.oo";
 import "core/name.oo";
+import "std/fs/os/fs.oo";
+import "store/store.oo";
 
 fn gen_name_ok(name: String) -> Bool {
     if chars_len(name) == 0 { return false; }

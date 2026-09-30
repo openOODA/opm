@@ -11,6 +11,7 @@
 
 import "core/name.oo";
 import "core/semver.oo";
+import "policy/caps.oo";
 
 fn graph_pfx(s: String, p: String) -> Bool {
     let n: Int = chars_len(p);
