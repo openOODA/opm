@@ -63,7 +63,7 @@ pub fn main(fr: &FsReadCap, fw: &FsWriteCap, proc: &ProcessCap, env: &EnvCap, ar
     if sub == "clean" { run_ooda_pm_clean(fr, fw, proc, env, rest); return Ok(0); }
 
     if sub == "version" || sub == "--version" || sub == "-v" {
-        println("opm v2.11.10");
+        println("opm v2.11.11");
         return Ok(0);
     }
     if sub == "help" || sub == "--help" || sub == "-h" {

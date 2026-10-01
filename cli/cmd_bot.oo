@@ -41,7 +41,14 @@ pub fn pm_bot_verify_pkg(fr: &FsReadCap, base_dir: String, pkg_name: String) -> 
     }
     let src_text: String = pm_slurp(fr, src_path);
     let live_sha: String = crypto_sha256_internal(src_text);
-    let want_sha: String = pm_kv(man_text, "sha256");
+    let mut want_sha: String = pm_kv(man_text, "checksum");
+    if want_sha == "" {
+        want_sha = pm_kv(man_text, "sha256");
+    }
+    let colon: Int = str_index_of(want_sha, ":");
+    if colon >= 0 {
+        want_sha = str_slice(want_sha, colon + 1, chars_len(want_sha));
+    }
     if want_sha != "" && want_sha != live_sha {
         return "sha256 mismatch (want " + want_sha + " got " + live_sha + ")";
     }
