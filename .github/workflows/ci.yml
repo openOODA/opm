@@ -90,7 +90,7 @@ jobs:
             test -f "opm/$d/anchor.oo" || { echo "ERR missing opm/$d/anchor.oo"; exit 1; }
           done
           echo "api_surface=10"
-          for t in qa/today_proof.oo qa/tomorrow_proof.oo qa/extract_proof.oo qa/ingest_proof.oo qa/init_proof.oo qa/lock_format_proof.oo qa/pubgrub_proof.oo qa/semver_proof.oo qa/semver_edge_proof.oo qa/argv_init_proof.oo qa/argv_bot_proof.oo qa/argv_publish_proof.oo qa/help_surface_proof.oo qa/sbom_dispatch_proof.oo qa/compiler_token_proof.oo qa/no_shell_proof.oo qa/search_proof.oo registry/git_ingest_proof.oo registry/reg_proof.oo qa/progress_proof.oo qa/minisign_proof.oo; do
+          for t in qa/dep/today_proof.oo qa/dep/tomorrow_proof.oo qa/pack/extract_proof.oo qa/pack/ingest_proof.oo qa/pack/init_proof.oo qa/pack/lock_format_proof.oo qa/dep/pubgrub_proof.oo qa/dep/semver_proof.oo qa/dep/semver_edge_proof.oo qa/cli/argv_init_proof.oo qa/cli/argv_bot_proof.oo qa/cli/argv_publish_proof.oo qa/cli/help_surface_proof.oo qa/dep/sbom_dispatch_proof.oo qa/cli/compiler_token_proof.oo qa/cli/no_shell_proof.oo qa/pack/search_proof.oo registry/git_ingest_proof.oo registry/reg_proof.oo qa/pack/progress_proof.oo qa/pack/minisign_proof.oo; do
             out=$("${OODA_COMPILER}" check "opm/$t") || { echo "$out"; exit 1; }
             case "$out" in *ERR*) echo "ERR in stdout opm/$t: $out"; exit 1;; esac
             out=$("${OODA_COMPILER}" check "opm/$t") || { echo "$out"; exit 1; }
@@ -196,8 +196,9 @@ jobs:
           trap 'rm -f /tmp/*.diff[12]' EXIT
           shopt -s nullglob
           count=0
-          for f in qa/probe_*.oo qa/*_proof.oo; do
+          for f in qa/*/*.oo; do
             test -f "$f" || continue
+            case "$f" in */anchor.oo) continue ;; esac
             count=$((count + 1))
             base=$(basename "$f" .oo)
             "$OODA_COMPILER" tokens "$f" > "/tmp/${base}.diff1" 2>&1 || {
