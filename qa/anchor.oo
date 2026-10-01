@@ -1,42 +1,13 @@
-// # Opm QA Index — Anchor for Agents
+// # OPM QA Subsystem Anchor
 //
-// Logline: Index of the break-test drivers that ship with opm.
+// Logline: Subsystem anchor re-exporting cli, pack, and dep proof clusters.
 //
-// Setup: Each proof driver is a hostile test for one shipped function. If a driver fails, opm fails to release.
+// Setup: Pure shim re-exporting opm proof clusters.
 //
 // Beats:
-//   1. today_proof.oo — resolve, lock identity, caps.
-//   2. tomorrow_proof.oo — tomorrow-revoke gate.
-//   3. extract_proof.oo — archive extraction refuses traversal.
-//   4. ingest_proof.oo — registry ingest rejects malformed manifests.
-//   5. init_proof.oo — init manifest shape.
-//   6. lock_format_proof.oo — lock line fields.
-//   7. pubgrub_proof.oo — resolver terminates.
-//   8. semver_proof.oo — SemVer parser.
-//   15. semver_edge_proof.oo — short/prerelease/build-meta/empty versions; numeric compare.
-//   9. argv_init_proof, argv_bot_proof, argv_publish_proof — rest argv.
-//  10. help_surface_proof, sbom_dispatch_proof — honest dispatch.
-//  11. compiler_token_proof, no_shell_proof — spawn and shell.
-//  12. search_proof.oo — catalog name substring match.
-//  13. progress_proof.oo — progress line renderer.
-//  14. probe_cap_extra.oo — extra-cap refuse.
-
-import "today_proof.oo";
-import "tomorrow_proof.oo";
-import "extract_proof.oo";
-import "ingest_proof.oo";
-import "init_proof.oo";
-import "lock_format_proof.oo";
-import "pubgrub_proof.oo";
-import "semver_proof.oo";
-import "semver_edge_proof.oo";
-import "argv_init_proof.oo";
-import "argv_bot_proof.oo";
-import "argv_publish_proof.oo";
-import "help_surface_proof.oo";
-import "sbom_dispatch_proof.oo";
-import "compiler_token_proof.oo";
-import "no_shell_proof.oo";
-import "search_proof.oo";
-import "progress_proof.oo";
-import "probe_cap_extra.oo";
+//   1. Re-export cli cluster anchor.
+//   2. Re-export pack cluster anchor.
+//   3. Re-export dep cluster anchor.
+import "cli/anchor.oo";
+import "pack/anchor.oo";
+import "dep/anchor.oo";

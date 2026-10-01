@@ -1,0 +1,15 @@
+// # OPM QA CLI Proofs Anchor
+//
+// Logline: CLI interface and environment proofs for opm package manager.
+//
+// Setup: Pure shim re-exporting CLI proofs.
+//
+// Beats:
+//   1. Re-export CLI proof modules.
+import "argv_bot_proof.oo";
+import "argv_init_proof.oo";
+import "argv_publish_proof.oo";
+import "compiler_token_proof.oo";
+import "help_surface_proof.oo";
+import "no_shell_proof.oo";
+import "probe_cap_extra.oo";

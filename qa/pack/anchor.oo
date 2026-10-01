@@ -1,0 +1,15 @@
+// # OPM QA Package Proofs Anchor
+//
+// Logline: Package lifecycle proofs for extract, ingest, init, lock, minisign, progress, and search.
+//
+// Setup: Pure shim re-exporting package proofs.
+//
+// Beats:
+//   1. Re-export package proof modules.
+import "extract_proof.oo";
+import "ingest_proof.oo";
+import "init_proof.oo";
+import "lock_format_proof.oo";
+import "minisign_proof.oo";
+import "progress_proof.oo";
+import "search_proof.oo";

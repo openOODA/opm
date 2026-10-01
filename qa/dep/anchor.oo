@@ -1,0 +1,14 @@
+// # OPM QA Dependency Proofs Anchor
+//
+// Logline: Dependency and versioning proofs for pubgrub, sbom, semver, and date pins.
+//
+// Setup: Pure shim re-exporting dependency proofs.
+//
+// Beats:
+//   1. Re-export dependency proof modules.
+import "pubgrub_proof.oo";
+import "sbom_dispatch_proof.oo";
+import "semver_edge_proof.oo";
+import "semver_proof.oo";
+import "today_proof.oo";
+import "tomorrow_proof.oo";

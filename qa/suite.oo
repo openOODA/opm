@@ -55,13 +55,20 @@ pub fn main(p: &ProcessCap, fs_r: &FsReadCap, env: &EnvCap, args: List[String]) 
         return Err("no compiler (OODA_COMPILER, OODA_TOOLCHAIN, or HOME layout)");
     }
 
-    let g1: List[String] = glob_scan_dir(fs_r, "qa", "*_proof.oo");
-    let g2: List[String] = glob_scan_dir(fs_r, "qa", "probe_*.oo");
-    let g3: List[String] = glob_scan_dir(fs_r, "registry", "*_proof.oo");
+    let g1: List[String] = glob_scan_dir(fs_r, "qa/cli", "*_proof.oo");
+    let g1_p: List[String] = glob_scan_dir(fs_r, "qa/cli", "probe_*.oo");
+    let g2: List[String] = glob_scan_dir(fs_r, "qa/pack", "*_proof.oo");
+    let g3: List[String] = glob_scan_dir(fs_r, "qa/dep", "*_proof.oo");
+    let g_reg: List[String] = glob_scan_dir(fs_r, "registry", "*_proof.oo");
     let mut ps: List[String] = list_new();
     let mut gi: Int = 0;
     while gi < list_len(g1) {
         ps = list_push(ps, list_get(g1, gi));
+        gi = gi + 1;
+    }
+    gi = 0;
+    while gi < list_len(g1_p) {
+        ps = list_push(ps, list_get(g1_p, gi));
         gi = gi + 1;
     }
     gi = 0;
@@ -72,6 +79,11 @@ pub fn main(p: &ProcessCap, fs_r: &FsReadCap, env: &EnvCap, args: List[String]) 
     gi = 0;
     while gi < list_len(g3) {
         ps = list_push(ps, list_get(g3, gi));
+        gi = gi + 1;
+    }
+    gi = 0;
+    while gi < list_len(g_reg) {
+        ps = list_push(ps, list_get(g_reg, gi));
         gi = gi + 1;
     }
     ps = natural_sort_list(ps);

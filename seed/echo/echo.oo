@@ -5,8 +5,13 @@
 // Setup: No extra caps. Safe to launch.
 //
 // Beats:
-//   1. Print echo.
+//   1. Print echo to standard output.
+//   2. Exit successfully with code 0.
+
+pub fn echo_message() -> String {
+    return "echo";
+}
 
 pub fn main() {
-    println("echo");
+    println(echo_message());
 }
