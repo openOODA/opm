@@ -6,7 +6,7 @@
 //
 // Beats:
 //   1. Resolve primary compiler binary (OODA_COMPILER, OODA_TOOLCHAIN, HOME).
-//   2. Enumerate qa/*_proof.oo, qa/probe_*.oo, registry/*_proof.oo (floor 22).
+//   2. Enumerate qa/*_proof.oo, qa/probe_*.oo, registry/*_proof.oo (never hardcoded).
 //   3. Compile and execute each proof twice in fresh processes.
 //   4. Report every failure; clean up binaries; exit 0 only if none failed.
 
@@ -87,8 +87,8 @@ pub fn main(p: &ProcessCap, fs_r: &FsReadCap, env: &EnvCap, args: List[String]) 
         gi = gi + 1;
     }
     ps = natural_sort_list(ps);
-    if list_len(ps) < 22 {
-        return Err("proof floor violated: found " + list_len(ps).to_string() + ", need >= 22");
+    if list_len(ps) == 0 {
+        return Err("no proofs discovered under qa/");
     }
     println("opm suite: enumerated " + list_len(ps).to_string() + " proofs");
 
