@@ -25,7 +25,7 @@ type ProgressHandle = struct {
     current: Int,
 };
 
-fn pm_progress_ansi_code(color: Bool, code: String) -> String {
+pub fn pm_progress_ansi_code(color: Bool, code: String) -> String {
     if !color { return ""; }
     return "\x1b[" + code + "m";
 }
@@ -43,7 +43,7 @@ fn pm_progress_color_marker(color: Bool, status: String) -> String {
     return "";
 }
 
-fn pm_progress_marker(status: String) -> String {
+pub fn pm_progress_marker(status: String) -> String {
     if status == "ok" { return "\u{2713}"; }
     if status == "warn" { return "\u{26a0}"; }
     if status == "err" { return "\u{2717}"; }
